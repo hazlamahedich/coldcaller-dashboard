@@ -15,6 +15,7 @@ const enhancedAudioRoutes = require('./routes/enhancedAudio');
 const callsRoutes = require('./routes/calls');
 const sipRoutes = require('./routes/sip');
 const healthRoutes = require('./routes/healthDetailed');
+const analyticsRoutes = require('./routes/analytics');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
@@ -84,6 +85,7 @@ app.use('/api/audio', enhancedAudioRoutes);
 app.use('/api/calls', callsRoutes);
 app.use('/api/sip', sipRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

@@ -9,7 +9,7 @@
  * @param {string} message - Success message
  * @param {number} statusCode - HTTP status code
  */
-export const sendSuccess = (res, data = null, message = 'Success', statusCode = 200) => {
+const sendSuccess = (res, data = null, message = 'Success', statusCode = 200) => {
   const response = {
     success: true,
     message,
@@ -32,7 +32,7 @@ export const sendSuccess = (res, data = null, message = 'Success', statusCode = 
  * @param {number} statusCode - HTTP status code
  * @param {any} errors - Detailed error information
  */
-export const sendError = (res, message = 'An error occurred', statusCode = 500, errors = null) => {
+const sendError = (res, message = 'An error occurred', statusCode = 500, errors = null) => {
   const response = {
     success: false,
     error: {
@@ -55,7 +55,7 @@ export const sendError = (res, message = 'An error occurred', statusCode = 500, 
  * @param {object} res - Express response object
  * @param {array} errors - Array of validation errors
  */
-export const sendValidationError = (res, errors) => {
+const sendValidationError = (res, errors) => {
   return sendError(res, 'Validation failed', 400, errors);
 };
 
@@ -64,7 +64,7 @@ export const sendValidationError = (res, errors) => {
  * @param {object} res - Express response object
  * @param {string} resource - Resource that was not found
  */
-export const sendNotFound = (res, resource = 'Resource') => {
+const sendNotFound = (res, resource = 'Resource') => {
   return sendError(res, `${resource} not found`, 404);
 };
 
@@ -73,7 +73,7 @@ export const sendNotFound = (res, resource = 'Resource') => {
  * @param {object} res - Express response object
  * @param {string} message - Unauthorized message
  */
-export const sendUnauthorized = (res, message = 'Unauthorized access') => {
+const sendUnauthorized = (res, message = 'Unauthorized access') => {
   return sendError(res, message, 401);
 };
 
@@ -82,7 +82,7 @@ export const sendUnauthorized = (res, message = 'Unauthorized access') => {
  * @param {object} res - Express response object
  * @param {string} message - Forbidden message
  */
-export const sendForbidden = (res, message = 'Access forbidden') => {
+const sendForbidden = (res, message = 'Access forbidden') => {
   return sendError(res, message, 403);
 };
 
@@ -93,7 +93,7 @@ export const sendForbidden = (res, message = 'Access forbidden') => {
  * @param {object} pagination - Pagination metadata
  * @param {string} message - Success message
  */
-export const sendPaginated = (res, data, pagination, message = 'Data retrieved successfully') => {
+const sendPaginated = (res, data, pagination, message = 'Data retrieved successfully') => {
   return res.status(200).json({
     success: true,
     message,
@@ -108,4 +108,18 @@ export const sendPaginated = (res, data, pagination, message = 'Data retrieved s
     },
     timestamp: new Date().toISOString(),
   });
+};
+
+// For backward compatibility - support both import styles
+const sendResponse = sendSuccess;
+
+module.exports = {
+  sendSuccess,
+  sendError,
+  sendValidationError,
+  sendNotFound,
+  sendUnauthorized,
+  sendForbidden,
+  sendPaginated,
+  sendResponse
 };

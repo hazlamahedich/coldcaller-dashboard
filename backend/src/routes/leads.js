@@ -10,6 +10,19 @@ const {
   getLeadStats
 } = require('../controllers/leadsController');
 
+const {
+  bulkImportLeads,
+  bulkUpdateLeads,
+  bulkDeleteLeads,
+  findDuplicates,
+  mergeLeadsEndpoint,
+  getLeadScoreBreakdown,
+  getLeadTimeline,
+  exportLeads,
+  batchEnrichLeads,
+  getLeadAnalytics
+} = require('../controllers/advancedLeadsController');
+
 const router = express.Router();
 
 // Validation rules for lead creation
@@ -113,5 +126,77 @@ router.put('/:id', updateLeadValidation, handleValidationErrors, updateLead);
  * @access  Public
  */
 router.delete('/:id', deleteLead);
+
+// Advanced Lead Management Routes
+
+/**
+ * @route   POST /api/leads/bulk/import
+ * @desc    Bulk import leads with duplicate detection
+ * @access  Public
+ */
+router.post('/bulk/import', bulkImportLeads);
+
+/**
+ * @route   PUT /api/leads/bulk/update
+ * @desc    Bulk update multiple leads
+ * @access  Public
+ */
+router.put('/bulk/update', bulkUpdateLeads);
+
+/**
+ * @route   DELETE /api/leads/bulk/delete
+ * @desc    Bulk delete multiple leads
+ * @access  Public
+ */
+router.delete('/bulk/delete', bulkDeleteLeads);
+
+/**
+ * @route   GET /api/leads/duplicates
+ * @desc    Find duplicate leads with similarity analysis
+ * @access  Public
+ */
+router.get('/duplicates', findDuplicates);
+
+/**
+ * @route   POST /api/leads/merge
+ * @desc    Merge two leads with customizable rules
+ * @access  Public
+ */
+router.post('/merge', mergeLeadsEndpoint);
+
+/**
+ * @route   GET /api/leads/:id/score
+ * @desc    Get detailed lead score breakdown
+ * @access  Public
+ */
+router.get('/:id/score', getLeadScoreBreakdown);
+
+/**
+ * @route   GET /api/leads/:id/timeline
+ * @desc    Get lead activity timeline
+ * @access  Public
+ */
+router.get('/:id/timeline', getLeadTimeline);
+
+/**
+ * @route   GET /api/leads/export
+ * @desc    Export leads in various formats
+ * @access  Public
+ */
+router.get('/export', exportLeads);
+
+/**
+ * @route   POST /api/leads/enrich
+ * @desc    Batch enrich leads with external data
+ * @access  Public
+ */
+router.post('/enrich', batchEnrichLeads);
+
+/**
+ * @route   GET /api/leads/analytics
+ * @desc    Get comprehensive lead analytics
+ * @access  Public
+ */
+router.get('/analytics', getLeadAnalytics);
 
 module.exports = router;
