@@ -1,0 +1,59 @@
+const WebSocket = require('ws');
+const EventEmitter = require('events');
+const SIPManager = require('./sipManager');
+
+class WebSocketManager extends EventEmitter {
+  constructor() {
+    super();
+    this.wss = null;
+    this.clients = new Map();
+    this.rooms = new Map(); // Room-based messaging
+    this.heartbeatInterval = null;
+  }
+
+  /**
+   * Initialize WebSocket server
+   */
+  initialize(server) {
+    this.wss = new WebSocket.Server({ 
+      server,
+      path: '/ws',
+      clientTracking: true
+    });
+
+    this.wss.on('connection', (ws, req) => {
+      this.handleConnection(ws, req);
+    });
+
+    // Set up heartbeat to detect broken connections
+    this.heartbeatInterval = setInterval(() => {
+      this.wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+          console.log('Terminating dead WebSocket connection');
+          return ws.terminate();
+        }
+        ws.isAlive = false;
+        ws.ping();
+      });
+    }, 30000); // 30 seconds
+
+    // Listen to SIP events for real-time updates
+    this.setupSIPEventListeners();
+
+    console.log('✅ WebSocket server initialized');
+  }
+
+  /**
+   * Handle new WebSocket connections
+   */
+  handleConnection(ws, req) {
+    const clientId = this.generateClientId();
+    const clientInfo = {
+      id: clientId,
+      ws,
+      ip: req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      connectedAt: new Date().toISOString(),
+      isAlive: true,
+      subscriptions: new Set()
+    };\n\n    this.clients.set(clientId, clientInfo);\n    ws.isAlive = true;\n    ws.clientId = clientId;\n\n    console.log(`📱 WebSocket client connected: ${clientId}`);\n\n    // Send welcome message with client ID\n    this.sendToClient(clientId, {\n      type: 'connection',\n      clientId,\n      message: 'Connected successfully',\n      timestamp: new Date().toISOString()\n    });\n\n    // Handle incoming messages\n    ws.on('message', (data) => {\n      this.handleMessage(clientId, data);\n    });\n\n    // Handle pong responses\n    ws.on('pong', () => {\n      ws.isAlive = true;\n    });\n\n    // Handle client disconnect\n    ws.on('close', () => {\n      this.handleDisconnection(clientId);\n    });\n\n    // Handle errors\n    ws.on('error', (error) => {\n      console.error(`WebSocket error for client ${clientId}:`, error);\n      this.handleDisconnection(clientId);\n    });\n  }\n\n  /**\n   * Handle incoming WebSocket messages\n   */\n  handleMessage(clientId, data) {\n    try {\n      const message = JSON.parse(data.toString());\n      const client = this.clients.get(clientId);\n\n      if (!client) {\n        console.warn(`Message from unknown client: ${clientId}`);\n        return;\n      }\n\n      console.log(`📨 Message from ${clientId}:`, message.type);\n\n      switch (message.type) {\n        case 'subscribe':\n          this.handleSubscription(clientId, message.channel);\n          break;\n        case 'unsubscribe':\n          this.handleUnsubscription(clientId, message.channel);\n          break;\n        case 'joinRoom':\n          this.handleJoinRoom(clientId, message.room);\n          break;\n        case 'leaveRoom':\n          this.handleLeaveRoom(clientId, message.room);\n          break;\n        case 'ping':\n          this.sendToClient(clientId, { type: 'pong', timestamp: new Date().toISOString() });\n          break;\n        default:\n          console.warn(`Unknown message type: ${message.type}`);\n      }\n    } catch (error) {\n      console.error(`Error parsing message from ${clientId}:`, error);\n      this.sendToClient(clientId, {\n        type: 'error',\n        message: 'Invalid message format',\n        timestamp: new Date().toISOString()\n      });\n    }\n  }\n\n  /**\n   * Handle client disconnection\n   */\n  handleDisconnection(clientId) {\n    const client = this.clients.get(clientId);\n    if (client) {\n      // Remove from all rooms\n      this.rooms.forEach((roomClients, roomName) => {\n        roomClients.delete(clientId);\n        if (roomClients.size === 0) {\n          this.rooms.delete(roomName);\n        }\n      });\n\n      this.clients.delete(clientId);\n      console.log(`📱 WebSocket client disconnected: ${clientId}`);\n    }\n  }\n\n  /**\n   * Handle channel subscriptions\n   */\n  handleSubscription(clientId, channel) {\n    const client = this.clients.get(clientId);\n    if (client) {\n      client.subscriptions.add(channel);\n      this.sendToClient(clientId, {\n        type: 'subscribed',\n        channel,\n        message: `Subscribed to ${channel}`,\n        timestamp: new Date().toISOString()\n      });\n      console.log(`📡 Client ${clientId} subscribed to ${channel}`);\n    }\n  }\n\n  /**\n   * Handle channel unsubscriptions\n   */\n  handleUnsubscription(clientId, channel) {\n    const client = this.clients.get(clientId);\n    if (client) {\n      client.subscriptions.delete(channel);\n      this.sendToClient(clientId, {\n        type: 'unsubscribed',\n        channel,\n        message: `Unsubscribed from ${channel}`,\n        timestamp: new Date().toISOString()\n      });\n      console.log(`📡 Client ${clientId} unsubscribed from ${channel}`);\n    }\n  }\n\n  /**\n   * Handle room joins\n   */\n  handleJoinRoom(clientId, room) {\n    if (!this.rooms.has(room)) {\n      this.rooms.set(room, new Set());\n    }\n    \n    this.rooms.get(room).add(clientId);\n    this.sendToClient(clientId, {\n      type: 'roomJoined',\n      room,\n      message: `Joined room ${room}`,\n      timestamp: new Date().toISOString()\n    });\n    console.log(`🏠 Client ${clientId} joined room ${room}`);\n  }\n\n  /**\n   * Handle room leaves\n   */\n  handleLeaveRoom(clientId, room) {\n    const roomClients = this.rooms.get(room);\n    if (roomClients) {\n      roomClients.delete(clientId);\n      if (roomClients.size === 0) {\n        this.rooms.delete(room);\n      }\n    }\n    \n    this.sendToClient(clientId, {\n      type: 'roomLeft',\n      room,\n      message: `Left room ${room}`,\n      timestamp: new Date().toISOString()\n    });\n    console.log(`🏠 Client ${clientId} left room ${room}`);\n  }\n\n  /**\n   * Send message to specific client\n   */\n  sendToClient(clientId, message) {\n    const client = this.clients.get(clientId);\n    if (client && client.ws.readyState === WebSocket.OPEN) {\n      try {\n        client.ws.send(JSON.stringify(message));\n      } catch (error) {\n        console.error(`Error sending message to client ${clientId}:`, error);\n        this.handleDisconnection(clientId);\n      }\n    }\n  }\n\n  /**\n   * Broadcast to all clients subscribed to a channel\n   */\n  broadcast(channel, message) {\n    const broadcastMessage = {\n      ...message,\n      channel,\n      timestamp: new Date().toISOString()\n    };\n\n    this.clients.forEach((client, clientId) => {\n      if (client.subscriptions.has(channel)) {\n        this.sendToClient(clientId, broadcastMessage);\n      }\n    });\n\n    console.log(`📡 Broadcasted to ${channel}: ${message.type}`);\n  }\n\n  /**\n   * Send message to all clients in a room\n   */\n  sendToRoom(room, message) {\n    const roomClients = this.rooms.get(room);\n    if (roomClients) {\n      const roomMessage = {\n        ...message,\n        room,\n        timestamp: new Date().toISOString()\n      };\n\n      roomClients.forEach(clientId => {\n        this.sendToClient(clientId, roomMessage);\n      });\n\n      console.log(`🏠 Message sent to room ${room}: ${message.type}`);\n    }\n  }\n\n  /**\n   * Set up SIP event listeners for real-time updates\n   */\n  setupSIPEventListeners() {\n    // Call events\n    SIPManager.on('callInitiated', (callData) => {\n      this.broadcast('calls', {\n        type: 'callInitiated',\n        data: callData\n      });\n    });\n\n    SIPManager.on('callConnected', (callData) => {\n      this.broadcast('calls', {\n        type: 'callConnected',\n        data: callData\n      });\n    });\n\n    SIPManager.on('callEnded', (callData) => {\n      this.broadcast('calls', {\n        type: 'callEnded',\n        data: callData\n      });\n    });\n\n    // Recording events\n    SIPManager.on('recordingStarted', (recordingData) => {\n      this.broadcast('recordings', {\n        type: 'recordingStarted',\n        data: recordingData\n      });\n    });\n\n    SIPManager.on('recordingStopped', (recordingData) => {\n      this.broadcast('recordings', {\n        type: 'recordingStopped',\n        data: recordingData\n      });\n    });\n\n    // Registration events\n    SIPManager.on('registered', (statusData) => {\n      this.broadcast('sip', {\n        type: 'sipRegistered',\n        data: statusData\n      });\n    });\n\n    SIPManager.on('registrationFailed', (error) => {\n      this.broadcast('sip', {\n        type: 'sipRegistrationFailed',\n        data: { error: error.message }\n      });\n    });\n\n    SIPManager.on('unregistered', () => {\n      this.broadcast('sip', {\n        type: 'sipUnregistered',\n        data: {}\n      });\n    });\n  }\n\n  /**\n   * Send real-time metrics updates\n   */\n  sendMetricsUpdate(metrics) {\n    this.broadcast('metrics', {\n      type: 'metricsUpdate',\n      data: metrics\n    });\n  }\n\n  /**\n   * Send call quality updates\n   */\n  sendCallQualityUpdate(callId, quality) {\n    this.broadcast('calls', {\n      type: 'callQualityUpdate',\n      data: { callId, quality }\n    });\n  }\n\n  /**\n   * Generate unique client ID\n   */\n  generateClientId() {\n    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n  }\n\n  /**\n   * Get connection statistics\n   */\n  getStats() {\n    return {\n      totalClients: this.clients.size,\n      totalRooms: this.rooms.size,\n      uptime: process.uptime(),\n      clientsBySubscription: this.getSubscriptionStats()\n    };\n  }\n\n  /**\n   * Get subscription statistics\n   */\n  getSubscriptionStats() {\n    const stats = {};\n    this.clients.forEach(client => {\n      client.subscriptions.forEach(subscription => {\n        stats[subscription] = (stats[subscription] || 0) + 1;\n      });\n    });\n    return stats;\n  }\n\n  /**\n   * Cleanup and close WebSocket server\n   */\n  close() {\n    if (this.heartbeatInterval) {\n      clearInterval(this.heartbeatInterval);\n    }\n\n    if (this.wss) {\n      this.wss.clients.forEach(ws => {\n        ws.terminate();\n      });\n      this.wss.close();\n    }\n\n    console.log('📱 WebSocket server closed');\n  }\n}\n\n// Export singleton instance\nmodule.exports = new WebSocketManager();

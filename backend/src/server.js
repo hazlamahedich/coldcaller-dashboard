@@ -13,6 +13,13 @@ const scriptsRoutes = require('./routes/scripts');
 const audioRoutes = require('./routes/audio');
 const enhancedAudioRoutes = require('./routes/enhancedAudio');
 const callsRoutes = require('./routes/calls');
+const sipRoutes = require('./routes/sip');
+const healthRoutes = require('./routes/healthDetailed');
+const CallMonitoringMiddleware = require('./middleware/callMonitoring');
+
+// Services
+const WebSocketManager = require('./services/webSocketManager');
+const SIPManager = require('./services/sipManager');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,6 +58,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined'));
 app.use(requestLogger);
 
+// Call monitoring middleware
+app.use('/api/calls', CallMonitoringMiddleware.trackCallRequest);
+app.use('/api/calls', CallMonitoringMiddleware.monitorCallQuality);
+app.use('/api/sip', CallMonitoringMiddleware.logSIPEvents);
+app.use(CallMonitoringMiddleware.performanceMonitor);
+app.use(CallMonitoringMiddleware.memoryMonitor);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -68,6 +82,8 @@ app.use('/api/scripts', scriptsRoutes);
 app.use('/api/audio', enhancedAudioRoutes);
 
 app.use('/api/calls', callsRoutes);
+app.use('/api/sip', sipRoutes);
+app.use('/api/health', healthRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -75,9 +91,43 @@ app.use(notFoundHandler);
 // Error handling middleware
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Cold Caller API server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📞 SIP Management: http://localhost:${PORT}/api/sip/status`);
+  console.log(`📡 WebSocket: ws://localhost:${PORT}/ws`);
+});
+
+// Initialize WebSocket server
+WebSocketManager.initialize(server);
+
+// Set up real-time metrics broadcasting
+setInterval(() => {
+  const metrics = {
+    timestamp: new Date().toISOString(),
+    sipStatus: SIPManager.getRegistrationStatus(),
+    activeCalls: SIPManager.getActiveCalls().length,
+    systemUptime: process.uptime(),
+    memoryUsage: process.memoryUsage()
+  };
+  WebSocketManager.sendMetricsUpdate(metrics);
+}, 10000); // Every 10 seconds
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  WebSocketManager.close();
+  server.close(() => {
+    console.log('Process terminated');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  WebSocketManager.close();
+  server.close(() => {
+    console.log('Process terminated');
+  });
 });
 
 module.exports = app;

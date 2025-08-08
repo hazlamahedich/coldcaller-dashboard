@@ -1,0 +1,126 @@
+/* VOIP Component Styles */
+
+/* Volume Slider Styles */
+.vertical-slider {
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.vertical-slider:hover {
+  opacity: 1;
+}
+
+.vertical-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #04AA6D;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.vertical-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #04AA6D;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* DTMF Keypad Animation */
+@keyframes dtmf-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.dtmf-key-pressed {
+  animation: dtmf-press 0.15s ease-in-out;
+}
+
+/* Call Status Indicators */
+.signal-bar {
+  transition: all 0.3s ease;
+}
+
+.signal-bar.active {
+  background-color: currentColor;
+}
+
+.signal-bar.inactive {
+  background-color: #e5e7eb;
+}
+
+/* Volume Control Popup */
+.volume-popup {
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Recording Animation */
+@keyframes recording-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.recording-indicator {
+  animation: recording-pulse 2s infinite;
+}
+
+/* Call State Transitions */
+.call-state-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Connection Quality Indicators */
+.quality-excellent {
+  color: #10b981;
+}
+
+.quality-good {
+  color: #84cc16;
+}
+
+.quality-fair {
+  color: #f59e0b;
+}
+
+.quality-poor {
+  color: #ef4444;
+}
+
+/* VOIP Phone Layout */
+.voip-phone-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.voip-component-spacing > * + * {
+  margin-top: 1rem;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .voip-phone-container {
+    padding: 0.5rem;
+  }
+  
+  .dtmf-overlay {
+    padding: 1rem;
+  }
+  
+  .call-controls-grid {
+    gap: 0.5rem;
+  }
+}

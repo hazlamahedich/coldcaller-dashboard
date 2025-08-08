@@ -131,13 +131,106 @@ const generateId = () => {
   return Date.now() + Math.floor(Math.random() * 1000);
 };
 
+// Additional data for enhanced call management
+let stats = {
+  totalCalls: 0,
+  totalConnected: 0,
+  totalInterested: 0,
+  averageDuration: '0:00',
+  conversionRate: 0,
+  lastUpdated: new Date().toISOString()
+};
+
+let audioFiles = [];
+
+// SIP Configuration storage
+const sipConfig = {
+  current: null,
+  history: []
+};
+
+// Active calls tracking
+const activeCalls = new Map();
+
+// Call recordings metadata
+const callRecordings = [];
+
+// Real-time metrics
+const systemMetrics = {
+  startTime: new Date().toISOString(),
+  totalCallsStarted: 0,
+  totalCallsCompleted: 0,
+  totalRecordingTime: 0,
+  averageCallQuality: 0,
+  systemUptime: 0,
+  sipConnectionStatus: 'disconnected',
+  lastUpdate: new Date().toISOString()
+};
+
+// Utility functions
+const findById = (collection, id) => {
+  return collection.find(item => item.id === id);
+};
+
+const findByProperty = (collection, property, value) => {
+  return collection.filter(item => item[property] === value);
+};
+
+const addItem = (collection, item) => {
+  item.id = generateId();
+  item.createdAt = new Date().toISOString();
+  item.updatedAt = new Date().toISOString();
+  collection.push(item);
+  return item;
+};
+
+const updateItem = (collection, id, updates) => {
+  const index = collection.findIndex(item => item.id === id);
+  if (index !== -1) {
+    collection[index] = { ...collection[index], ...updates, updatedAt: new Date().toISOString() };
+    return collection[index];
+  }
+  return null;
+};
+
+const deleteItem = (collection, id) => {
+  const index = collection.findIndex(item => item.id === id);
+  if (index !== -1) {
+    return collection.splice(index, 1)[0];
+  }
+  return null;
+};
+
+const resetData = () => {
+  leads.length = 0;
+  callLogs.length = 0;
+  audioFiles.length = 0;
+  callRecordings.length = 0;
+  activeCalls.clear();
+  sipConfig.current = null;
+  sipConfig.history = [];
+  console.log('Data store reset');
+};
+
 module.exports = {
   // Data arrays
   leads,
   scripts,
   audioClips,
   callLogs,
+  stats,
+  audioFiles,
+  sipConfig,
+  activeCalls,
+  callRecordings,
+  systemMetrics,
   
   // Utility functions
-  generateId
+  generateId,
+  findById,
+  findByProperty,
+  addItem,
+  updateItem,
+  deleteItem,
+  resetData
 };

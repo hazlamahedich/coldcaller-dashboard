@@ -11,9 +11,17 @@ import audioService from './audioService.js';
 import { audioManager } from './AudioManager.js';
 import callsService from './callsService.js';
 
-// Import audio utilities and hooks
+// Import VOIP services
+import voipService from './VOIPService.js';
+import SIPManager from './SIPManager.js';
+import MediaManager from './MediaManager.js';
+import CallSession from './CallSession.js';
+import SIPConfigManager from './SIPConfigManager.js';
+
+// Import utilities and hooks
 import { useAudioRecorder } from '../hooks/useAudioRecorder.js';
 import audioUtils from '../utils/audioUtils.js';
+import webrtcUtils from '../utils/webrtcUtils.js';
 
 // Re-export all services for easy importing
 export {
@@ -24,8 +32,14 @@ export {
   audioService,
   audioManager,
   callsService,
+  voipService,
+  SIPManager,
+  MediaManager,
+  CallSession,
+  SIPConfigManager,
   useAudioRecorder,
-  audioUtils
+  audioUtils,
+  webrtcUtils
 };
 
 // Default export with all services grouped
@@ -37,11 +51,19 @@ const services = {
   audio: audioService,
   audioManager,
   calls: callsService,
+  voip: voipService,
+  sip: {
+    manager: SIPManager,
+    mediaManager: MediaManager,
+    callSession: CallSession,
+    configManager: SIPConfigManager
+  },
   hooks: {
     useAudioRecorder
   },
   utils: {
-    audioUtils
+    audioUtils,
+    webrtcUtils
   }
 };
 

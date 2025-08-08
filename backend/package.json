@@ -42,7 +42,14 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "uuid": "^9.0.1",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "socket.io": "^4.7.4",
+    "fluent-ffmpeg": "^2.1.2",
+    "sip.js": "^0.21.2",
+    "node-cron": "^3.0.3",
+    "ws": "^8.16.0",
+    "rtcpeerconnection-shim": "^1.2.15",
+    "webrtc-adapter": "^8.2.3"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

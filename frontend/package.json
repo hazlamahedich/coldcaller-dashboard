@@ -6,7 +6,8 @@
     "axios": "^1.11.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "sip.js": "^0.21.2"
   },
   "scripts": {
     "start": "react-scripts start",
