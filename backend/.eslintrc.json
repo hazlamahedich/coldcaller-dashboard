@@ -1,0 +1,33 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true,
+    "jest": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "prettier"
+  ],
+  "plugins": ["prettier"],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "prettier/prettier": "error",
+    "no-console": "warn",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "prefer-const": "error",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-arrow-callback": "error",
+    "prefer-template": "error",
+    "template-curly-spacing": "error",
+    "arrow-spacing": "error",
+    "consistent-return": "error",
+    "no-param-reassign": "error",
+    "no-return-assign": "error",
+    "no-throw-literal": "error",
+    "prefer-promise-reject-errors": "error"
+  }
+}

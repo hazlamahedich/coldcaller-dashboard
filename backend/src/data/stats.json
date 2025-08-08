@@ -1,0 +1,229 @@
+{
+  "overview": {
+    "period": "current_month",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-01-31T23:59:59Z",
+    "last_updated": "2024-01-20T18:30:00Z"
+  },
+  "call_statistics": {
+    "total_calls": 147,
+    "successful_connections": 89,
+    "voicemails": 34,
+    "no_answers": 24,
+    "connection_rate": 0.605,
+    "average_call_duration": "00:08:42",
+    "total_talk_time": "12:47:18",
+    "calls_per_agent_per_day": 8.2,
+    "peak_calling_hours": {
+      "morning": "09:00-11:00",
+      "afternoon": "14:00-16:00"
+    }
+  },
+  "conversion_statistics": {
+    "leads_contacted": 95,
+    "appointments_scheduled": 23,
+    "qualified_leads": 18,
+    "sales_ready": 8,
+    "closed_deals": 3,
+    "conversion_rates": {
+      "contact_to_appointment": 0.242,
+      "contact_to_qualified": 0.189,
+      "contact_to_sale": 0.084,
+      "qualified_to_sale": 0.444
+    },
+    "average_deal_value": 12500,
+    "total_revenue": 37500,
+    "pipeline_value": 180000
+  },
+  "agent_performance": {
+    "agent_001": {
+      "name": "Sarah Williams",
+      "calls_made": 52,
+      "connections": 34,
+      "connection_rate": 0.654,
+      "appointments": 9,
+      "qualified_leads": 7,
+      "deals_closed": 2,
+      "revenue_generated": 25000,
+      "average_call_duration": "00:09:15",
+      "quality_score": 4.3,
+      "top_scripts": ["script_001", "script_004"],
+      "improvement_areas": ["objection_handling"]
+    },
+    "agent_002": {
+      "name": "Mike Rodriguez",
+      "calls_made": 48,
+      "connections": 28,
+      "connection_rate": 0.583,
+      "appointments": 8,
+      "qualified_leads": 6,
+      "deals_closed": 1,
+      "revenue_generated": 12500,
+      "average_call_duration": "00:08:20",
+      "quality_score": 4.1,
+      "top_scripts": ["script_001", "script_005"],
+      "improvement_areas": ["closing_techniques"]
+    },
+    "agent_003": {
+      "name": "Jennifer Chen",
+      "calls_made": 47,
+      "connections": 27,
+      "connection_rate": 0.574,
+      "appointments": 6,
+      "qualified_leads": 5,
+      "deals_closed": 0,
+      "revenue_generated": 0,
+      "average_call_duration": "00:08:05",
+      "quality_score": 3.9,
+      "top_scripts": ["script_006", "script_001"],
+      "improvement_areas": ["closing_techniques", "follow_up_timing"]
+    }
+  },
+  "script_performance": {
+    "script_001": {
+      "title": "Introduction",
+      "usage_count": 147,
+      "success_rate": 0.23,
+      "average_duration": "00:02:15",
+      "appointments_generated": 15,
+      "top_performing_agents": ["agent_001", "agent_002"]
+    },
+    "script_003": {
+      "title": "Objection Handling - Too Busy",
+      "usage_count": 89,
+      "success_rate": 0.34,
+      "average_duration": "00:01:45", 
+      "appointments_generated": 8,
+      "top_performing_agents": ["agent_001"]
+    },
+    "script_004": {
+      "title": "Closing - Schedule Demo",
+      "usage_count": 34,
+      "success_rate": 0.45,
+      "average_duration": "00:02:00",
+      "appointments_generated": 23,
+      "top_performing_agents": ["agent_001", "agent_002"]
+    },
+    "script_005": {
+      "title": "Objection Handling - Not Interested",
+      "usage_count": 67,
+      "success_rate": 0.28,
+      "average_duration": "00:01:20",
+      "appointments_generated": 4,
+      "top_performing_agents": ["agent_002"]
+    },
+    "script_006": {
+      "title": "Healthcare Introduction",
+      "usage_count": 12,
+      "success_rate": 0.41,
+      "average_duration": "00:03:10",
+      "appointments_generated": 5,
+      "top_performing_agents": ["agent_003"]
+    }
+  },
+  "lead_source_performance": {
+    "Cold Call": {
+      "leads_generated": 45,
+      "conversion_rate": 0.18,
+      "average_deal_value": 15000,
+      "cost_per_lead": 25
+    },
+    "Website": {
+      "leads_generated": 23,
+      "conversion_rate": 0.26,
+      "average_deal_value": 11000,
+      "cost_per_lead": 15
+    },
+    "Referral": {
+      "leads_generated": 15,
+      "conversion_rate": 0.47,
+      "average_deal_value": 18000,
+      "cost_per_lead": 5
+    },
+    "Trade Show": {
+      "leads_generated": 8,
+      "conversion_rate": 0.25,
+      "average_deal_value": 13500,
+      "cost_per_lead": 150
+    },
+    "LinkedIn": {
+      "leads_generated": 4,
+      "conversion_rate": 0.0,
+      "average_deal_value": 0,
+      "cost_per_lead": 50
+    }
+  },
+  "time_based_analytics": {
+    "daily_call_volume": {
+      "monday": 32,
+      "tuesday": 28,
+      "wednesday": 31,
+      "thursday": 29,
+      "friday": 27,
+      "saturday": 0,
+      "sunday": 0
+    },
+    "hourly_success_rates": {
+      "09:00": 0.31,
+      "10:00": 0.28,
+      "11:00": 0.22,
+      "12:00": 0.15,
+      "13:00": 0.18,
+      "14:00": 0.25,
+      "15:00": 0.29,
+      "16:00": 0.24,
+      "17:00": 0.19
+    },
+    "monthly_trends": {
+      "calls_growth": 0.12,
+      "conversion_growth": 0.08,
+      "revenue_growth": 0.15
+    }
+  },
+  "industry_performance": {
+    "Technology": {
+      "leads": 28,
+      "conversion_rate": 0.21,
+      "average_deal_size": 14500
+    },
+    "Healthcare": {
+      "leads": 12,
+      "conversion_rate": 0.33,
+      "average_deal_size": 18000
+    },
+    "Marketing": {
+      "leads": 15,
+      "conversion_rate": 0.27,
+      "average_deal_size": 9500
+    },
+    "Financial Services": {
+      "leads": 8,
+      "conversion_rate": 0.12,
+      "average_deal_size": 22000
+    },
+    "Venture Capital": {
+      "leads": 5,
+      "conversion_rate": 0.40,
+      "average_deal_size": 16000
+    }
+  },
+  "goals_and_targets": {
+    "monthly_call_target": 200,
+    "monthly_appointment_target": 40,
+    "monthly_revenue_target": 50000,
+    "target_conversion_rate": 0.20,
+    "progress": {
+      "calls": 0.735,
+      "appointments": 0.575,
+      "revenue": 0.75,
+      "conversion_rate": 0.945
+    }
+  },
+  "quality_metrics": {
+    "average_call_quality": 4.1,
+    "customer_satisfaction": 4.3,
+    "compliance_score": 0.98,
+    "script_adherence": 0.87,
+    "follow_up_rate": 0.92
+  }
+}

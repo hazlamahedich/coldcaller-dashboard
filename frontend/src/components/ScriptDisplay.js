@@ -1,17 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { scriptsService } from '../services';
 import { dummyScripts } from '../data/dummyData';
 
 // ScriptDisplay Component - Shows color-coded call scripts
 // Helps you know what to say during different parts of the call
+// Now integrated with backend API services
 
 const ScriptDisplay = () => {
-  // Track which script is currently selected
+  // API Integration State
+  const [scripts, setScripts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [apiConnected, setApiConnected] = useState(false);
+  
+  // Script Display State
   const [selectedScript, setSelectedScript] = useState('introduction');
-  // Track if the script is expanded for easier reading
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Get the current script data
-  const currentScript = dummyScripts[selectedScript];
+  // Load scripts from API on component mount
+  useEffect(() => {
+    loadScripts();
+  }, []);
+
+  const loadScripts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await scriptsService.getAllScripts();
+      
+      if (response.success && Object.keys(response.data).length > 0) {
+        setScripts(response.data);
+        setApiConnected(true);
+        console.log('✅ Scripts loaded from API:', Object.keys(response.data).length, 'scripts');
+      } else {
+        // Fallback to default scripts if API fails or returns no data
+        console.log('⚠️ API unavailable, loading default scripts');
+        const defaultResponse = await scriptsService.getDefaultScripts();
+        setScripts(defaultResponse.data || dummyScripts);
+        setApiConnected(false);
+      }
+    } catch (err) {
+      console.error('❌ Failed to load scripts:', err);
+      setError('Failed to load scripts from server');
+      // Fallback to dummy scripts
+      setScripts(dummyScripts);
+      setApiConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get the current script data (fallback to first available script)
+  const currentScript = scripts[selectedScript] || Object.values(scripts)[0] || dummyScripts.introduction;
 
   // Get Tailwind classes for each script color theme
   const getScriptClasses = (color, isSelected = false) => {
@@ -49,21 +90,81 @@ const ScriptDisplay = () => {
   };
 
   // Function to copy script to clipboard
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(currentScript.text);
-    alert('Script copied to clipboard!');
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(currentScript.text);
+      // Show a better success message
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+      notification.textContent = 'Script copied to clipboard!';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
+      
+      console.log('✅ Script copied to clipboard');
+    } catch (err) {
+      console.error('❌ Failed to copy to clipboard:', err);
+      // Fallback for older browsers
+      alert('Script copied to clipboard!');
+    }
+  };
+
+  // Function to personalize script with lead data (placeholder for future enhancement)
+  const personalizeScript = async () => {
+    if (!apiConnected) {
+      console.warn('Personalization requires API connection');
+      return;
+    }
+    
+    // TODO: Integrate with LeadPanel to get current lead data
+    // This would be enhanced in a future update
+    console.log('🎭 Script personalization feature coming soon!');
+  };
+
+  // Function to refresh scripts
+  const refreshScripts = () => {
+    loadScripts();
   };
 
   const currentTheme = getScriptClasses(currentScript.color);
 
   return (
     <div className="card max-w-lg mx-2">
-      <h2 className="text-xl font-bold text-center mb-4 text-gray-800">Call Scripts</h2>
+      <div className="text-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Call Scripts</h2>
+        {loading && (
+          <div className="text-sm text-blue-600 mt-1">
+            🔄 Loading scripts...
+          </div>
+        )}
+        {error && (
+          <div className="text-sm text-red-600 mt-1 bg-red-50 p-2 rounded">
+            ⚠️ {error}
+            <button 
+              onClick={refreshScripts} 
+              className="ml-2 text-blue-600 hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!loading && (
+          <div className="text-xs text-gray-500 mt-1">
+            API: <span className={`font-semibold ${
+              apiConnected ? 'text-green-600' : 'text-orange-600'
+            }`}>
+              {apiConnected ? '🟢 Connected' : '🟡 Offline'}
+            </span>
+          </div>
+        )}
+      </div>
       
       {/* Script selection buttons */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        {Object.keys(dummyScripts).map((scriptKey) => {
-          const script = dummyScripts[scriptKey];
+        {Object.keys(scripts).length > 0 ? Object.keys(scripts).map((scriptKey) => {
+          const script = scripts[scriptKey];
           const isSelected = selectedScript === scriptKey;
           const buttonClasses = getScriptClasses(script.color, isSelected);
           
@@ -71,10 +172,12 @@ const ScriptDisplay = () => {
             <button
               key={scriptKey}
               onClick={() => setSelectedScript(scriptKey)}
+              disabled={loading}
               className={`
                 px-4 py-3 rounded-md font-semibold text-sm
                 transition-all duration-200 transform hover:scale-105
                 border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
                 ${buttonClasses.button}
                 ${isSelected ? 'shadow-md' : 'shadow-sm hover:shadow-md'}
               `}
@@ -82,7 +185,11 @@ const ScriptDisplay = () => {
               {script.title}
             </button>
           );
-        })}
+        }) : (
+          <div className="col-span-2 text-center text-gray-500 py-8">
+            {loading ? '🔄 Loading scripts...' : '📝 No scripts available'}
+          </div>
+        )}
       </div>
 
       {/* Current script display */}
@@ -98,6 +205,17 @@ const ScriptDisplay = () => {
         `}>
           <span className="text-lg font-bold">{currentScript.title}</span>
           <div className="flex gap-2">
+            <button 
+              onClick={personalizeScript}
+              disabled={!apiConnected}
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 border border-white/30 
+                         rounded-sm text-xs transition-all duration-200 hover:scale-105
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         focus:outline-none focus:ring-2 focus:ring-white/50"
+              title={!apiConnected ? 'Requires API connection' : 'Personalize with lead data'}
+            >
+              🎭 Personalize
+            </button>
             <button 
               onClick={copyToClipboard} 
               className="px-3 py-1 bg-white/20 hover:bg-white/30 border border-white/30 
@@ -118,7 +236,13 @@ const ScriptDisplay = () => {
         </div>
         
         <div className="p-4 bg-white text-gray-800 text-sm leading-relaxed font-serif">
-          {currentScript.text}
+          {loading ? (
+            <div className="text-center py-4 text-gray-500">
+              🔄 Loading script content...
+            </div>
+          ) : (
+            currentScript?.text || 'No script content available'
+          )}
         </div>
       </div>
 
@@ -145,9 +269,32 @@ const ScriptDisplay = () => {
         </ul>
       </div>
 
+      {/* Action buttons */}
+      <div className="flex gap-3 mb-4">
+        <button 
+          onClick={refreshScripts}
+          disabled={loading}
+          className="flex-1 px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 text-blue-700 rounded-md text-sm font-medium transition-colors"
+        >
+          {loading ? '🔄 Loading...' : '🔄 Refresh Scripts'}
+        </button>
+        <button 
+          onClick={() => console.log('📥 Script management coming soon!')}
+          disabled={!apiConnected}
+          className="flex-1 px-3 py-2 bg-green-100 hover:bg-green-200 disabled:opacity-50 text-green-700 rounded-md text-sm font-medium transition-colors"
+        >
+          ⚙️ Manage Scripts
+        </button>
+      </div>
+      
       {/* Customization note */}
       <div className="bg-amber-50 p-3 rounded-lg text-center text-sm text-amber-800 border border-amber-200">
         📝 Note: Replace [BRACKETS] with actual information during your call
+        {apiConnected && (
+          <div className="mt-1 text-xs text-amber-700">
+            ✨ Use "Personalize" button for automatic replacement
+          </div>
+        )}
       </div>
     </div>
   );
