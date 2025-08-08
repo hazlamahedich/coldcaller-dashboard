@@ -1,0 +1,23 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run tests before commit
+echo "🧪 Running tests before commit..."
+
+cd frontend
+
+# Run fast unit tests
+npm run test:unit -- --watchAll=false --passWithNoTests
+
+if [ $? -ne 0 ]; then
+  echo "❌ Unit tests failed. Please fix the tests before committing."
+  exit 1
+fi
+
+echo "✅ All tests passed!"
+
+# Optional: Run coverage check
+echo "📊 Checking test coverage..."
+npm run test:coverage -- --silent
+
+echo "✅ Pre-commit checks completed successfully!"
