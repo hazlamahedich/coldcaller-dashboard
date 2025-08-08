@@ -1,28 +1,45 @@
 /**
- * Audio Service
- * Handles all API calls related to audio clips management
+ * Audio Service (Performance Optimized)
+ * Handles all API calls related to audio clips management with performance optimizations
  */
 
 import api from './api.js';
+import audioPerformanceManager from '../utils/audioPerformanceManager';
+import audioAnalytics from '../utils/audioAnalytics';
 
-// Audio service for managing audio clips and playback
+// Audio service for managing audio clips and playback with performance optimization
 export const audioService = {
   
   /**
-   * Get all audio clips organized by category
+   * Get all audio clips organized by category (Performance Optimized)
    * @param {Object} params - Query parameters
    * @param {string} params.category - Filter by audio category
    * @param {string} params.search - Search term for audio name
    * @returns {Promise<Object>} Audio clips collection
    */
   getAllAudioClips: async (params = {}) => {
+    const startTime = performance.now();
+    
     try {
       const queryString = new URLSearchParams(params).toString();
       const url = queryString ? `/audio?${queryString}` : '/audio';
       
-      return await api.get(url, {}, true);
+      const response = await api.get(url, {}, true);
+      
+      // Initialize performance optimization after first load
+      if (response.success && response.data) {
+        // Preload high-priority audio clips
+        audioPerformanceManager.preloadAudioClips(response.data, ['audio_001', 'audio_004', 'audio_007']);
+      }
+      
+      const loadTime = performance.now() - startTime;
+      console.log(`⚡ Audio clips loaded in ${loadTime.toFixed(0)}ms`);
+      
+      return response;
     } catch (error) {
       console.error('❌ Failed to fetch audio clips:', error);
+      audioAnalytics.recordError('fetch_clips', null, error.message);
+      
       // Return fallback data structure
       return {
         success: false,
@@ -229,7 +246,7 @@ export const audioService = {
   },
   
   /**
-   * Record usage of an audio clip
+   * Record usage of an audio clip (Enhanced with Analytics)
    * @param {number|string} audioId - Audio clip identifier
    * @param {Object} usageData - Usage context data
    * @param {string} usageData.leadId - Associated lead ID
@@ -238,15 +255,109 @@ export const audioService = {
    */
   recordAudioUsage: async (audioId, usageData = {}) => {
     try {
+      // Record in analytics first (local, fast)
+      if (usageData.clipName && usageData.category && usageData.duration) {
+        audioAnalytics.recordPlay(audioId, usageData.clipName, usageData.category, usageData.duration);
+      }
+      
+      // Then send to API (can fail without affecting UX)
       return await api.post(`/audio/${audioId}/usage`, usageData, {}, false);
     } catch (error) {
       console.error(`❌ Failed to record audio usage for ${audioId}:`, error);
+      audioAnalytics.recordError('record_usage', audioId, error.message);
+      
       // Don't fail the main operation if usage tracking fails
       return {
         success: false,
         message: 'Usage tracking failed'
       };
     }
+  },
+
+  /**
+   * Play audio clip with advanced performance features
+   * @param {number|string} audioId - Audio clip identifier
+   * @param {Object} options - Playback options
+   * @returns {Promise<Object>} Playback result with audio element
+   */
+  playAudioClipOptimized: async (audioId, options = {}) => {
+    const startTime = performance.now();
+    
+    try {
+      // Use performance manager for optimized playback
+      const audioElement = await audioPerformanceManager.playAudioClip(audioId, {
+        volume: options.volume || 1.0,
+        crossfade: options.crossfade || false,
+        crossfadeMs: options.crossfadeMs || 150
+      });
+      
+      const playTime = performance.now() - startTime;
+      console.log(`▶️ Audio played in ${playTime.toFixed(0)}ms`);
+      
+      return {
+        success: true,
+        audioElement: audioElement,
+        playTime: playTime
+      };
+      
+    } catch (error) {
+      console.error(`❌ Failed to play audio ${audioId}:`, error);
+      audioAnalytics.recordError('playback', audioId, error.message);
+      
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+
+  /**
+   * Get performance dashboard data
+   * @returns {Object} Performance metrics and analytics
+   */
+  getPerformanceDashboard: () => {
+    return {
+      performance: audioPerformanceManager.getPerformanceDashboard(),
+      analytics: {
+        summary: audioAnalytics.getPerformanceSummary(),
+        patterns: audioAnalytics.getUsagePatterns(),
+        technical: audioAnalytics.metrics.technical
+      },
+      historical: audioAnalytics.getHistoricalData()
+    };
+  },
+
+  /**
+   * Preload specific audio clips for better performance
+   * @param {Array} clipIds - Array of clip IDs to preload
+   * @returns {Promise<number>} Number of successfully preloaded clips
+   */
+  preloadAudioClips: async (clipIds) => {
+    try {
+      // Get clip data first
+      const clipsData = {};
+      for (const id of clipIds) {
+        const response = await this.getAudioClip(id);
+        if (response.success) {
+          clipsData[response.data.category] = clipsData[response.data.category] || [];
+          clipsData[response.data.category].push(response.data);
+        }
+      }
+      
+      // Use performance manager to preload
+      return await audioPerformanceManager.preloadAudioClips(clipsData, clipIds);
+    } catch (error) {
+      console.error('❌ Failed to preload audio clips:', error);
+      return 0;
+    }
+  },
+
+  /**
+   * Export performance analytics data
+   * @returns {Object} Comprehensive analytics export
+   */
+  exportAnalytics: () => {
+    return audioAnalytics.exportData();
   }
 };
 

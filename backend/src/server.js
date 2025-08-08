@@ -11,16 +11,28 @@ const { requestLogger } = require('./middleware/requestLogger');
 const leadsRoutes = require('./routes/leads');
 const scriptsRoutes = require('./routes/scripts');
 const audioRoutes = require('./routes/audio');
+const enhancedAudioRoutes = require('./routes/enhancedAudio');
 const callsRoutes = require('./routes/calls');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // Allow audio streaming
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      mediaSrc: ["'self'", "data:", "blob:"], // Allow audio/video content
+    },
+  },
+}));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'], // For audio streaming
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Range'] // Support range requests
 }));
 
 // Rate limiting
@@ -51,7 +63,10 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api/leads', leadsRoutes);
 app.use('/api/scripts', scriptsRoutes);
-app.use('/api/audio', audioRoutes);
+
+// Audio routes - Enhanced routes take precedence for file operations
+app.use('/api/audio', enhancedAudioRoutes);
+
 app.use('/api/calls', callsRoutes);
 
 // 404 handler

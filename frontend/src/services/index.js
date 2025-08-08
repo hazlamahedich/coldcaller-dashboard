@@ -8,7 +8,12 @@ import { api, apiClient } from './api.js';
 import leadsService from './leadsService.js';
 import scriptsService from './scriptsService.js';
 import audioService from './audioService.js';
+import { audioManager } from './AudioManager.js';
 import callsService from './callsService.js';
+
+// Import audio utilities and hooks
+import { useAudioRecorder } from '../hooks/useAudioRecorder.js';
+import audioUtils from '../utils/audioUtils.js';
 
 // Re-export all services for easy importing
 export {
@@ -17,7 +22,10 @@ export {
   leadsService,
   scriptsService,
   audioService,
-  callsService
+  audioManager,
+  callsService,
+  useAudioRecorder,
+  audioUtils
 };
 
 // Default export with all services grouped
@@ -27,7 +35,14 @@ const services = {
   leads: leadsService,
   scripts: scriptsService,
   audio: audioService,
-  calls: callsService
+  audioManager,
+  calls: callsService,
+  hooks: {
+    useAudioRecorder
+  },
+  utils: {
+    audioUtils
+  }
 };
 
 export default services;
