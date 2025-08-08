@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { audioService } from '../services';
+import { useTheme } from '../contexts/ThemeContext';
 
 // AudioRecorder Component - Professional audio recording interface
 // Features: real-time recording, live visualization, quality settings
 // Integrated with audio service for seamless upload and management
 
 const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
+  const { isDarkMode } = useTheme();
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -59,23 +61,16 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
   // Check microphone permissions
   const checkPermissions = async () => {
     try {
-      const result = await navigator.permissions.query({ name: 'microphone' });
-      setHasPermission(result.state === 'granted');
+      console.log('🔍 Checking microphone permissions...');
       
-      result.addEventListener('change', () => {
-        setHasPermission(result.state === 'granted');
-      });
+      // Skip permission query and just assume we need user interaction
+      // Many browsers require user interaction for microphone access anyway
+      console.log('📋 Setting hasPermission to true - will request on first use');
+      setHasPermission(true);
       
     } catch (err) {
-      console.warn('⚠️ Permissions API not supported');
-      // Try to get media stream to test permissions
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-        setHasPermission(true);
-      } catch (mediaErr) {
-        setPermissionError('Microphone access denied');
-      }
+      console.error('❌ Error in checkPermissions:', err);
+      setHasPermission(true); // Enable button, let user try
     }
   };
 
@@ -99,6 +94,7 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
   // Request microphone permission and setup stream
   const requestPermission = async () => {
     try {
+      console.log('🔍 Requesting microphone permission...');
       setPermissionError(null);
       
       const constraints = {
@@ -112,7 +108,10 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
         }
       };
       
+      console.log('📋 getUserMedia constraints:', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('✅ Media stream obtained:', stream);
+      
       audioStreamRef.current = stream;
       setHasPermission(true);
       
@@ -121,7 +120,8 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       
     } catch (err) {
       console.error('❌ Permission denied:', err);
-      setPermissionError('Microphone access is required for recording');
+      setPermissionError('Microphone access is required for recording: ' + err.message);
+      setHasPermission(false);
     }
   };
 
@@ -164,11 +164,22 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
   // Start recording
   const startRecording = async () => {
     try {
+      console.log('🎤 startRecording called');
+      console.log('📋 hasPermission:', hasPermission);
+      console.log('📋 audioStreamRef.current:', audioStreamRef.current);
+      console.log('📋 permissionError:', permissionError);
+      
       if (!audioStreamRef.current) {
+        console.log('🔍 No audio stream, requesting permission...');
         await requestPermission();
       }
       
-      if (!audioStreamRef.current) return;
+      if (!audioStreamRef.current) {
+        console.error('❌ Still no audio stream after requestPermission');
+        return;
+      }
+      
+      console.log('✅ Audio stream available, starting recording...');
       
       // Reset state
       chunksRef.current = [];
@@ -186,24 +197,33 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       const mimeType = mimeTypes[format] || mimeTypes.webm;
       
       // Create MediaRecorder
+      console.log('📋 Creating MediaRecorder with mimeType:', mimeType);
+      console.log('📋 MediaRecorder.isTypeSupported(' + mimeType + '):', MediaRecorder.isTypeSupported(mimeType));
+      
       mediaRecorderRef.current = new MediaRecorder(audioStreamRef.current, {
         mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : undefined,
         audioBitsPerSecond: bitRate * 1000
       });
       
+      console.log('✅ MediaRecorder created successfully');
+      
       mediaRecorderRef.current.ondataavailable = (event) => {
+        console.log('📋 MediaRecorder data available:', event.data.size, 'bytes');
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
       
       mediaRecorderRef.current.onstop = () => {
+        console.log('📋 MediaRecorder stopped, creating blob...');
         const blob = new Blob(chunksRef.current, { type: mimeType });
+        console.log('✅ Recording blob created:', blob.size, 'bytes');
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
       };
       
       // Start recording
+      console.log('🎤 Starting MediaRecorder...');
       mediaRecorderRef.current.start(100); // Record in 100ms chunks
       setIsRecording(true);
       setIsPaused(false);
@@ -294,12 +314,33 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       if (response.success) {
         console.log('✅ Recording uploaded successfully');
         
+        // Also store in localStorage as backup for testing with enhanced data
+        const recordingData = {
+          id: Date.now(),
+          name: recordingName.trim(),
+          category: recordingCategory || 'custom', // Ensure category is set
+          description: recordingDescription || '',
+          duration: `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')}`,
+          createdAt: new Date().toISOString(),
+          // Additional fields for consistency with API data structure
+          audioBlob: null, // We don't store the actual blob in localStorage
+          fileSize: audioBlob.size,
+          recordingTime: recordingTime
+        };
+        
+        const existingRecordings = JSON.parse(localStorage.getItem('userRecordings') || '[]');
+        existingRecordings.push(recordingData);
+        localStorage.setItem('userRecordings', JSON.stringify(existingRecordings));
+        console.log('💾 Recording saved to localStorage:', recordingData);
+        console.log('📋 Total recordings in localStorage:', existingRecordings.length);
+        
         // Clear recording
         clearRecording();
         
-        // Notify parent component
+        // Notify parent component with proper data structure
         if (onRecordingComplete) {
-          onRecordingComplete(response.data);
+          console.log('🔔 Notifying parent component of recording completion');
+          onRecordingComplete(recordingData); // Always use our local data structure
         }
         
       } else {
@@ -358,20 +399,30 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className={`max-w-2xl mx-auto p-6 rounded-lg shadow-lg ${
+      isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
+    }`}>
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Audio Recorder</h2>
-        <p className="text-gray-600">
+        <h2 className={`text-2xl font-bold mb-2 ${
+          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+        }`}>Audio Recorder</h2>
+        <p className={`${
+          isDarkMode ? 'text-gray-400' : 'text-gray-600'
+        }`}>
           Record high-quality audio clips for your call scripts
         </p>
       </div>
 
       {/* Permission Error */}
       {permissionError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className={`mb-6 p-4 rounded-lg ${
+          isDarkMode ? 'bg-red-900/20 border border-red-700' : 'bg-red-50 border border-red-200'
+        }`}>
           <div className="flex items-center">
             <span className="text-red-600 text-lg mr-2">⚠️</span>
-            <span className="text-red-800">{permissionError}</span>
+            <span className={`${
+              isDarkMode ? 'text-red-200' : 'text-red-800'
+            }`}>{permissionError}</span>
             <button
               onClick={requestPermission}
               className="ml-auto px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
@@ -384,10 +435,14 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
 
       {/* Upload Error */}
       {uploadError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className={`mb-6 p-4 border rounded-lg ${
+          isDarkMode ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'
+        }`}>
           <div className="flex items-center">
             <span className="text-red-600 text-lg mr-2">⚠️</span>
-            <span className="text-red-800">{uploadError}</span>
+            <span className={`${
+              isDarkMode ? 'text-red-200' : 'text-red-800'
+            }`}>{uploadError}</span>
           </div>
         </div>
       )}
@@ -396,13 +451,19 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       {!isRecording && !audioBlob && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
               Microphone
             </label>
             <select
               value={selectedDevice}
               onChange={(e) => setSelectedDevice(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDarkMode 
+                  ? 'border-gray-600 bg-gray-800 text-gray-200'
+                  : 'border-gray-300 bg-white text-gray-900'
+              }`}
             >
               {availableDevices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>
@@ -413,7 +474,9 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
               Quality
             </label>
             <select
@@ -423,7 +486,11 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
                 setSampleRate(rate);
                 setBitRate(bit);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDarkMode 
+                  ? 'border-gray-600 bg-gray-800 text-gray-200'
+                  : 'border-gray-300 bg-white text-gray-900'
+              }`}
             >
               <option value="44100-128">CD Quality (44.1kHz, 128kbps)</option>
               <option value="48000-192">High Quality (48kHz, 192kbps)</option>
@@ -465,7 +532,11 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
         <div className="flex justify-center space-x-4">
           {!isRecording && !audioBlob ? (
             <button
-              onClick={startRecording}
+              onClick={() => {
+                console.log('🎤 Start Recording button clicked');
+                console.log('📋 Button state - hasPermission:', hasPermission, 'disabled:', !hasPermission);
+                startRecording();
+              }}
               disabled={!hasPermission}
               className="px-8 py-4 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
             >
@@ -507,10 +578,14 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
 
         {/* Recording Status */}
         {isRecording && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className={`mt-4 p-3 border rounded-lg ${
+            isDarkMode ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'
+          }`}>
             <div className="flex items-center justify-center">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
-              <span className="text-red-800 font-medium">
+              <span className={`font-medium ${
+                isDarkMode ? 'text-red-200' : 'text-red-800'
+              }`}>
                 {isPaused ? 'Recording Paused' : 'Recording in Progress'}
               </span>
             </div>
@@ -521,8 +596,12 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       {/* Recorded Audio Preview */}
       {audioBlob && audioUrl && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Recording Preview</h3>
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <h3 className={`text-lg font-semibold mb-3 ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-800'
+          }`}>Recording Preview</h3>
+          <div className={`p-4 rounded-lg ${
+            isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
+          }`}>
             <audio controls className="w-full mb-4">
               <source src={audioUrl} />
               Your browser does not support audio playback.
@@ -531,7 +610,9 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
             {/* Metadata Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
                   Recording Name *
                 </label>
                 <input
@@ -540,20 +621,30 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
                   onChange={(e) => setRecordingName(e.target.value)}
                   disabled={isUploading}
                   placeholder="Enter recording name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                    isDarkMode 
+                      ? 'border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400'
+                      : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                  }`}
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
                   Category
                 </label>
                 <select
                   value={recordingCategory}
                   onChange={(e) => setRecordingCategory(e.target.value)}
                   disabled={isUploading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                    isDarkMode 
+                      ? 'border-gray-600 bg-gray-700 text-gray-200'
+                      : 'border-gray-300 bg-white text-gray-900'
+                  }`}
                 >
                   <option value="greetings">Greetings</option>
                   <option value="objections">Objections</option>
@@ -564,7 +655,9 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
             </div>
             
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
                 Description
               </label>
               <textarea
@@ -573,18 +666,26 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
                 disabled={isUploading}
                 placeholder="Optional description for this recording"
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                  isDarkMode 
+                    ? 'border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400'
+                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                }`}
               />
             </div>
 
             {/* Upload Progress */}
             {isUploading && (
               <div className="mt-4">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <div className={`flex justify-between text-sm mb-2 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                   <span>Uploading...</span>
                   <span>{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className={`w-full rounded-full h-2 ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>
                   <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
@@ -607,13 +708,17 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
         </div>
       )}
 
+
       {/* Recording Tips */}
-      <div className="text-sm text-gray-500 text-center">
+      <div className={`text-sm text-center ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+      }`}>
         <p className="mb-1">💡 Tips for best quality:</p>
         <ul className="text-xs space-y-1">
           <li>• Use a quiet environment</li>
           <li>• Speak clearly and maintain consistent distance</li>
           <li>• Keep recordings under 5 minutes for better performance</li>
+          <li>• <strong>Note:</strong> HTTPS is required for microphone access</li>
         </ul>
       </div>
     </div>
