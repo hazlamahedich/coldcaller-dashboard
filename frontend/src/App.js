@@ -13,7 +13,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-slate-700 text-white py-5 px-5 text-center shadow-soft">
+      <header className="bg-slate-700 text-white py-5 px-5 text-center shadow-lg">
         <h1 className="text-3xl font-bold m-0">🎯 Cold Calling Dashboard</h1>
         <p className="mt-2 text-base opacity-90 m-0">Your all-in-one sales calling platform</p>
       </header>

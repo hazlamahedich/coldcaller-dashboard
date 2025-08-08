@@ -1,0 +1,205 @@
+/* TradeBuddyPH - Minimalist Professional Trading Theme */
+:root {
+  /* Primary Brand Colors - Professional Trading Palette */
+  --background: oklch(0.9950 0.0020 240);
+  --foreground: oklch(0.1200 0.0100 240);
+  --card: oklch(0.9980 0.0015 240);
+  --card-foreground: oklch(0.1200 0.0100 240);
+  --popover: oklch(0.9980 0.0015 240);
+  --popover-foreground: oklch(0.1200 0.0100 240);
+  
+  /* Trading Green - Success/Profit */
+  --primary: oklch(0.5800 0.1800 142);
+  --primary-foreground: oklch(0.9950 0.0020 240);
+  
+  /* Professional Blue - Trust/Technology */
+  --secondary: oklch(0.2200 0.0800 240);
+  --secondary-foreground: oklch(0.9950 0.0020 240);
+  
+  /* Neutral Grays - Clean Minimal */
+  --muted: oklch(0.9600 0.0050 240);
+  --muted-foreground: oklch(0.4500 0.0100 240);
+  --accent: oklch(0.9700 0.0080 142);
+  --accent-foreground: oklch(0.2200 0.0800 240);
+  
+  /* Alert Red - Risk/Loss */
+  --destructive: oklch(0.5500 0.2200 25);
+  --destructive-foreground: oklch(0.9950 0.0020 240);
+  
+  /* Borders & Inputs */
+  --border: oklch(0.9200 0.0100 240);
+  --input: oklch(0.9200 0.0100 240);
+  --ring: oklch(0.5800 0.1800 142);
+  
+  /* Chart Colors - Financial Data */
+  --chart-1: oklch(0.5800 0.1800 142); /* Profit Green */
+  --chart-2: oklch(0.5500 0.2200 25);  /* Loss Red */
+  --chart-3: oklch(0.6500 0.1500 240); /* Neutral Blue */
+  --chart-4: oklch(0.7000 0.1200 60);  /* Warning Orange */
+  --chart-5: oklch(0.5000 0.1000 280); /* Info Purple */
+  
+  /* Sidebar Colors */
+  --sidebar: oklch(0.9950 0.0020 240);
+  --sidebar-foreground: oklch(0.1200 0.0100 240);
+  --sidebar-primary: oklch(0.5800 0.1800 142);
+  --sidebar-primary-foreground: oklch(0.9950 0.0020 240);
+  --sidebar-accent: oklch(0.9700 0.0080 142);
+  --sidebar-accent-foreground: oklch(0.2200 0.0800 240);
+  --sidebar-border: oklch(0.9200 0.0100 240);
+  --sidebar-ring: oklch(0.5800 0.1800 142);
+  
+  /* Typography - Professional & Clean */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Inter', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Border Radius - Subtle Modern */
+  --radius: 0.5rem;
+  
+  /* Shadows - Subtle Professional Depth */
+  --shadow-2xs: 0 1px 2px 0px hsl(240 5% 6% / 0.02);
+  --shadow-xs: 0 1px 3px 0px hsl(240 5% 6% / 0.03);
+  --shadow-sm: 0 1px 3px 0px hsl(240 5% 6% / 0.05), 0 1px 2px -1px hsl(240 5% 6% / 0.05);
+  --shadow: 0 1px 3px 0px hsl(240 5% 6% / 0.08), 0 1px 2px -1px hsl(240 5% 6% / 0.08);
+  --shadow-md: 0 4px 6px -1px hsl(240 5% 6% / 0.08), 0 2px 4px -1px hsl(240 5% 6% / 0.05);
+  --shadow-lg: 0 10px 15px -3px hsl(240 5% 6% / 0.08), 0 4px 6px -2px hsl(240 5% 6% / 0.03);
+  --shadow-xl: 0 20px 25px -5px hsl(240 5% 6% / 0.08), 0 10px 10px -5px hsl(240 5% 6% / 0.02);
+  --shadow-2xl: 0 25px 50px -12px hsl(240 5% 6% / 0.12);
+  
+  /* Trading-Specific Shadows */
+  --shadow-profit: 0 4px 14px 0 hsl(142 76% 36% / 0.15);
+  --shadow-loss: 0 4px 14px 0 hsl(25 95% 53% / 0.15);
+  --shadow-glow: 0 0 20px 0 hsl(142 76% 36% / 0.2);
+  
+  /* Letter Spacing - Clean Professional */
+  --tracking-normal: 0em;
+  --tracking-tight: -0.025em;
+  --tracking-wide: 0.025em;
+  
+  /* Spacing Scale */
+  --spacing: 0.25rem;
+  
+  /* Gradient Backgrounds */
+  --gradient-primary: linear-gradient(135deg, oklch(0.5800 0.1800 142) 0%, oklch(0.6200 0.1600 155) 100%);
+  --gradient-secondary: linear-gradient(135deg, oklch(0.2200 0.0800 240) 0%, oklch(0.2800 0.1000 245) 100%);
+  --gradient-hero: linear-gradient(135deg, oklch(0.9950 0.0020 240) 0%, oklch(0.9900 0.0100 245) 100%);
+  
+  /* Animation Easing */
+  --ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Component Specific */
+  --navbar-blur: blur(12px);
+  --card-hover-lift: translateY(-2px);
+  --button-press: translateY(1px);
+  
+  /* Radius Variations */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+/* Dark Mode Variations */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.0900 0.0100 240);
+    --foreground: oklch(0.9200 0.0100 240);
+    --card: oklch(0.1000 0.0150 240);
+    --card-foreground: oklch(0.9200 0.0100 240);
+    --popover: oklch(0.1000 0.0150 240);
+    --popover-foreground: oklch(0.9200 0.0100 240);
+    
+    --muted: oklch(0.1500 0.0200 240);
+    --muted-foreground: oklch(0.6500 0.0100 240);
+    --accent: oklch(0.1800 0.0300 142);
+    --accent-foreground: oklch(0.9200 0.0100 240);
+    
+    --border: oklch(0.2000 0.0200 240);
+    --input: oklch(0.2000 0.0200 240);
+    
+    --gradient-hero: linear-gradient(135deg, oklch(0.0900 0.0100 240) 0%, oklch(0.1200 0.0200 245) 100%);
+  }
+}
+
+/* Custom Trading Components */
+.trading-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  transition: all 0.3s var(--ease-out-cubic);
+}
+
+.trading-card:hover {
+  transform: var(--card-hover-lift);
+  box-shadow: var(--shadow-lg);
+}
+
+.profit-indicator {
+  color: var(--primary);
+  text-shadow: 0 0 8px hsl(142 76% 36% / 0.3);
+}
+
+.loss-indicator {
+  color: var(--destructive);
+  text-shadow: 0 0 8px hsl(25 95% 53% / 0.3);
+}
+
+.cta-button {
+  background: var(--gradient-primary);
+  color: var(--primary-foreground);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-profit);
+  transition: all 0.2s var(--ease-out-cubic);
+}
+
+.cta-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+.navbar-glass {
+  backdrop-filter: var(--navbar-blur);
+  background: oklch(from var(--background) l c h / 0.8);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Typography Scale */
+.text-financial {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Micro-interactions */
+.pulse-success {
+  animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.6s var(--ease-out-cubic) forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

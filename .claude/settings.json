@@ -1,0 +1,171 @@
+{
+  "env": {
+    "CLAUDE_FLOW_AUTO_COMMIT": "false",
+    "CLAUDE_FLOW_AUTO_PUSH": "false",
+    "CLAUDE_FLOW_HOOKS_ENABLED": "true",
+    "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
+    "CLAUDE_FLOW_REMOTE_EXECUTION": "true",
+    "CLAUDE_FLOW_CHECKPOINTS_ENABLED": "true"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx claude-flow *)",
+      "Bash(npm run lint)",
+      "Bash(npm run test:*)",
+      "Bash(npm test *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git config *)",
+      "Bash(git tag *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(jq *)",
+      "Bash(node *)",
+      "Bash(which *)",
+      "Bash(pwd)",
+      "Bash(ls *)",
+      "mcp__kiennd-reference-servers__sequentialthinking",
+      "mcp__microsoft-playwright-mcp__browser_navigate",
+      "mcp__microsoft-playwright-mcp__browser_snapshot",
+      "mcp__microsoft-playwright-mcp__browser_wait_for",
+      "mcp__microsoft-playwright-mcp__browser_click",
+      "mcp__microsoft-playwright-mcp__browser_take_screenshot", 
+      "mcp__microsoft-playwright-mcp__browser_close",
+      "mcp__big-omega-mem-0-mcp__search-memories",
+      "mcp__big-omega-mem-0-mcp__add-memory",
+      "mcp__serena__onboarding",
+      "mcp__serena__list_dir",
+      "mcp__serena__find_file",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__write_memory",
+      "mcp__serena__find_symbol",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__read_memory",
+      "mcp__serena__replace_symbol_body",
+      "mcp__supabase-community-supabase-mcp__list_projects",
+      "mcp__hello-ggx-shadcn-vue-mcp__requirement-structuring",
+      "mcp__xinzhongyouhai-mcp-sequentialthinking-tools__sequentialthinking_tools",
+      "Bash(pip install:*)",
+      "Bash(uvx:*)",
+      "Bash(cp:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npx -y @smithery/cli@latest run @serena-ui/mcp-server --version)",
+      "Bash(npm install:*)",
+      "Bash(smithery:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(ls:*)",
+      "Bash(pkill:*)",
+      "Bash(rm:*)",
+      "Bash(npx claude-flow@alpha hooks pre-task:*)",
+      "Bash(npx claude-flow:*)",
+      "Bash(npx claude-flow@alpha hooks pre-task:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(npm audit:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git add:*)",
+      "Bash(npm test:*)",
+      "Bash(git commit:*)",
+      "Bash(gh repo create:*)",
+      "Bash(npm run build:analyze:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(curl * | bash)",
+      "Bash(wget * | sh)",
+      "Bash(eval *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty' 2>/dev/null || echo ''); if [ -n \"$COMMAND\" ]; then npx claude-flow@alpha hooks pre-command --command \"$COMMAND\" --validate-safety true --prepare-resources true 2>/dev/null || true; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null || echo ''); if [ -n \"$FILE\" ]; then npx claude-flow@alpha hooks pre-edit --file \"$FILE\" --auto-assign-agents true --load-context true 2>/dev/null || true; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty' 2>/dev/null || echo ''); if [ -n \"$COMMAND\" ]; then npx claude-flow@alpha hooks post-command --command \"$COMMAND\" --track-metrics true --store-results true 2>/dev/null || true; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null || echo ''); if [ -n \"$FILE\" ]; then npx claude-flow@alpha hooks post-edit --file \"$FILE\" --format true --update-memory true 2>/dev/null || true; fi"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'INPUT=$(cat); CUSTOM=$(echo \"$INPUT\" | jq -r \".custom_instructions // \\\"\\\"\"); echo \"🔄 PreCompact Guidance:\"; echo \"📋 IMPORTANT: Review CLAUDE.md in project root for:\"; echo \"   • 54 available agents and concurrent usage patterns\"; echo \"   • Swarm coordination strategies (hierarchical, mesh, adaptive)\"; echo \"   • SPARC methodology workflows with batchtools optimization\"; echo \"   • Critical concurrent execution rules (GOLDEN RULE: 1 MESSAGE = ALL OPERATIONS)\"; if [ -n \"$CUSTOM\" ]; then echo \"🎯 Custom compact instructions: $CUSTOM\"; fi; echo \"✅ Ready for compact operation\"'"
+          }
+        ]
+      },
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'echo \"🔄 Auto-Compact Guidance (Context Window Full):\"; echo \"📋 CRITICAL: Before compacting, ensure you understand:\"; echo \"   • All 54 agents available in .claude/agents/ directory\"; echo \"   • Concurrent execution patterns from CLAUDE.md\"; echo \"   • Batchtools optimization for 300% performance gains\"; echo \"   • Swarm coordination strategies for complex tasks\"; echo \"⚡ Apply GOLDEN RULE: Always batch operations in single messages\"; echo \"✅ Auto-compact proceeding with full agent context\"'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow@alpha hooks session-end --generate-summary true --persist-state true --export-metrics true 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+  "includeCoAuthoredBy": true,
+  "enabledMcpjsonServers": [
+    "claude-flow", 
+    "ruv-swarm",
+    "kiennd-reference-servers",
+    "microsoft-playwright-mcp", 
+    "big-omega-mem-0-mcp",
+    "serena",
+    "supabase-community-supabase-mcp",
+    "hello-ggx-shadcn-vue-mcp",
+    "xinzhongyouhai-mcp-sequentialthinking-tools"
+  ]
+}

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Find dialysis centers across the Philippines - KidneyCare PH">
+    <title>KidneyCare Philippines - Find Dialysis Centers</title>
+    
+    <!-- Performance Optimizations -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            /* Light mode colors */
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #059669;
+            --secondary-light: #10b981;
+            --accent: #0891b2;
+            
+            /* Light mode backgrounds */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+            
+            /* Light mode text */
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --text-inverse: #ffffff;
+            
+            /* Borders and shadows */
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            
+            /* Status colors */
+            --success: #059669;
+            --warning: #d97706;
+            --error: #dc2626;
+            --info: #0891b2;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode colors */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            
+            /* Dark mode text */
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            
+            /* Dark mode borders */
+            --border-light: #334155;
+            --border-medium: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: relative;
+            width: 64px;
+            height: 32px;
+            background: var(--border-light);
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+        }
+
+        .theme-toggle-indicator {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background: var(--primary);
+        }
+
+        [data-theme="dark"] .theme-toggle-indicator {
+            transform: translateX(32px);
+        }
+
+        /* Enhanced mobile components */
+        .mobile-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .search-bar {
+            background: var(--bg-card);
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            min-height: 48px;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .location-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: var(--text-inverse);
+            border-radius: 12px;
+            min-height: 48px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .location-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3);
+        }
+
+        .center-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            min-height: 120px;
+        }
+
+        .center-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .filter-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            padding: 8px 16px;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+            min-height: 40px;
+            color: var(--text-primary);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: var(--text-inverse);
+            border-color: var(--primary);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-light);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+        }
+
+        .nav-item {
+            min-height: 56px;
+            transition: all 0.15s ease;
+            color: var(--text-muted);
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-open { 
+            background: var(--success);
+            color: var(--text-inverse);
+        }
+        
+        .status-quality { 
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+
+        .distance-badge {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Map container with dark mode support */
+        .map-container {
+            height: 300px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            background: var(--bg-secondary);
+        }
+
+        /* Dark mode map markers */
+        [data-theme="dark"] .map-placeholder::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><defs><pattern id="grid-dark" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="%23334155" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid-dark)"/><circle cx="100" cy="80" r="8" fill="%233b82f6"/><circle cx="200" cy="120" r="8" fill="%233b82f6"/><circle cx="300" cy="60" r="8" fill="%233b82f6"/></svg>') center/cover;
+        }
+
+        /* Light mode map markers */
+        .map-placeholder::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="%23e2e8f0" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/><circle cx="100" cy="80" r="8" fill="%232563eb"/><circle cx="200" cy="120" r="8" fill="%232563eb"/><circle cx="300" cy="60" r="8" fill="%232563eb"/></svg>') center/cover;
+        }
+
+        /* Loading animation */
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        /* Smooth scrolling */
+        .smooth-scroll {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* Performance optimizations */
+        .gpu-accelerated {
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        /* Mobile-specific adjustments */
+        @media (max-width: 640px) {
+            .center-card {
+                margin-bottom: 12px;
+            }
+            
+            .map-container {
+                height: 250px;
+            }
+        }
+
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-3">
+                <button class="p-2">
+                    <i data-lucide="menu" class="w-6 h-6" style="color: var(--text-secondary)"></i>
+                </button>
+                <div>
+                    <h1 class="text-lg font-semibold" style="color: var(--text-primary)">KidneyCare PH</h1>
+                    <p class="text-xs" style="color: var(--text-muted)">Find dialysis centers</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Dark/Light Mode Toggle -->
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <div class="theme-toggle-indicator">
+                        <i data-lucide="sun" class="w-4 h-4 theme-icon-light" style="color: var(--warning)"></i>
+                        <i data-lucide="moon" class="w-4 h-4 theme-icon-dark hidden" style="color: var(--primary)"></i>
+                    </div>
+                </button>
+                <button class="p-2 relative">
+                    <i data-lucide="map-pin" class="w-6 h-6" style="color: var(--text-secondary)"></i>
+                </button>
+                <button class="p-2 relative">
+                    <i data-lucide="bell" class="w-6 h-6" style="color: var(--text-secondary)"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="px-4 pb-4">
+            <div class="search-bar flex items-center px-4 py-3">
+                <i data-lucide="search" class="w-5 h-5 mr-3" style="color: var(--text-muted)"></i>
+                <input type="text" 
+                       placeholder="Find dialysis centers..." 
+                       class="flex-1 outline-none bg-transparent"
+                       style="color: var(--text-primary);"
+                       id="searchInput">
+                <button class="ml-2 p-1">
+                    <i data-lucide="filter" class="w-5 h-5" style="color: var(--text-muted)"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Location Button -->
+        <div class="px-4 pb-4">
+            <button class="location-btn w-full flex items-center justify-center space-x-2 py-3 font-medium">
+                <i data-lucide="navigation" class="w-5 h-5"></i>
+                <span>Use My Location</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pb-20">
+        <!-- Interactive Map Section -->
+        <section class="px-4 py-4">
+            <div class="map-container gpu-accelerated">
+                <div class="map-placeholder">
+                    <div class="text-center relative z-10">
+                        <i data-lucide="map" class="w-12 h-12 mx-auto mb-2" style="color: var(--text-muted)"></i>
+                        <p class="text-sm" style="color: var(--text-muted)">Interactive map loading...</p>
+                        <p class="text-xs" style="color: var(--text-muted)">391 centers available</p>
+                    </div>
+                </div>
+                
+                <!-- Map Toggle Button -->
+                <button class="absolute top-4 right-4 p-2 shadow-md" style="background: var(--bg-card); border-radius: 8px;">
+                    <i data-lucide="layers" class="w-5 h-5" style="color: var(--text-secondary)"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Quick Filters -->
+        <section class="px-4 py-2">
+            <div class="flex space-x-2 overflow-x-auto smooth-scroll pb-2">
+                <button class="filter-chip active flex items-center space-x-1">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <span>All Centers</span>
+                </button>
+                <button class="filter-chip flex items-center space-x-1">
+                    <i data-lucide="navigation" class="w-4 h-4"></i>
+                    <span>Near Me</span>
+                </button>
+                <button class="filter-chip flex items-center space-x-1">
+                    <i data-lucide="star" class="w-4 h-4"></i>
+                    <span>Top Rated</span>
+                </button>
+                <button class="filter-chip flex items-center space-x-1">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span>Open Now</span>
+                </button>
+                <button class="filter-chip flex items-center space-x-1">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Accredited</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Results Header -->
+        <section class="px-4 py-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold" style="color: var(--text-primary)">Nearby Centers</h2>
+                <span class="text-sm" style="color: var(--text-muted)">391 found</span>
+            </div>
+
+            <!-- Center Cards -->
+            <div class="space-y-3">
+                <!-- Center Card 1 -->
+                <div class="center-card p-4 gpu-accelerated">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-semibold mb-1" style="color: var(--text-primary)">Metro Dialysis Center</h3>
+                            <p class="text-sm mb-2" style="color: var(--text-muted)">Makati Medical Center</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="distance-badge">2.3 km</span>
+                                <div class="flex items-center">
+                                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                    <span class="text-sm ml-1" style="color: var(--text-secondary)">4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <span class="status-badge status-open">Open</span>
+                            <span class="status-badge status-quality">Premium</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 text-sm" style="color: var(--text-muted)">
+                            <span class="flex items-center">
+                                <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                24/7
+                            </span>
+                            <span class="flex items-center">
+                                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                15 machines
+                            </span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="phone" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="navigation" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Card 2 -->
+                <div class="center-card p-4 gpu-accelerated">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-semibold mb-1" style="color: var(--text-primary)">Kidney Care Specialists</h3>
+                            <p class="text-sm mb-2" style="color: var(--text-muted)">Quezon City</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="distance-badge">3.1 km</span>
+                                <div class="flex items-center">
+                                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                    <span class="text-sm ml-1" style="color: var(--text-secondary)">4.6</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <span class="status-badge status-open">Open</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 text-sm" style="color: var(--text-muted)">
+                            <span class="flex items-center">
+                                <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                6AM-10PM
+                            </span>
+                            <span class="flex items-center">
+                                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                12 machines
+                            </span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="phone" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="navigation" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Card 3 -->
+                <div class="center-card p-4 gpu-accelerated">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-semibold mb-1" style="color: var(--text-primary)">Philippine Heart Center</h3>
+                            <p class="text-sm mb-2" style="color: var(--text-muted)">Dialysis Unit</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="distance-badge">4.7 km</span>
+                                <div class="flex items-center">
+                                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                    <span class="text-sm ml-1" style="color: var(--text-secondary)">4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <span class="status-badge status-open">Open</span>
+                            <span class="status-badge status-quality">Premium</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 text-sm" style="color: var(--text-muted)">
+                            <span class="flex items-center">
+                                <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                24/7
+                            </span>
+                            <span class="flex items-center">
+                                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                25 machines
+                            </span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="phone" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                            <button class="p-2 rounded-lg" style="background: rgba(37, 99, 235, 0.1);">
+                                <i data-lucide="navigation" class="w-4 h-4" style="color: var(--primary)"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading More Indicator -->
+                <div class="center-card p-4 text-center">
+                    <div class="pulse flex items-center justify-center space-x-2">
+                        <div class="w-2 h-2 rounded-full" style="background: var(--primary)"></div>
+                        <div class="w-2 h-2 rounded-full" style="background: var(--primary)"></div>
+                        <div class="w-2 h-2 rounded-full" style="background: var(--primary)"></div>
+                    </div>
+                    <p class="text-sm mt-2" style="color: var(--text-muted)">Loading more centers...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="flex">
+            <button class="nav-item flex-1 flex flex-col items-center justify-center active">
+                <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Home</span>
+            </button>
+            <button class="nav-item flex-1 flex flex-col items-center justify-center">
+                <i data-lucide="search" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Search</span>
+            </button>
+            <button class="nav-item flex-1 flex flex-col items-center justify-center">
+                <i data-lucide="heart" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Favorites</span>
+            </button>
+            <button class="nav-item flex-1 flex flex-col items-center justify-center">
+                <i data-lucide="user" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Dark/Light mode functionality
+        class ThemeManager {
+            constructor() {
+                this.themeToggle = document.getElementById('themeToggle');
+                this.lightIcon = document.querySelector('.theme-icon-light');
+                this.darkIcon = document.querySelector('.theme-icon-dark');
+                this.currentTheme = localStorage.getItem('theme') || 'light';
+                
+                this.init();
+            }
+
+            init() {
+                this.setTheme(this.currentTheme);
+                this.themeToggle.addEventListener('click', () => this.toggleTheme());
+                
+                // Listen for system theme changes
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('theme')) {
+                        this.setTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            setTheme(theme) {
+                this.currentTheme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                if (theme === 'dark') {
+                    this.lightIcon.classList.add('hidden');
+                    this.darkIcon.classList.remove('hidden');
+                    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#1e293b');
+                } else {
+                    this.darkIcon.classList.add('hidden');
+                    this.lightIcon.classList.remove('hidden');
+                    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#2563eb');
+                }
+                
+                localStorage.setItem('theme', theme);
+                lucide.createIcons();
+            }
+
+            toggleTheme() {
+                const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+                this.setTheme(newTheme);
+                
+                // Add haptic feedback simulation
+                this.themeToggle.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.themeToggle.style.transform = '';
+                }, 100);
+            }
+        }
+
+        // Initialize theme manager
+        const themeManager = new ThemeManager();
+
+        // Mobile optimizations and interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function(e) {
+                console.log('Searching for:', e.target.value);
+            });
+
+            // Filter chip interactions
+            const filterChips = document.querySelectorAll('.filter-chip');
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    filterChips.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Bottom navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    navItems.forEach(n => n.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Location button functionality
+            const locationBtn = document.querySelector('.location-btn');
+            locationBtn.addEventListener('click', function() {
+                this.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Finding location...</span>';
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i data-lucide="navigation" class="w-5 h-5"></i><span>Location found!</span>';
+                    lucide.createIcons();
+                }, 2000);
+            });
+
+            // Card interactions with haptic feedback simulation
+            const centerCards = document.querySelectorAll('.center-card');
+            centerCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 100);
+                });
+            });
+
+            // Performance optimization: Intersection Observer for lazy loading
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            console.log('Loading more centers...');
+                        }
+                    });
+                });
+
+                const loadingIndicator = document.querySelector('.pulse').closest('.center-card');
+                if (loadingIndicator) {
+                    observer.observe(loadingIndicator);
+                }
+            }
+        });
+
+        // Service Worker registration for PWA capabilities
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                console.log('PWA capabilities available');
+            });
+        }
+    </script>
+</body>
+</html>

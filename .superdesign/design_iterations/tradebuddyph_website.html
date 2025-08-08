@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeBuddyPH - AI-Powered Trading Assistant</title>
+    <meta name="description" content="Transform your trading ideas into profitable strategies with AI. Natural language to professional trading code in seconds.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Custom Theme -->
+    <link rel="stylesheet" href="tradebuddy_theme.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        'trading-green': 'oklch(0.5800 0.1800 142)',
+                        'trading-red': 'oklch(0.5500 0.2200 25)',
+                        'professional-blue': 'oklch(0.2200 0.0800 240)',
+                        'neutral-gray': 'oklch(0.9600 0.0050 240)'
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 0.6s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'pulse-green': 'pulseGreen 2s ease-in-out infinite',
+                        'counter': 'counter 2s ease-out forwards',
+                        'typing': 'typing 3s steps(40) infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulseGreen {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+        
+        @keyframes typing {
+            0% { width: 0; }
+            50% { width: 100%; }
+            100% { width: 0; }
+        }
+        
+        @keyframes counter {
+            from { --num: 0; }
+            to { --num: var(--target); }
+        }
+        
+        .counter {
+            animation: counter 2s ease-out forwards;
+            counter-reset: num var(--num);
+        }
+        
+        .counter::after {
+            content: counter(num);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .trading-card {
+            transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+        }
+        
+        .trading-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            transition: all 0.2s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+        
+        .profit-text {
+            color: #22c55e;
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+        
+        .loss-text {
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .typing-animation {
+            border-right: 2px solid #22c55e;
+            animation: typing 3s steps(40) infinite;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .magnetic-button {
+            transition: transform 0.2s ease;
+        }
+        
+        .magnetic-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body class="font-sans bg-white text-gray-900" x-data="{ mobileMenu: false, activeDemo: 'strategy' }">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold gradient-text">TradeBuddyPH</span>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Features</a>
+                    <a href="#demo" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Demo</a>
+                    <a href="#pricing" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Pricing</a>
+                    <a href="#docs" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Docs</a>
+                </div>
+                
+                <!-- CTA Buttons -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <button class="text-gray-700 hover:text-green-600 transition-colors duration-200">Login</button>
+                    <button class="cta-button text-white px-4 py-2 rounded-lg font-medium magnetic-button">
+                        Start Free Trial
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button @click="mobileMenu = !mobileMenu" class="md:hidden">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenu" x-transition class="md:hidden bg-white border-t">
+            <div class="px-4 py-4 space-y-4">
+                <a href="#features" class="block text-gray-700">Features</a>
+                <a href="#demo" class="block text-gray-700">Demo</a>
+                <a href="#pricing" class="block text-gray-700">Pricing</a>
+                <a href="#docs" class="block text-gray-700">Docs</a>
+                <button class="w-full cta-button text-white py-2 rounded-lg font-medium">Start Free Trial</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center animate-fade-up">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    Transform Trading Ideas into 
+                    <span class="gradient-text">Profitable Strategies</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+                    AI-powered platform that converts natural language trading ideas into production-ready, 
+                    backtested strategies for Python, TradingView, and MetaTrader.
+                </p>
+                
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                    <button class="cta-button text-white px-8 py-4 rounded-lg font-semibold text-lg magnetic-button">
+                        <i data-lucide="play" class="w-5 h-5 inline mr-2"></i>
+                        Start Trading Smarter
+                    </button>
+                    <button class="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-lg font-semibold text-lg hover:border-green-500 hover:text-green-600 transition-colors duration-200">
+                        <i data-lucide="video" class="w-5 h-5 inline mr-2"></i>
+                        Watch Demo
+                    </button>
+                </div>
+                
+                <!-- Hero Visual - Animated Trading Dashboard -->
+                <div class="relative max-w-4xl mx-auto">
+                    <div class="trading-card bg-white p-6 rounded-2xl shadow-2xl floating">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Input Panel -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Natural Language Input</h3>
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <p class="text-sm text-gray-600 typing-animation font-mono">
+                                        "Buy AAPL when RSI < 30 and sell when RSI > 70"
+                                    </p>
+                                </div>
+                                <div class="flex items-center space-x-2 text-green-600">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                    <span class="text-sm">AI Processing Complete</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Output Panel -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Generated Strategy</h3>
+                                <div class="bg-gray-900 p-4 rounded-lg text-green-400 font-mono text-xs">
+                                    <div>def strategy():</div>
+                                    <div class="ml-4">rsi = ta.RSI(close, 14)</div>
+                                    <div class="ml-4">if rsi &lt; 30:</div>
+                                    <div class="ml-8">buy(size=100)</div>
+                                    <div class="ml-4">elif rsi &gt; 70:</div>
+                                    <div class="ml-8">sell(size=100)</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div class="bg-green-50 p-2 rounded">
+                                        <div class="profit-text font-bold font-mono">+24.5%</div>
+                                        <div class="text-xs text-gray-600">Return</div>
+                                    </div>
+                                    <div class="bg-blue-50 p-2 rounded">
+                                        <div class="text-blue-600 font-bold font-mono">1.8</div>
+                                        <div class="text-xs text-gray-600">Sharpe</div>
+                                    </div>
+                                    <div class="bg-red-50 p-2 rounded">
+                                        <div class="loss-text font-bold font-mono">-12.3%</div>
+                                        <div class="text-xs text-gray-600">Max DD</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Metrics -->
+    <section class="py-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                <div class="animate-slide-up">
+                    <div class="text-3xl font-bold profit-text font-mono mb-2">50,000+</div>
+                    <div class="text-gray-600">Strategies Generated</div>
+                </div>
+                <div class="animate-slide-up" style="animation-delay: 0.1s">
+                    <div class="text-3xl font-bold profit-text font-mono mb-2">85%</div>
+                    <div class="text-gray-600">Success Rate</div>
+                </div>
+                <div class="animate-slide-up" style="animation-delay: 0.2s">
+                    <div class="text-3xl font-bold text-blue-600 font-mono mb-2">3</div>
+                    <div class="text-gray-600">Trading Platforms</div>
+                </div>
+                <div class="animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="text-3xl font-bold text-purple-600 font-mono mb-2">24/7</div>
+                    <div class="text-gray-600">AI Assistant</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Powerful Trading Features</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Everything you need to develop, test, and deploy profitable trading strategies
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- AI Strategy Generation -->
+                <div class="trading-card bg-white p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="brain" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">AI Strategy Generation</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Convert natural language trading ideas into professional, executable code for multiple platforms
+                    </p>
+                </div>
+                
+                <!-- Professional Backtesting -->
+                <div class="trading-card bg-white p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="bar-chart-3" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Professional Backtesting</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Comprehensive backtesting with 20+ performance metrics and risk analysis
+                    </p>
+                </div>
+                
+                <!-- Multi-Platform Support -->
+                <div class="trading-card bg-white p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="layers" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Multi-Platform Deploy</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Deploy to Python/Backtrader, TradingView/PineScript, and MetaTrader/MQL5
+                    </p>
+                </div>
+                
+                <!-- Risk Management -->
+                <div class="trading-card bg-white p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield" class="w-6 h-6 text-red-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Risk Management</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Built-in risk assessment, position sizing, and portfolio protection mechanisms
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Demo Section -->
+    <section id="demo" class="py-20 bg-gradient-to-br from-gray-50 to-white px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">See TradeBuddyPH in Action</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Experience the power of AI-driven trading strategy development
+                </p>
+            </div>
+            
+            <div class="trading-card bg-white p-8 rounded-2xl">
+                <!-- Demo Tabs -->
+                <div class="flex flex-wrap justify-center mb-8 space-x-4">
+                    <button @click="activeDemo = 'strategy'" 
+                            :class="activeDemo === 'strategy' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                        Strategy Generation
+                    </button>
+                    <button @click="activeDemo = 'backtest'" 
+                            :class="activeDemo === 'backtest' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                        Backtesting Results
+                    </button>
+                    <button @click="activeDemo = 'deploy'" 
+                            :class="activeDemo === 'deploy' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                        Platform Deployment
+                    </button>
+                </div>
+                
+                <!-- Demo Content -->
+                <div class="min-h-96">
+                    <!-- Strategy Generation Demo -->
+                    <div x-show="activeDemo === 'strategy'" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-semibold">Natural Language Input</h3>
+                            <div class="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
+                                <textarea class="w-full h-32 bg-transparent border-none resize-none focus:outline-none text-gray-700" 
+                                          placeholder="Describe your trading strategy in plain English...">Create a momentum strategy that buys when the 20-day moving average crosses above the 50-day moving average and the RSI is below 70. Set stop loss at 2% and take profit at 5%.</textarea>
+                            </div>
+                            <button class="cta-button text-white px-6 py-3 rounded-lg font-medium">
+                                <i data-lucide="wand-2" class="w-4 h-4 inline mr-2"></i>
+                                Generate Strategy
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-semibold">Generated Python Code</h3>
+                            <div class="bg-gray-900 p-6 rounded-lg text-green-400 font-mono text-sm overflow-x-auto">
+                                <pre>import backtrader as bt
+import pandas as pd
+
+class MomentumStrategy(bt.Strategy):
+    def __init__(self):
+        self.ma20 = bt.indicators.SMA(period=20)
+        self.ma50 = bt.indicators.SMA(period=50)
+        self.rsi = bt.indicators.RSI(period=14)
+        
+    def next(self):
+        if not self.position:
+            if (self.ma20[0] > self.ma50[0] and 
+                self.rsi[0] < 70):
+                self.buy(size=100)
+                
+        elif self.position:
+            if (self.data.close[0] <= self.position.price * 0.98 or
+                self.data.close[0] >= self.position.price * 1.05):
+                self.sell(size=self.position.size)</pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backtesting Results Demo -->
+                    <div x-show="activeDemo === 'backtest'" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-center">Backtesting Performance</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-green-50 p-6 rounded-lg text-center">
+                                <div class="profit-text text-3xl font-bold font-mono mb-2">+32.4%</div>
+                                <div class="text-gray-600">Total Return</div>
+                                <div class="text-xs text-gray-500 mt-1">vs 12.1% benchmark</div>
+                            </div>
+                            <div class="bg-blue-50 p-6 rounded-lg text-center">
+                                <div class="text-blue-600 text-3xl font-bold font-mono mb-2">2.15</div>
+                                <div class="text-gray-600">Sharpe Ratio</div>
+                                <div class="text-xs text-gray-500 mt-1">Risk-adjusted returns</div>
+                            </div>
+                            <div class="bg-red-50 p-6 rounded-lg text-center">
+                                <div class="loss-text text-3xl font-bold font-mono mb-2">-8.7%</div>
+                                <div class="text-gray-600">Max Drawdown</div>
+                                <div class="text-xs text-gray-500 mt-1">Worst peak-to-trough</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-gray-800">156</div>
+                                <div class="text-sm text-gray-600">Total Trades</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-semibold profit-text">62%</div>
+                                <div class="text-sm text-gray-600">Win Rate</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-blue-600">1.8</div>
+                                <div class="text-sm text-gray-600">Profit Factor</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-purple-600">24</div>
+                                <div class="text-sm text-gray-600">Avg Hold Days</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deployment Demo -->
+                    <div x-show="activeDemo === 'deploy'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="trading-card bg-yellow-50 p-6 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="code" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h4 class="font-semibold mb-2">Python/Backtrader</h4>
+                            <p class="text-sm text-gray-600 mb-4">Production-ready Python code for algorithmic trading</p>
+                            <button class="w-full bg-yellow-500 text-white py-2 rounded-lg text-sm font-medium">Export Code</button>
+                        </div>
+                        
+                        <div class="trading-card bg-blue-50 p-6 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h4 class="font-semibold mb-2">TradingView/PineScript</h4>
+                            <p class="text-sm text-gray-600 mb-4">Ready-to-use PineScript for TradingView platform</p>
+                            <button class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm font-medium">Copy Script</button>
+                        </div>
+                        
+                        <div class="trading-card bg-green-50 p-6 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="terminal" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h4 class="font-semibold mb-2">MetaTrader/MQL5</h4>
+                            <p class="text-sm text-gray-600 mb-4">Professional MQL5 Expert Advisor code</p>
+                            <button class="w-full bg-green-500 text-white py-2 rounded-lg text-sm font-medium">Download EA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Choose the plan that fits your trading needs
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Free Plan -->
+                <div class="trading-card bg-white p-8 rounded-xl text-center border-2 border-gray-200">
+                    <h3 class="text-xl font-bold mb-2">Starter</h3>
+                    <div class="text-4xl font-bold mb-6">
+                        <span class="font-mono">$0</span>
+                        <span class="text-lg text-gray-600 font-normal">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 text-left">
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">5 strategies per month</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Basic backtesting</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Python code export</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Community support</span>
+                        </li>
+                    </ul>
+                    <button class="w-full border-2 border-green-500 text-green-600 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors duration-200">
+                        Get Started Free
+                    </button>
+                </div>
+                
+                <!-- Pro Plan -->
+                <div class="trading-card bg-white p-8 rounded-xl text-center border-2 border-green-500 relative transform scale-105">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Professional</h3>
+                    <div class="text-4xl font-bold mb-6">
+                        <span class="font-mono">$49</span>
+                        <span class="text-lg text-gray-600 font-normal">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 text-left">
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Unlimited strategies</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Advanced backtesting</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">All platform exports</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Priority support</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">API access</span>
+                        </li>
+                    </ul>
+                    <button class="w-full cta-button text-white py-3 rounded-lg font-medium">
+                        Start Pro Trial
+                    </button>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="trading-card bg-white p-8 rounded-xl text-center border-2 border-gray-200">
+                    <h3 class="text-xl font-bold mb-2">Enterprise</h3>
+                    <div class="text-4xl font-bold mb-6">
+                        <span class="font-mono">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 text-left">
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Everything in Pro</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Custom AI models</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">White-label solution</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">Dedicated support</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                            <span class="text-sm">On-premise deployment</span>
+                        </li>
+                    </ul>
+                    <button class="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:border-green-500 hover:text-green-600 transition-colors duration-200">
+                        Contact Sales
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">TradeBuddyPH</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Transforming trading ideas into profitable strategies with the power of AI.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+                            <i data-lucide="twitter" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+                            <i data-lucide="linkedin" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+                            <i data-lucide="github" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Product -->
+                <div>
+                    <h4 class="font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Features</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Pricing</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">API Documentation</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Changelog</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Resources -->
+                <div>
+                    <h4 class="font-semibold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Documentation</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Tutorials</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Blog</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Community</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support -->
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Contact Us</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Status</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors duration-200">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 TradeBuddyPH. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-up');
+                }
+            });
+        }, observerOptions);
+        
+        // Observe elements for animation
+        document.querySelectorAll('.trading-card, .animate-slide-up').forEach(el => {
+            observer.observe(el);
+        });
+        
+        // Magnetic button effect
+        document.querySelectorAll('.magnetic-button').forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05) translateY(-2px)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1) translateY(0)';
+            });
+        });
+        
+        // Typing animation cycling
+        const typingTexts = [
+            '"Buy AAPL when RSI < 30 and sell when RSI > 70"',
+            '"Create a mean reversion strategy for EURUSD"',
+            '"Implement a breakout strategy with 2% stop loss"',
+            '"Build a momentum strategy using MACD crossover"'
+        ];
+        
+        let currentTextIndex = 0;
+        const typingElement = document.querySelector('.typing-animation');
+        
+        function cycleTypingText() {
+            if (typingElement) {
+                typingElement.textContent = typingTexts[currentTextIndex];
+                currentTextIndex = (currentTextIndex + 1) % typingTexts.length;
+            }
+        }
+        
+        // Change typing text every 4 seconds
+        setInterval(cycleTypingText, 4000);
+    </script>
+</body>
+</html>
