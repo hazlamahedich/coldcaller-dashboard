@@ -1,0 +1,152 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Coldcaller Application Dashboard",
+    "tags": ["coldcaller", "production"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Backend Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coldcaller-backend\"}[5m])) by (le))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"coldcaller-backend\"}[5m])) by (le))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "s"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"coldcaller-backend\"}[5m]))",
+            "legendFormat": "Requests per second"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "reqps"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"coldcaller-backend\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"coldcaller-backend\"}[5m]))",
+            "legendFormat": "Error rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "percentunit",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends{job=\"postgres\"}",
+            "legendFormat": "Active connections"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"coldcaller-backend\"}",
+            "legendFormat": "Backend memory"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "bytes"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"coldcaller-backend\"}[5m])",
+            "legendFormat": "Backend CPU"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "percent",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 16,
+    "version": 1
+  }
+}

@@ -1,0 +1,218 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with High Availability
+  postgres:
+    image: postgres:15-alpine
+    container_name: coldcaller-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coldcaller}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+      - ./infrastructure/postgres/backups:/backups
+    networks:
+      - coldcaller-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-coldcaller}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Cache and Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: coldcaller-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - coldcaller-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: coldcaller-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-coldcaller}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    networks:
+      - coldcaller-network
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: coldcaller-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001}
+      REACT_APP_ENVIRONMENT: ${ENVIRONMENT:-production}
+    networks:
+      - coldcaller-network
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Load Balancer and Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: coldcaller-nginx
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d
+      - ./infrastructure/ssl:/etc/ssl/certs
+      - nginx_logs:/var/log/nginx
+    networks:
+      - coldcaller-network
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coldcaller-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - coldcaller-network
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coldcaller-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - coldcaller-network
+    ports:
+      - "3030:3000"
+
+  # Log Management
+  loki:
+    image: grafana/loki:latest
+    container_name: coldcaller-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./infrastructure/monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/tmp/loki
+    networks:
+      - coldcaller-network
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: coldcaller-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./infrastructure/monitoring/promtail-config.yml:/etc/promtail/config.yml
+    networks:
+      - coldcaller-network
+    command: -config.file=/etc/promtail/config.yml
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
+    driver: local
+
+networks:
+  coldcaller-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

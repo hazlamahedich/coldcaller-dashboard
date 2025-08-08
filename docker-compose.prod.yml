@@ -1,0 +1,165 @@
+version: '3.8'
+
+# Production Docker Compose with High Availability
+services:
+  # PostgreSQL with read replicas
+  postgres-master:
+    image: postgres:15-alpine
+    container_name: coldcaller-postgres-master
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coldcaller}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/master:/docker-entrypoint-initdb.d
+      - ./infrastructure/postgres/backups:/backups
+    networks:
+      - coldcaller-network
+    ports:
+      - "5432:5432"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica:
+    image: postgres:15-alpine
+    container_name: coldcaller-postgres-replica
+    restart: unless-stopped
+    environment:
+      PGUSER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MASTER_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRES_MASTER_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/replica:/docker-entrypoint-initdb.d
+    networks:
+      - coldcaller-network
+    ports:
+      - "5433:5432"
+    depends_on:
+      - postgres-master
+
+  # Redis Cluster
+  redis-master:
+    image: redis:7-alpine
+    container_name: coldcaller-redis-master
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf --appendonly yes
+    volumes:
+      - redis_master_data:/data
+      - ./infrastructure/redis/master.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - coldcaller-network
+    ports:
+      - "6379:6379"
+
+  redis-sentinel:
+    image: redis:7-alpine
+    container_name: coldcaller-redis-sentinel
+    restart: unless-stopped
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    volumes:
+      - ./infrastructure/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
+    networks:
+      - coldcaller-network
+    ports:
+      - "26379:26379"
+    depends_on:
+      - redis-master
+
+  # Backend API with multiple instances
+  backend-1:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    container_name: coldcaller-backend-1
+    environment:
+      INSTANCE_ID: backend-1
+      DB_HOST: postgres-master
+      DB_REPLICA_HOST: postgres-replica
+
+  backend-2:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    container_name: coldcaller-backend-2
+    ports:
+      - "3002:3001"
+    environment:
+      INSTANCE_ID: backend-2
+      DB_HOST: postgres-master
+      DB_REPLICA_HOST: postgres-replica
+
+  # Frontend with CDN preparation
+  frontend:
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-https://api.coldcaller.com}
+      REACT_APP_CDN_URL: ${CDN_URL:-https://cdn.coldcaller.com}
+      REACT_APP_ENVIRONMENT: production
+
+  # Production Nginx with SSL
+  nginx:
+    extends:
+      file: docker-compose.yml
+      service: nginx
+    volumes:
+      - ./infrastructure/nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d
+      - ./infrastructure/ssl/live:/etc/letsencrypt/live:ro
+      - ./infrastructure/ssl/archive:/etc/letsencrypt/archive:ro
+    ports:
+      - "80:80"
+      - "443:443"
+
+  # Backup Service
+  backup:
+    image: alpine:latest
+    container_name: coldcaller-backup
+    restart: unless-stopped
+    volumes:
+      - postgres_master_data:/backup/postgres:ro
+      - redis_master_data:/backup/redis:ro
+      - backend_uploads:/backup/uploads:ro
+      - ./infrastructure/backups:/backups
+      - ./infrastructure/scripts/backup.sh:/backup.sh
+    networks:
+      - coldcaller-network
+    command: |
+      sh -c "
+      apk add --no-cache postgresql-client redis aws-cli
+      crond -f -d 8"
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${BACKUP_S3_BUCKET}
+
+volumes:
+  postgres_master_data:
+    driver: local
+  postgres_replica_data:
+    driver: local
+  redis_master_data:
+    driver: local
+  redis_sentinel_data:
+    driver: local
+
+networks:
+  coldcaller-network:
+    external: true

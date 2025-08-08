@@ -1,0 +1,138 @@
+{
+  "name": "ColdCaller - Professional Cold Calling Dashboard",
+  "short_name": "ColdCaller",
+  "description": "Your all-in-one sales calling platform with real-time performance monitoring",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["business", "productivity", "communication"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ColdCaller Desktop Dashboard"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ColdCaller Mobile Interface"
+    }
+  ],
+  "features": [
+    "Performance monitoring",
+    "Real-time call analytics",
+    "Offline functionality",
+    "Push notifications",
+    "Background sync"
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["audio/*", ".csv", ".xlsx"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "audio/mpeg": [".mp3"],
+        "audio/wav": [".wav"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "tel",
+      "url": "/call?number=%s"
+    },
+    {
+      "protocol": "mailto",
+      "url": "/contact?email=%s"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Call",
+      "short_name": "Call",
+      "description": "Start a new call",
+      "url": "/call",
+      "icons": [
+        {
+          "src": "/icons/call-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Performance Dashboard",
+      "short_name": "Performance",
+      "description": "View performance metrics",
+      "url": "/performance",
+      "icons": [
+        {
+          "src": "/icons/dashboard-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Lead Management",
+      "short_name": "Leads",
+      "description": "Manage leads and contacts",
+      "url": "/leads",
+      "icons": [
+        {
+          "src": "/icons/leads-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
+}
