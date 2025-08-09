@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { leadsService } from '../services';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * LeadAnalyticsDashboard - Comprehensive analytics and insights
  * Features: Funnel visualization, source attribution, performance metrics, real-time feed
  */
 const LeadAnalyticsDashboard = () => {
+  const { isDarkMode, themeClasses } = useTheme();
   const [analytics, setAnalytics] = useState({
     summary: {
       total: 0,
@@ -44,7 +46,20 @@ const LeadAnalyticsDashboard = () => {
       const response = await leadsService.getAllLeads({ limit: 1000 });
       
       if (response.success) {
-        const leads = response.data;
+        // Handle the nested data structure: response.data.leads contains the array
+        const leads = response.data.leads || response.data || [];
+        console.log('📊 [Analytics] Processing leads data:', {
+          responseStructure: Object.keys(response.data),
+          leadsCount: Array.isArray(leads) ? leads.length : 0,
+          leadsType: typeof leads,
+          firstLead: leads[0]
+        });
+        
+        if (!Array.isArray(leads)) {
+          console.warn('⚠️ [Analytics] Expected leads to be an array, got:', typeof leads, leads);
+          throw new Error('Invalid leads data format - expected array');
+        }
+        
         const processedAnalytics = processLeadsData(leads);
         setAnalytics(processedAnalytics);
       } else {
@@ -200,13 +215,29 @@ const LeadAnalyticsDashboard = () => {
     };
   }, [dateRange]);
 
-  // Get trend indicator
+  // Get trend indicator with dark mode support
   const getTrendIndicator = (current, previous) => {
-    if (previous === 0) return { icon: '📈', color: 'text-blue-600', text: 'New' };
+    if (previous === 0) return { 
+      icon: '📈', 
+      color: isDarkMode ? 'text-blue-400' : 'text-blue-600', 
+      text: 'New' 
+    };
     const change = ((current - previous) / previous) * 100;
-    if (change > 0) return { icon: '📈', color: 'text-green-600', text: `+${change.toFixed(1)}%` };
-    if (change < 0) return { icon: '📉', color: 'text-red-600', text: `${change.toFixed(1)}%` };
-    return { icon: '➡️', color: 'text-gray-600', text: 'No change' };
+    if (change > 0) return { 
+      icon: '📈', 
+      color: isDarkMode ? 'text-green-400' : 'text-green-600', 
+      text: `+${change.toFixed(1)}%` 
+    };
+    if (change < 0) return { 
+      icon: '📉', 
+      color: isDarkMode ? 'text-red-400' : 'text-red-600', 
+      text: `${change.toFixed(1)}%` 
+    };
+    return { 
+      icon: '➡️', 
+      color: isDarkMode ? 'text-gray-400' : 'text-gray-600', 
+      text: 'No change' 
+    };
   };
 
   // Get status color
@@ -221,22 +252,22 @@ const LeadAnalyticsDashboard = () => {
     }
   };
 
-  // Get priority color
+  // Get priority color with dark mode support
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'High': return 'text-red-600 bg-red-100';
-      case 'Medium': return 'text-orange-600 bg-orange-100';
-      case 'Low': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'High': return isDarkMode ? 'text-red-200 bg-red-900/50' : 'text-red-600 bg-red-100';
+      case 'Medium': return isDarkMode ? 'text-orange-200 bg-orange-900/50' : 'text-orange-600 bg-orange-100';
+      case 'Low': return isDarkMode ? 'text-green-200 bg-green-900/50' : 'text-green-600 bg-green-100';
+      default: return isDarkMode ? 'text-gray-300 bg-gray-800' : 'text-gray-600 bg-gray-100';
     }
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-8`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-500 mt-4">Loading analytics...</p>
+          <p className={`${themeClasses.textSecondary} mt-4`}>Loading analytics...</p>
         </div>
       </div>
     );
@@ -244,14 +275,14 @@ const LeadAnalyticsDashboard = () => {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-8`}>
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Analytics</h3>
-          <p className="text-gray-500 mb-4">{error}</p>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-2`}>Failed to Load Analytics</h3>
+          <p className={`${themeClasses.textSecondary} mb-4`}>{error}</p>
           <button
             onClick={loadAnalytics}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className={`px-4 py-2 ${themeClasses.buttonPrimary} rounded-lg`}
           >
             Retry
           </button>
@@ -268,8 +299,8 @@ const LeadAnalyticsDashboard = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Lead Analytics</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className={`text-2xl font-bold ${themeClasses.textPrimary}`}>Lead Analytics</h2>
+          <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>
             Performance insights and trends
           </p>
         </div>
@@ -277,7 +308,7 @@ const LeadAnalyticsDashboard = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`px-4 py-2 ${themeClasses.input} rounded-lg ${themeClasses.focusRing} focus:ring-2`}
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -286,7 +317,7 @@ const LeadAnalyticsDashboard = () => {
           </select>
           <button
             onClick={loadAnalytics}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className={`px-4 py-2 ${themeClasses.buttonPrimary} rounded-lg`}
           >
             🔄 Refresh
           </button>
@@ -295,13 +326,13 @@ const LeadAnalyticsDashboard = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Leads</p>
-              <p className="text-3xl font-bold text-gray-900">{analytics.summary.total}</p>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Total Leads</p>
+              <p className={`text-3xl font-bold ${themeClasses.textPrimary}`}>{analytics.summary.total}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
+            <div className={`p-3 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'} rounded-full`}>
               <span className="text-2xl">👥</span>
             </div>
           </div>
@@ -309,22 +340,22 @@ const LeadAnalyticsDashboard = () => {
             <span className={`text-sm ${weeklyTrend.color}`}>
               {weeklyTrend.icon} {weeklyTrend.text}
             </span>
-            <span className="text-sm text-gray-500 ml-2">vs last week</span>
+            <span className={`text-sm ${themeClasses.textMuted} ml-2`}>vs last week</span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Qualified</p>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Qualified</p>
               <p className="text-3xl font-bold text-green-600">{analytics.summary.qualified}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
+            <div className={`p-3 ${isDarkMode ? 'bg-green-900/50' : 'bg-green-100'} rounded-full`}>
               <span className="text-2xl">✅</span>
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-sm text-gray-500">
+            <span className={`text-sm ${themeClasses.textMuted}`}>
               {analytics.summary.total > 0 ? 
                 `${((analytics.summary.qualified / analytics.summary.total) * 100).toFixed(1)}% of total` :
                 'No data'
@@ -333,32 +364,32 @@ const LeadAnalyticsDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Conversion Rate</p>
               <p className="text-3xl font-bold text-purple-600">
                 {analytics.conversionRates.overallConversion.toFixed(1)}%
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
+            <div className={`p-3 ${isDarkMode ? 'bg-purple-900/50' : 'bg-purple-100'} rounded-full`}>
               <span className="text-2xl">🎯</span>
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-sm text-gray-500">
+            <span className={`text-sm ${themeClasses.textMuted}`}>
               New to Closed
             </span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">This Month</p>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>This Month</p>
               <p className="text-3xl font-bold text-orange-600">{analytics.trends.thisMonth}</p>
             </div>
-            <div className="p-3 bg-orange-100 rounded-full">
+            <div className={`p-3 ${isDarkMode ? 'bg-orange-900/50' : 'bg-orange-100'} rounded-full`}>
               <span className="text-2xl">📅</span>
             </div>
           </div>
@@ -366,7 +397,7 @@ const LeadAnalyticsDashboard = () => {
             <span className={`text-sm ${monthlyTrend.color}`}>
               {monthlyTrend.icon} {monthlyTrend.text}
             </span>
-            <span className="text-sm text-gray-500 ml-2">vs last month</span>
+            <span className={`text-sm ${themeClasses.textMuted} ml-2`}>vs last month</span>
           </div>
         </div>
       </div>
@@ -374,18 +405,18 @@ const LeadAnalyticsDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Lead Funnel */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-4">Lead Funnel</h3>
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Lead Funnel</h3>
           <div className="space-y-4">
             {analytics.funnel.map((stage, index) => (
               <div key={stage.stage} className="relative">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">{stage.stage}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>{stage.stage}</span>
+                  <span className={`text-sm ${themeClasses.textMuted}`}>
                     {stage.count} ({stage.percentage.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-3`}>
                   <div
                     className={`h-3 rounded-full ${getStatusColor(stage.stage)} transition-all duration-500`}
                     style={{ width: `${Math.max(stage.percentage, 5)}%` }}
@@ -397,8 +428,8 @@ const LeadAnalyticsDashboard = () => {
         </div>
 
         {/* Lead Sources */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-4">Lead Sources</h3>
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Lead Sources</h3>
           <div className="space-y-3">
             {analytics.sources.slice(0, 6).map((source, index) => (
               <div key={source.source} className="flex items-center justify-between">
@@ -406,11 +437,11 @@ const LeadAnalyticsDashboard = () => {
                   <div className={`w-3 h-3 rounded-full mr-3 ${
                     ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-purple-500', 'bg-red-500', 'bg-gray-500'][index]
                   }`}></div>
-                  <span className="text-sm font-medium text-gray-700">{source.source}</span>
+                  <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>{source.source}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-gray-900">{source.count}</div>
-                  <div className="text-xs text-gray-500">{source.percentage.toFixed(1)}%</div>
+                  <div className={`text-sm font-semibold ${themeClasses.textPrimary}`}>{source.count}</div>
+                  <div className={`text-xs ${themeClasses.textMuted}`}>{source.percentage.toFixed(1)}%</div>
                 </div>
               </div>
             ))}
@@ -421,8 +452,8 @@ const LeadAnalyticsDashboard = () => {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Priority Distribution */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-4">Priority Distribution</h3>
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Priority Distribution</h3>
           <div className="space-y-3">
             {analytics.priorities.map((priority) => (
               <div key={priority.priority} className="flex items-center justify-between">
@@ -430,8 +461,8 @@ const LeadAnalyticsDashboard = () => {
                   {priority.priority}
                 </span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-900">{priority.count}</span>
-                  <span className="text-xs text-gray-500">({priority.percentage.toFixed(1)}%)</span>
+                  <span className={`text-sm font-medium ${themeClasses.textPrimary}`}>{priority.count}</span>
+                  <span className={`text-xs ${themeClasses.textMuted}`}>({priority.percentage.toFixed(1)}%)</span>
                 </div>
               </div>
             ))}
@@ -439,15 +470,15 @@ const LeadAnalyticsDashboard = () => {
         </div>
 
         {/* Top Industries */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-4">Top Industries</h3>
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Top Industries</h3>
           <div className="space-y-3">
             {analytics.industries.slice(0, 5).map((industry) => (
               <div key={industry.industry} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700 truncate">{industry.industry}</span>
+                <span className={`text-sm font-medium ${themeClasses.textSecondary} truncate`}>{industry.industry}</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-900">{industry.count}</span>
-                  <span className="text-xs text-gray-500">({industry.percentage.toFixed(1)}%)</span>
+                  <span className={`text-sm font-medium ${themeClasses.textPrimary}`}>{industry.count}</span>
+                  <span className={`text-xs ${themeClasses.textMuted}`}>({industry.percentage.toFixed(1)}%)</span>
                 </div>
               </div>
             ))}
@@ -455,16 +486,16 @@ const LeadAnalyticsDashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Recent Activity</h3>
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {analytics.recentActivity.map((activity) => (
               <div key={`${activity.id}-${activity.timestamp}`} className="flex items-start space-x-3">
                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{activity.title}</p>
-                  <p className="text-xs text-gray-500">{activity.description}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className={`text-sm font-medium ${themeClasses.textPrimary} truncate`}>{activity.title}</p>
+                  <p className={`text-xs ${themeClasses.textSecondary}`}>{activity.description}</p>
+                  <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                     {new Date(activity.timestamp).toLocaleString()}
                   </p>
                 </div>
@@ -475,32 +506,32 @@ const LeadAnalyticsDashboard = () => {
       </div>
 
       {/* Conversion Metrics */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold mb-4">Conversion Metrics</h3>
+      <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+        <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Conversion Metrics</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
               {analytics.conversionRates.newToFollowUp.toFixed(1)}%
             </div>
-            <div className="text-sm text-gray-600">New → Follow-up</div>
+            <div className={`text-sm ${themeClasses.textSecondary}`}>New → Follow-up</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">
               {analytics.conversionRates.followUpToQualified.toFixed(1)}%
             </div>
-            <div className="text-sm text-gray-600">Follow-up → Qualified</div>
+            <div className={`text-sm ${themeClasses.textSecondary}`}>Follow-up → Qualified</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
               {analytics.conversionRates.qualifiedToClosed.toFixed(1)}%
             </div>
-            <div className="text-sm text-gray-600">Qualified → Closed</div>
+            <div className={`text-sm ${themeClasses.textSecondary}`}>Qualified → Closed</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
               {analytics.conversionRates.overallConversion.toFixed(1)}%
             </div>
-            <div className="text-sm text-gray-600">Overall Conversion</div>
+            <div className={`text-sm ${themeClasses.textSecondary}`}>Overall Conversion</div>
           </div>
         </div>
       </div>

@@ -38,11 +38,22 @@ const EnhancedLeadPanel = () => {
       
       const response = await leadsService.getAllLeads({ limit: 100 });
       
-      if (response.success && response.data.length > 0) {
-        setLeads(response.data);
-        setCurrentLead(response.data[0]);
-        setApiConnected(true);
-        console.log('✅ Leads loaded from API:', response.data.length, 'leads');
+      if (response.success && response.data) {
+        // Handle the nested data structure: response.data.leads contains the array
+        const leadsArray = response.data.leads || response.data || [];
+        
+        if (Array.isArray(leadsArray) && leadsArray.length > 0) {
+          setLeads(leadsArray);
+          setCurrentLead(leadsArray[0]);
+          setApiConnected(true);
+          console.log('✅ Leads loaded from API:', leadsArray.length, 'leads');
+        } else {
+          console.log('⚠️ No leads found in API response');
+          // Fallback to dummy data if no leads
+          setLeads(dummyLeads);
+          setCurrentLead(dummyLeads[0]);
+          setApiConnected(false);
+        }
       } else {
         // Fallback to dummy data if API fails or returns no data
         console.log('⚠️ API unavailable, using dummy data');

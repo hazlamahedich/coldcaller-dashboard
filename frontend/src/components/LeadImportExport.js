@@ -265,7 +265,12 @@ const LeadImportExport = ({ onImportComplete, onClose, isOpen }) => {
         throw new Error(response.message || 'Export failed');
       }
 
-      const data = response.data;
+      // Handle the nested data structure: response.data.leads contains the array
+      const data = response.data.leads || response.data || [];
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid data format - expected array of leads');
+      }
       
       if (exportFormat === 'csv') {
         exportToCSV(data, params.fields);
