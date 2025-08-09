@@ -1,0 +1,256 @@
+/* Custom styles for the chatbot component */
+
+/* FORCE HIGH CONTRAST TEXT - Override any inherited styles */
+.chatbot-container {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Force ALL elements to have black text with maximum specificity */
+.chatbot-container,
+.chatbot-container > *,
+.chatbot-container > * > *,
+.chatbot-container > * > * > *,
+.chatbot-container > * > * > * > * {
+  color: #000000 !important;
+}
+
+/* Override ALL possible text color classes */
+.chatbot-container .text-gray-100,
+.chatbot-container .text-gray-200,
+.chatbot-container .text-gray-300,
+.chatbot-container .text-gray-400,
+.chatbot-container .text-gray-500,
+.chatbot-container .text-gray-600,
+.chatbot-container .text-gray-700,
+.chatbot-container .text-gray-800,
+.chatbot-container .text-gray-900,
+.chatbot-container .text-white {
+  color: #000000 !important;
+}
+
+/* Force all text elements to be black */
+.chatbot-container,
+.chatbot-container *:not(.bg-blue-500):not(.bg-red-50):not(.text-blue-500):not(.text-blue-700):not(.text-red-800):not(.text-orange-500) {
+  color: #000000 !important;
+}
+
+.chatbot-container h1,
+.chatbot-container h2, 
+.chatbot-container h3,
+.chatbot-container h4,
+.chatbot-container h5,
+.chatbot-container h6 {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.chatbot-container p {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.chatbot-container div {
+  color: #000000 !important;
+}
+
+.chatbot-container span {
+  color: #000000 !important;
+}
+
+.chatbot-container .welcome-text * {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.chatbot-container .keyboard-hint {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.chatbot-container .message-content {
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+.chatbot-container .message-timestamp {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* Force strong contrast for ALL text elements */
+.chatbot-container * {
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Ensure no element has transparent or light text */
+.chatbot-container *[class*="text-gray"],
+.chatbot-container *[class*="text-white"],
+.chatbot-container *[style*="color"] {
+  color: #000000 !important;
+}
+
+/* Ensure input text is also dark */
+.chatbot-container input,
+.chatbot-container textarea {
+  color: #000000 !important;
+}
+
+/* Placeholder text */
+.chatbot-container input::placeholder,
+.chatbot-container textarea::placeholder {
+  color: #4b5563 !important;
+}
+
+/* Smooth scrollbar for chat messages */
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Line clamp utility for source snippets */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Custom resize cursors for better UX */
+.resize-handle {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Typing indicator animation */
+@keyframes typing-dot {
+  0%, 60%, 100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Pulse animation for online indicator */
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse-green {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Smooth transitions for chatbot state changes */
+.chatbot-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles for accessibility */
+.chat-input:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  ring-opacity: 0.5;
+}
+
+/* Custom shadow for floating elements */
+.floating-shadow {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 
+              0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Message fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chatbot-mobile {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+  .chatbot-dark {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+  
+  .chatbot-dark .chat-messages {
+    background-color: #111827;
+  }
+  
+  .chatbot-dark .message-assistant {
+    background-color: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+}

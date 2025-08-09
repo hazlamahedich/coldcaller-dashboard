@@ -32,6 +32,9 @@ const analyticsRoutes = require('./routes/analytics');
 const callAnalyticsRoutes = require('./routes/callAnalytics');
 const twilioRoutes = require('./routes/twilio');
 const twilioTestRoutes = require('./routes/twilio-test');
+const ragChatRoutes = require('./routes/ragChat');
+const chatRoutes = require('./routes/chat_existing');
+const documentsRoutes = require('./routes/documents');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
@@ -83,7 +86,9 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:3001', // Allow backend self-requests (proxy issue)
       'http://localhost:3002', // Allow React dev server on port 3002
+      'http://localhost:3003', // Allow React dev server on port 3003
       'https://coldcaller.com',
       'https://app.coldcaller.com'
     ];
@@ -227,6 +232,9 @@ app.get('/api/calls/recent', (req, res) => {
 // Protected API routes (require authentication)
 app.use('/api/leads', authenticate, leadsRoutes);
 app.use('/api/scripts', authenticate, scriptsRoutes);
+app.use('/api/rag', ragChatRoutes); // RAG chat routes for AI-powered help
+app.use('/api/chat', chatRoutes); // Existing chat routes
+app.use('/api/documents', documentsRoutes); // Document serving routes for chatbot sources
 
 // Audio routes with file upload security
 app.use('/api/audio', authenticate, secureFileUpload, enhancedAudioRoutes);

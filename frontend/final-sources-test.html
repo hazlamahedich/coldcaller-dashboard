@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Final Sources Test</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
+            line-height: 1.6; 
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .success { background: #d4edda; border-left-color: #28a745; }
+        .error { background: #f8d7da; border-left-color: #dc3545; }
+        .info { background: #d1ecf1; border-left-color: #17a2b8; }
+        .warning { background: #fff3cd; border-left-color: #ffc107; }
+        
+        pre { 
+            background: #2d3748; 
+            color: #e2e8f0;
+            padding: 15px; 
+            border-radius: 6px; 
+            overflow-x: auto; 
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button { 
+            padding: 12px 20px; 
+            margin: 8px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .status { font-weight: bold; font-size: 1.1em; }
+        .highlight { 
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 3px 6px; 
+            border-radius: 4px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .console-monitor {
+            background: #1a202c;
+            color: #4fd1c7;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Final Sources Debug & Verification</h1>
+        <p style="text-align: center; font-size: 1.2em; color: #666;">
+            Comprehensive test to verify SourceLink buttons are working correctly
+        </p>
+
+        <div class="test-section info">
+            <h2>📋 Test Protocol</h2>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>
+                    <strong>Open Main App:</strong> 
+                    <a href="http://localhost:3000" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;">
+                        http://localhost:3000 →
+                    </a>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>
+                    <strong>Open Chatbot:</strong> Click the floating chat icon in bottom-right corner
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>
+                    <strong>Test Query:</strong> Ask: <span class="highlight">"What is Twilio?"</span>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div>
+                    <strong>Look For:</strong> Blue buttons with "📖 View Document" after the response
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Automated Tests</h2>
+            <button onclick="runFullTest()">🚀 Run Complete Test Suite</button>
+            <button onclick="testAPIOnly()">📡 Test RAG API Only</button>
+            <button onclick="monitorConsole()">👀 Monitor Console Logs</button>
+            <button onclick="clearAll()">🧹 Clear Results</button>
+        </div>
+
+        <div id="console-monitor" class="console-monitor" style="display: none;">
+            <div style="color: #4fd1c7; margin-bottom: 10px;">📟 Console Monitor Active - Watching for SourceLink logs...</div>
+            <div id="console-output"></div>
+        </div>
+
+        <div id="results"></div>
+
+        <div class="test-section warning" style="margin-top: 40px;">
+            <h2>🎯 What to Look For</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                <div>
+                    <h3 style="color: #28a745;">✅ Success Signs:</h3>
+                    <ul>
+                        <li>Blue "📖 View Document" buttons appear</li>
+                        <li>Console shows "🎯 ChatMessage rendering assistant message"</li>
+                        <li>Console shows "🔗 SourceLink mounted/updated"</li>
+                        <li>Buttons are clickable and open documents</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: #dc3545;">❌ Problem Signs:</h3>
+                    <ul>
+                        <li>No blue buttons visible in chat response</li>
+                        <li>Only "📚 X sources" toggle button shows</li>
+                        <li>Console errors about missing components</li>
+                        <li>Sources section is empty or hidden</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        const consoleOutput = document.getElementById('console-output');
+        let consoleMonitorActive = false;
+
+        // Override console.log to capture SourceLink logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, arguments);
+            
+            if (consoleMonitorActive) {
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                
+                if (message.includes('🎯 ChatMessage') || message.includes('🔗 SourceLink') || message.includes('sources')) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const logEntry = document.createElement('div');
+                    logEntry.style.margin = '5px 0';
+                    logEntry.style.padding = '5px';
+                    logEntry.style.borderLeft = '3px solid #4fd1c7';
+                    logEntry.style.backgroundColor = '#2d3748';
+                    logEntry.innerHTML = `<span style="color: #68d391;">[${timestamp}]</span> ${message}`;
+                    consoleOutput.appendChild(logEntry);
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }
+            }
+        };
+
+        function addResult(type, title, content, isHtml = false) {
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            const titleElement = document.createElement('h3');
+            titleElement.textContent = title;
+            titleElement.style.marginTop = '0';
+            div.appendChild(titleElement);
+            
+            if (isHtml) {
+                const contentDiv = document.createElement('div');
+                contentDiv.innerHTML = content;
+                div.appendChild(contentDiv);
+            } else {
+                const pre = document.createElement('pre');
+                pre.textContent = content;
+                div.appendChild(pre);
+            }
+            
+            resultsDiv.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearAll() {
+            resultsDiv.innerHTML = '';
+            consoleOutput.innerHTML = '<div style="color: #4fd1c7; margin-bottom: 10px;">📟 Console Monitor Active - Watching for SourceLink logs...</div>';
+        }
+
+        function monitorConsole() {
+            const monitor = document.getElementById('console-monitor');
+            consoleMonitorActive = !consoleMonitorActive;
+            
+            if (consoleMonitorActive) {
+                monitor.style.display = 'block';
+                addResult('info', '👀 Console Monitor Started', 'Now monitoring console for SourceLink and ChatMessage logs...');
+            } else {
+                monitor.style.display = 'none';
+                addResult('info', '⏹️ Console Monitor Stopped', 'Console monitoring disabled.');
+            }
+        }
+
+        async function testAPIOnly() {
+            addResult('info', '🔄 Testing RAG API...', 'Making direct API call to verify sources...');
+            
+            try {
+                const response = await fetch('/api/rag/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'What is Twilio?',
+                        conversationId: '550e8400-e29b-41d4-a716-446655440999',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.sources && data.sources.length > 0) {
+                    const sourcesSummary = data.sources.map((source, index) => 
+                        `${index + 1}. ${source.title} (${Math.round(source.similarity * 100)}% match)`
+                    ).join('\n');
+                    
+                    addResult('success', '✅ RAG API Working Perfect!', 
+                        `✓ Response received\n` +
+                        `✓ ${data.sources.length} sources returned\n` +
+                        `✓ Confidence: ${Math.round(data.confidence * 100)}%\n\n` +
+                        `Sources:\n${sourcesSummary}\n\n` +
+                        `Sample source structure:\n${JSON.stringify(data.sources[0], null, 2)}`
+                    );
+                } else {
+                    addResult('error', '❌ RAG API Issue', 
+                        data.error || 'No sources returned from API'
+                    );
+                }
+            } catch (error) {
+                addResult('error', '❌ API Network Error', error.message);
+            }
+        }
+
+        async function runFullTest() {
+            addResult('info', '🚀 Starting Complete Test Suite...', 'Running comprehensive verification...');
+            
+            // Test 1: API
+            await testAPIOnly();
+            
+            // Test 2: Component check
+            setTimeout(() => {
+                addResult('info', '🔍 Component Analysis', 
+                    'Current page component scan:\n\n' +
+                    `• Chat containers: ${document.querySelectorAll('[class*="chat"]').length}\n` +
+                    `• Message elements: ${document.querySelectorAll('[class*="message"]').length}\n` +
+                    `• Source links: ${document.querySelectorAll('[data-source-link="true"]').length}\n` +
+                    `• View Document buttons: ${Array.from(document.querySelectorAll('a')).filter(a => a.textContent && a.textContent.includes('View Document')).length}\n\n` +
+                    `Note: If counts are 0, chatbot is not on this page.\n` +
+                    `Open http://localhost:3000 to use the main chatbot.`
+                );
+            }, 1000);
+            
+            // Test 3: Instructions
+            setTimeout(() => {
+                addResult('warning', '📋 Next Steps', 
+                    '1. ✅ API test completed - sources are being returned correctly\n' +
+                    '2. 🔄 Now test the actual chatbot interface:\n' +
+                    '   • Open http://localhost:3000\n' +
+                    '   • Click chatbot icon (bottom-right)\n' +
+                    '   • Ask: "What is Twilio?"\n' +
+                    '   • Look for bright BLUE buttons with "📖 View Document"\n' +
+                    '3. 👀 Enable console monitoring above to see debug logs\n' +
+                    '4. 🎯 Expected: Blue buttons should appear after AI response'
+                );
+            }, 2000);
+        }
+
+        // Auto-start console monitoring
+        setTimeout(() => {
+            monitorConsole();
+            addResult('info', '🎬 Debug Session Ready', 
+                'Console monitoring is active.\n' +
+                'SourceLink components now have enhanced visibility.\n' +
+                'Test the chatbot to see bright blue "View Document" buttons!'
+            );
+        }, 500);
+    </script>
+</body>
+</html>

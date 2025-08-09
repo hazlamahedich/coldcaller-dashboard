@@ -15,6 +15,9 @@ router.get('/', asyncHandler(async (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       health: '/health',
+      rag_chat: '/api/rag',
+      chat: '/api/chat',
+      documents: '/api/documents',
       leads: '/api/leads (coming soon)',
       calls: '/api/calls (coming soon)',
       scripts: '/api/scripts (coming soon)',
@@ -36,15 +39,26 @@ router.get('/status', asyncHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       features: {
+        chat_api: 'operational',
+        rag_chatbot: 'operational',
         leads_management: 'coming_soon',
         call_logging: 'coming_soon', 
         script_management: 'coming_soon',
         analytics_dashboard: 'coming_soon',
-        audio_playback: 'coming_soon',
+        audio_playbook: 'coming_soon',
       },
     },
   });
 }));
+
+// Route imports
+const chatRoutes = require('./ragChat');
+const documentRoutes = require('./documents');
+
+// Route usage - Mount RAG routes at /rag path
+router.use('/rag', chatRoutes);
+router.use('/chat', chatRoutes); // Keep both for backward compatibility
+router.use('/documents', documentRoutes);
 
 // Future route imports will go here:
 // import leadsRoutes from './leads.js';

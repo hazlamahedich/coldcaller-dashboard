@@ -54,7 +54,13 @@ button[title*="Call"] {
 }
 
 /* Prevent any automatic styling that browsers might apply to detected phone numbers */
-a[href^="tel:"] {
+a[href^="tel:"]:not([data-source-link]) {
   pointer-events: none !important;
   text-decoration: none !important;
+}
+
+/* Ensure source links are always clickable */
+a[data-source-link] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }

@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import chatbot styles */
+@import './styles/chatbot.css';
+
 /* CSS Variables for Modern Theme Toggle */
 :root {
   --background: #ffffff;

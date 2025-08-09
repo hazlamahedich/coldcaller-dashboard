@@ -8,6 +8,7 @@ import { MakeCalls, ManageLeads, Analytics, Settings } from './pages';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatbotToggle from './components/ChatbotToggle';
 
 // Import contexts
 import { 
@@ -20,6 +21,8 @@ import {
 
 // Import phone detection fix styles
 import './styles/phone-detection-fix.css';
+// Import chatbot contrast fix styles
+import './styles/chatbot.css';
 
 // Main App Component with React Router
 function App() {
@@ -62,6 +65,8 @@ function App() {
                       </ProtectedRoute>
                     } />
                   </Routes>
+                  {/* Global Chatbot Toggle - Available on all pages */}
+                  <ChatbotToggle />
                 </Router>
               </ErrorBoundary>
             </CallProvider>
