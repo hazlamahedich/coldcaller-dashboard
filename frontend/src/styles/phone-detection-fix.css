@@ -1,0 +1,60 @@
+/* Phone Detection Prevention Styles */
+/* Prevents browsers from automatically converting phone numbers to tel: links */
+
+/* Prevent automatic phone number detection on display spans */
+[data-phone-display] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none !important;
+  /* Prevent iOS Safari auto-detection */
+  -webkit-text-size-adjust: none;
+  /* Prevent Android Chrome auto-detection */
+  -webkit-touch-callout: none;
+}
+
+/* Ensure phone buttons work properly despite prevention styles */
+button[title*="Call"] {
+  pointer-events: auto !important;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  /* Override any automatic link styling */
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+/* General prevention of auto-linking for phone-like content */
+.kanban-card {
+  /* Prevent phone detection on entire card */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 768px) {
+  [data-phone-display] {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -khtml-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* Prevent mobile browsers from styling phone numbers */
+  span[data-phone-display] {
+    color: inherit !important;
+    text-decoration: none !important;
+    border: none !important;
+  }
+}
+
+/* Prevent any automatic styling that browsers might apply to detected phone numbers */
+a[href^="tel:"] {
+  pointer-events: none !important;
+  text-decoration: none !important;
+}
