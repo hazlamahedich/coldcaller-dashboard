@@ -1,6 +1,7 @@
 const { callLogs, leads, generateId } = require('../data/dataStore');
 const ResponseFormatter = require('../utils/responseFormatter');
 const SIPManager = require('../services/sipManager');
+const TwilioService = require('../services/twilioService');
 const CallRecordingModel = require('../models/callRecordingModel');
 const fs = require('fs');
 const path = require('path');
@@ -214,13 +215,23 @@ const getCallStats = (req, res) => {
       }
     }
     
-    // Calculate statistics
+    // Calculate statistics with frontend-compatible field names
+    const connectedCount = filteredLogs.filter(log => 
+      ['Interested', 'Not Interested', 'Callback Requested'].includes(log.outcome)
+    ).length;
+    const appointmentCount = filteredLogs.filter(log => 
+      ['Interested', 'Qualified', 'Callback Requested'].includes(log.outcome)
+    ).length;
+
     const stats = {
       totalCalls: filteredLogs.length,
+      callsMade: filteredLogs.length,  // Frontend compatibility
+      connected: connectedCount,
+      contactsReached: connectedCount, // Frontend compatibility
+      appointments: appointmentCount,
+      appointmentsSet: appointmentCount, // Frontend compatibility
       byOutcome: {
-        connected: filteredLogs.filter(log => 
-          ['Interested', 'Not Interested', 'Callback Requested'].includes(log.outcome)
-        ).length,
+        connected: connectedCount,
         voicemail: filteredLogs.filter(log => log.outcome === 'Voicemail').length,
         noAnswer: filteredLogs.filter(log => log.outcome === 'No Answer').length,
         busy: filteredLogs.filter(log => log.outcome === 'Busy').length,
@@ -302,13 +313,105 @@ const startCall = async (req, res) => {
   try {
     const { leadId, phoneNumber, agentId, campaignId } = req.body;
     
-    // Validate lead exists if provided
-    let lead = null;
-    if (leadId) {
-      lead = leads.find(l => l.id === leadId);
-      if (!lead) {
-        return ResponseFormatter.error(res, 'Lead not found', 404);
+    // Enhanced input validation with detailed error messages
+    const validationErrors = [];
+    
+    // Validate phone number
+    if (!phoneNumber || typeof phoneNumber !== 'string') {
+      validationErrors.push({
+        field: 'phoneNumber',
+        message: 'Phone number is required',
+        code: 'MISSING_PHONE_NUMBER'
+      });
+    } else {
+      // More flexible phone number validation for international numbers
+      // Allow: +, digits, spaces, dashes, dots, parentheses
+      const phoneRegex = /^[\+]?[\d\s\-\(\)\.]{8,20}$/;
+      const cleanPhone = phoneNumber.replace(/[\s\-\(\)\.]/g, '');
+      
+      // Must start with digit 1-9 after cleaning, and have appropriate length
+      if (!phoneRegex.test(phoneNumber) || !/^[\+]?[1-9]\d*$/.test(cleanPhone) || cleanPhone.length < 8 || cleanPhone.length > 16) {
+        validationErrors.push({
+          field: 'phoneNumber',
+          message: 'Invalid phone number format. Must be 8-16 digits, optionally starting with + and may contain spaces, dashes, dots, or parentheses',
+          code: 'INVALID_PHONE_FORMAT',
+          received: phoneNumber
+        });
       }
+    }
+    
+    // Validate leadId if provided
+    let lead = null;
+    if (leadId !== null && leadId !== undefined) {
+      if (!Number.isInteger(leadId) || leadId <= 0) {
+        validationErrors.push({
+          field: 'leadId',
+          message: 'Lead ID must be a positive integer',
+          code: 'INVALID_LEAD_ID',
+          received: leadId
+        });
+      } else {
+        lead = leads.find(l => l.id === leadId);
+        if (!lead) {
+          validationErrors.push({
+            field: 'leadId',
+            message: `Lead with ID ${leadId} not found`,
+            code: 'LEAD_NOT_FOUND',
+            received: leadId
+          });
+        }
+      }
+    }
+    
+    // Validate agentId if provided
+    if (agentId !== null && agentId !== undefined) {
+      if (typeof agentId !== 'string' || agentId.trim().length === 0) {
+        validationErrors.push({
+          field: 'agentId',
+          message: 'Agent ID must be a non-empty string',
+          code: 'INVALID_AGENT_ID',
+          received: agentId
+        });
+      } else if (agentId.length > 50) {
+        validationErrors.push({
+          field: 'agentId',
+          message: 'Agent ID cannot exceed 50 characters',
+          code: 'AGENT_ID_TOO_LONG',
+          received: agentId.length
+        });
+      }
+    }
+    
+    // Validate campaignId if provided
+    if (campaignId !== null && campaignId !== undefined) {
+      if (typeof campaignId !== 'string' || campaignId.trim().length === 0) {
+        validationErrors.push({
+          field: 'campaignId',
+          message: 'Campaign ID must be a non-empty string',
+          code: 'INVALID_CAMPAIGN_ID',
+          received: campaignId
+        });
+      } else if (campaignId.length > 50) {
+        validationErrors.push({
+          field: 'campaignId',
+          message: 'Campaign ID cannot exceed 50 characters',
+          code: 'CAMPAIGN_ID_TOO_LONG',
+          received: campaignId.length
+        });
+      }
+    }
+    
+    // Return validation errors if any
+    if (validationErrors.length > 0) {
+      console.warn('Call start validation failed:', {
+        errors: validationErrors,
+        requestBody: req.body,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString()
+      });
+      
+      return ResponseFormatter.validationError(res, validationErrors);
     }
 
     const callId = generateId();
@@ -358,18 +461,42 @@ const startCall = async (req, res) => {
       nextActions: []
     };
 
-    // Initialize SIP call
-    const sipResult = await SIPManager.initiateCall({
-      id: callId,
+    // Use Twilio for real calls instead of mock SIP
+    const twilioResult = await TwilioService.makeCall(
+      process.env.TWILIO_PHONE_NUMBER, 
       phoneNumber,
-      callData: newCall
-    });
+      {
+        record: false,
+        statusCallback: `${process.env.TWILIO_STATUS_WEBHOOK_URL}?callId=${callId}`,
+        recordingStatusCallback: process.env.TWILIO_RECORDING_WEBHOOK_URL
+      }
+    );
 
-    if (!sipResult.success) {
+    if (!twilioResult.success) {
       newCall.status = 'failed';
       newCall.outcome = 'Failed';
       newCall.disposition = 'system_error';
-      newCall.notes = `SIP Error: ${sipResult.error}`;
+      newCall.notes = `Twilio Error: ${twilioResult.error}`;
+      
+      // Log the specific error for debugging
+      console.error('Twilio call failed:', {
+        callId,
+        phoneNumber,
+        error: twilioResult.error,
+        code: twilioResult.code
+      });
+    } else {
+      // Store Twilio call SID for tracking
+      newCall.twilioCallSid = twilioResult.callSid;
+      newCall.notes = `Call initiated via Twilio (SID: ${twilioResult.callSid})`;
+      
+      console.log('✅ Twilio call initiated:', {
+        callId,
+        twilioCallSid: twilioResult.callSid,
+        from: twilioResult.from,
+        to: twilioResult.to,
+        status: twilioResult.status
+      });
     }
 
     callLogs.push(newCall);
@@ -378,14 +505,53 @@ const startCall = async (req, res) => {
       res,
       {
         call: newCall,
-        sip: sipResult
+        twilio: twilioResult
       },
       'Call initiated successfully',
       201
     );
   } catch (error) {
-    console.error('Error starting call:', error);
-    return ResponseFormatter.error(res, 'Failed to start call');
+    console.error('Error starting call:', {
+      error: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+    
+    // Handle specific error types with detailed messages
+    if (error.name === 'ValidationError') {
+      return ResponseFormatter.validationError(res, [{
+        field: 'validation',
+        message: error.message,
+        code: 'VALIDATION_ERROR'
+      }]);
+    }
+    
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return ResponseFormatter.error(res, 'Unable to connect to call service. Please try again later.', 503, {
+        code: 'SERVICE_UNAVAILABLE',
+        type: 'CONNECTION_ERROR'
+      });
+    }
+    
+    if (error.message && error.message.includes('phone')) {
+      return ResponseFormatter.error(res, `Phone number validation failed: ${error.message}`, 400, {
+        code: 'PHONE_VALIDATION_ERROR',
+        type: 'VALIDATION_ERROR'
+      });
+    }
+    
+    // Generic error with more helpful message
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Call initiation failed: ${error.message}`
+      : 'Unable to start call. Please check your input and try again.';
+      
+    return ResponseFormatter.error(res, errorMessage, 500, {
+      code: 'CALL_START_ERROR',
+      type: 'SYSTEM_ERROR'
+    });
   }
 };
 
@@ -453,8 +619,22 @@ const endCall = async (req, res) => {
     const call = callLogs[callIndex];
     const now = new Date();
     
-    // End SIP call
-    await SIPManager.endCall(id);
+    // End Twilio call if it has a Twilio SID
+    if (call.twilioCallSid) {
+      try {
+        const hangupResult = await TwilioService.updateCall(call.twilioCallSid, { status: 'completed' });
+        console.log('📞 Twilio call ended:', { 
+          callId: id, 
+          twilioCallSid: call.twilioCallSid, 
+          success: hangupResult.success 
+        });
+      } catch (error) {
+        console.warn('⚠️ Could not end Twilio call:', error.message);
+      }
+    } else {
+      // Fallback to SIP manager for backward compatibility
+      await SIPManager.endCall(id);
+    }
     
     // Finalize call data
     call.status = 'ended';
