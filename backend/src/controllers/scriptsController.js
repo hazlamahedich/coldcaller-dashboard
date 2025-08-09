@@ -163,6 +163,63 @@ const deleteScript = (req, res) => {
 };
 
 /**
+ * Personalize a script with lead and agent information
+ */
+const personalizeScript = (req, res) => {
+  try {
+    const { id } = req.params;
+    const { lead = {}, agent = {} } = req.body;
+    
+    const script = scripts[id];
+    if (!script) {
+      return ResponseFormatter.notFound(res, 'Script');
+    }
+    
+    // Create personalized version of the script
+    let personalizedText = script.text;
+    
+    // Replace common placeholders with lead data
+    const replacements = {
+      '[NAME]': lead.name || '[NAME]',
+      '[LEAD_NAME]': lead.name || '[LEAD_NAME]',
+      '[COMPANY]': lead.company || '[COMPANY]',
+      '[THEIR COMPANY]': lead.company || '[THEIR COMPANY]',
+      '[PHONE]': lead.phone || '[PHONE]',
+      '[EMAIL]': lead.email || '[EMAIL]',
+      '[YOUR NAME]': agent.name || '[YOUR NAME]',
+      '[AGENT_NAME]': agent.name || '[AGENT_NAME]',
+      '[YOUR COMPANY]': agent.company || '[YOUR COMPANY]',
+      '[AGENT_COMPANY]': agent.company || '[AGENT_COMPANY]'
+    };
+    
+    // Apply replacements
+    Object.entries(replacements).forEach(([placeholder, replacement]) => {
+      personalizedText = personalizedText.replace(new RegExp(placeholder, 'gi'), replacement);
+    });
+    
+    const personalizedScript = {
+      ...script,
+      text: personalizedText,
+      personalized: true,
+      personalizedAt: new Date().toISOString(),
+      leadInfo: {
+        name: lead.name,
+        company: lead.company
+      }
+    };
+    
+    return ResponseFormatter.success(
+      res,
+      personalizedScript,
+      'Script personalized successfully'
+    );
+  } catch (error) {
+    console.error('Error personalizing script:', error);
+    return ResponseFormatter.error(res, 'Failed to personalize script');
+  }
+};
+
+/**
  * Get script categories
  */
 const getScriptCategories = (req, res) => {
@@ -189,5 +246,6 @@ module.exports = {
   createScript,
   updateScript,
   deleteScript,
+  personalizeScript,
   getScriptCategories
 };

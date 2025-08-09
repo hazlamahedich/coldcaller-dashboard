@@ -8,6 +8,7 @@ const {
   createScript,
   updateScript,
   deleteScript,
+  personalizeScript,
   getScriptCategories
 } = require('../controllers/scriptsController');
 
@@ -105,5 +106,12 @@ router.put('/:id', updateScriptValidation, handleValidationErrors, updateScript)
  * @access  Public
  */
 router.delete('/:id', deleteScript);
+
+/**
+ * @route   POST /api/scripts/:id/personalize
+ * @desc    Personalize a script with lead and agent data
+ * @access  Public
+ */
+router.post('/:id/personalize', personalizeScript);
 
 module.exports = router;
