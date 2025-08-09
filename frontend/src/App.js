@@ -7,12 +7,16 @@ import { MakeCalls, ManageLeads, Analytics, Settings } from './pages';
 // Import Layout and ErrorBoundary
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Import contexts
-import { ThemeProvider } from './contexts/ThemeContext';
-import { SettingsProvider } from './contexts/SettingsContext';
-import { LeadProvider } from './contexts/LeadContext';
-import { CallProvider } from './contexts/CallContext';
+import { 
+  AuthProvider,
+  ThemeProvider, 
+  SettingsProvider, 
+  LeadProvider, 
+  CallProvider 
+} from './contexts';
 
 // Import phone detection fix styles
 import './styles/phone-detection-fix.css';
@@ -20,26 +24,51 @@ import './styles/phone-detection-fix.css';
 // Main App Component with React Router
 function App() {
   return (
-    <ThemeProvider>
-      <SettingsProvider>
-        <LeadProvider>
-          <CallProvider>
-            <ErrorBoundary>
-              <Router>
-                <Layout>
+    <AuthProvider>
+      <ThemeProvider>
+        <SettingsProvider>
+          <LeadProvider>
+            <CallProvider>
+              <ErrorBoundary>
+                <Router>
                   <Routes>
-                    <Route path="/" element={<MakeCalls />} />
-                    <Route path="/leads" element={<ManageLeads />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/settings" element={<Settings />} />
+                    {/* Protected Routes */}
+                    <Route path="/" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <MakeCalls />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/leads" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <ManageLeads />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/analytics" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Analytics />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/settings" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Settings />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
                   </Routes>
-                </Layout>
-              </Router>
-            </ErrorBoundary>
-          </CallProvider>
-        </LeadProvider>
-      </SettingsProvider>
-    </ThemeProvider>
+                </Router>
+              </ErrorBoundary>
+            </CallProvider>
+          </LeadProvider>
+        </SettingsProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

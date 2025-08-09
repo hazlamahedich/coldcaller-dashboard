@@ -1,5 +1,5 @@
-import request from 'supertest';
-import app from '../../src/server.js';
+const request = require('supertest');
+const app = require('../../src/server.js');
 
 describe('Server Configuration', () => {
   describe('GET /', () => {

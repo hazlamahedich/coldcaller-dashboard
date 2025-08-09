@@ -82,9 +82,37 @@ const sqlInjectionProtection = (req, res, next) => {
     /(\bSYSTEM\s*\()/gi
   ];
 
+  // Fields that should be exempt from certain SQL injection patterns
+  const phoneNumberFields = ['phoneNumber', 'phone'];
+  const specialCharacterPattern = /(;|\||&|\$|\+|,|\(|\)|'|"|`)/gi; // Pattern 4
+
+  const isPhoneField = (path) => {
+    const fieldName = path.split('.').pop();
+    return phoneNumberFields.includes(fieldName);
+  };
+
+  const isValidPhoneNumber = (value) => {
+    // Clean the phone number by removing spaces, dashes, parentheses
+    const cleaned = value.replace(/[\s\-\(\)\.]/g, '');
+    
+    // E.164 format: +1234567890 to +123456789012345 (after cleaning)
+    return /^\+[1-9]\d{1,14}$/.test(cleaned);
+  };
+
   const checkForSqlInjection = (obj, path = '') => {
     if (typeof obj === 'string') {
-      for (const pattern of sqlPatterns) {
+      for (let i = 0; i < sqlPatterns.length; i++) {
+        const pattern = sqlPatterns[i];
+        
+        
+        // Special handling for phone number fields and the special character pattern
+        if (i === 3 && isPhoneField(path)) { // Pattern 4: special characters
+          // If this is a phone field and contains a valid phone number, skip the + check
+          if (isValidPhoneNumber(obj)) {
+            continue; // Skip this pattern for valid phone numbers
+          }
+        }
+        
         if (pattern.test(obj)) {
           console.warn(`Potential SQL injection detected at ${path}:`, obj);
           
@@ -95,7 +123,9 @@ const sqlInjectionProtection = (req, res, next) => {
             value: obj,
             ip: req.ip,
             userAgent: req.get('User-Agent'),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            pattern: `Pattern ${i + 1}`,
+            isPhoneField: isPhoneField(path)
           });
           
           return res.status(400).json({
@@ -282,14 +312,15 @@ const createAdvancedRateLimit = (options = {}) => {
     }
   });
 
-  // Create slow down middleware
+  // Create slow down middleware with fixed deprecation warning
   const slowDownLimiter = slowDown({
     windowMs,
     delayAfter,
-    delayMs,
+    delayMs: () => delayMs, // Fixed deprecation warning
     maxDelayMs,
     skipSuccessfulRequests,
-    skipFailedRequests
+    skipFailedRequests,
+    validate: { delayMs: false } // Disable deprecation warning
   });
 
   return [slowDownLimiter, limiter];
@@ -483,8 +514,7 @@ const getCSPDirectives = () => {
     frameSrc: ["'none'"],
     baseUri: ["'self'"],
     formAction: ["'self'"],
-    frameAncestors: ["'none'"],
-    upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : undefined
+    frameAncestors: ["'none'"]
   };
 };
 

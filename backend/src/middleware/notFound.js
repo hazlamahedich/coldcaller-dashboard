@@ -2,7 +2,7 @@
  * 404 Not Found middleware
  * Handles requests to undefined routes
  */
-export const notFound = (req, res, next) => {
+const notFound = (req, res, next) => {
   const error = new Error(`Route not found: ${req.method} ${req.originalUrl}`);
   error.statusCode = 404;
   
@@ -29,3 +29,5 @@ export const notFound = (req, res, next) => {
     method: req.method,
   });
 };
+
+module.exports = { notFound };

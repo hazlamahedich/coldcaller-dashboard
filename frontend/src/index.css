@@ -2,6 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for Modern Theme Toggle */
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #3b82f6;
+  --radius: 8px;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+  --background: #030712; /* Enhanced dark background for better contrast */
+  --foreground: #f8fafc; /* Brighter foreground text */
+  --card: #111827; /* Darker cards for better contrast */
+  --card-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #374151;
+  --secondary-foreground: #e5e7eb; /* Enhanced secondary text */
+  --muted: #1f2937; /* Better muted background */
+  --muted-foreground: #9ca3af;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --border: #4b5563; /* Improved border visibility */
+  --input: #374151;
+  --ring: #60a5fa; /* Brighter focus ring for accessibility */
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  
+  /* Enhanced contrast colors for UI elements */
+  --success: #065f46;
+  --success-foreground: #bbf7d0;
+  --warning: #92400e;
+  --warning-foreground: #fef3c7;
+  --error: #991b1b;
+  --error-foreground: #fecaca;
+  --info: #1e40af;
+  --info-foreground: #dbeafe;
+}
+
+/* Modern Theme Toggle Styles */
+.theme-toggle {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: var(--muted);
+  border-radius: 15px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+}
+
+.theme-toggle:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
 /* Custom base styles */
 body {
   margin: 0;
@@ -10,7 +84,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
 code {
@@ -18,28 +92,293 @@ code {
     monospace;
 }
 
-/* Custom component styles */
+/* Modern Twilio-inspired component styles */
 .btn-primary {
-  @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed;
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm hover:shadow-md;
 }
 
 .btn-secondary {
-  @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed;
+  @apply font-medium py-2.5 px-4 rounded-lg transition-all duration-200 disabled:cursor-not-allowed shadow-sm;
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--muted);
+  border-color: var(--border);
+}
+
+.btn-secondary:disabled {
+  background-color: var(--muted);
+  opacity: 0.5;
 }
 
 .btn-danger {
-  @apply bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed;
+  @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm hover:shadow-md;
 }
 
+/* Modern card with Twilio-style clean shadows */
 .card {
-  @apply bg-white rounded-lg shadow-lg p-6;
+  @apply rounded-xl shadow-sm border p-6 transition-all duration-200 hover:shadow-md;
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--card-foreground);
+}
+
+.card-dark {
+  @apply bg-gray-800 rounded-xl shadow-sm border border-gray-700 p-6 transition-all duration-200 hover:shadow-md;
+}
+
+/* Professional gradients */
+.gradient-blue {
+  @apply bg-gradient-to-r from-blue-50 to-blue-100;
+}
+
+.gradient-green {
+  @apply bg-gradient-to-r from-green-50 to-green-100;
+}
+
+.gradient-purple {
+  @apply bg-gradient-to-r from-purple-50 to-purple-100;
+}
+
+/* Dark mode gradients */
+.gradient-blue-dark {
+  @apply bg-gradient-to-r from-blue-900/30 to-blue-800/30;
+}
+
+.gradient-green-dark {
+  @apply bg-gradient-to-r from-green-900/30 to-green-800/30;
+}
+
+.gradient-purple-dark {
+  @apply bg-gradient-to-r from-purple-900/30 to-purple-800/30;
+}
+
+/* Ensure text readability in dark mode */
+[data-theme="dark"] * {
+  color: var(--foreground);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div {
+  color: var(--foreground);
+}
+
+/* Override any remaining hardcoded text colors */
+[data-theme="dark"] .text-black {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-gray-900 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .text-gray-500 {
+  color: #64748b !important;
 }
 
 .input-field {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm;
+  background-color: var(--input);
+  border: 1px solid var(--border);
+  color: var(--foreground);
 }
 
-/* Custom utilities for ScriptDisplay */
+.input-field:focus {
+  border-color: var(--ring);
+}
+
+.input-field-dark {
+  @apply w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm;
+  background-color: var(--input);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+/* Professional status indicators */
+.status-indicator {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-connected {
+  @apply bg-green-100 text-green-800;
+}
+
+[data-theme="dark"] .status-connected {
+  @apply bg-green-900/30 text-green-300;
+}
+
+.status-voicemail {
+  @apply bg-blue-100 text-blue-800;
+}
+
+[data-theme="dark"] .status-voicemail {
+  @apply bg-blue-900/30 text-blue-300;
+}
+
+.status-callback {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+[data-theme="dark"] .status-callback {
+  @apply bg-yellow-900/30 text-yellow-300;
+}
+
+.status-no-answer {
+  @apply bg-gray-100 text-gray-800;
+}
+
+[data-theme="dark"] .status-no-answer {
+  @apply bg-gray-800/50 text-gray-200;
+}
+
+/* Additional dark mode status indicators */
+[data-theme="dark"] .status-offline {
+  @apply bg-red-900/30 text-red-300;
+}
+
+[data-theme="dark"] .status-online {
+  @apply bg-green-900/30 text-green-300;
+}
+
+/* Modern loading animations */
+.pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .8;
+  }
+}
+
+/* Custom utilities */
 .border-3 {
   border-width: 3px;
+}
+
+/* Smooth scroll for modern feel */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+/* Enhanced focus styles for accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.focus-ring-dark {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-900;
+}
+
+/* High contrast button styles */
+.btn-high-contrast {
+  @apply font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700 text-white border-2 border-green-600 hover:border-green-700;
+}
+
+.btn-warning {
+  @apply bg-yellow-600 hover:bg-yellow-700 text-white border-2 border-yellow-600 hover:border-yellow-700;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700;
+}
+
+/* Dark mode specific button enhancements */
+[data-theme="dark"] .btn-success {
+  @apply bg-green-600 hover:bg-green-500 border-green-600 hover:border-green-500;
+}
+
+[data-theme="dark"] .btn-warning {
+  @apply bg-yellow-600 hover:bg-yellow-500 border-yellow-600 hover:border-yellow-500;
+}
+
+[data-theme="dark"] .btn-danger {
+  @apply bg-red-600 hover:bg-red-500 border-red-600 hover:border-red-500;
+}
+
+/* Improved focus indicators for buttons */
+[data-theme="dark"] .btn-success:focus {
+  @apply ring-green-400 ring-offset-gray-900;
+}
+
+[data-theme="dark"] .btn-warning:focus {
+  @apply ring-yellow-400 ring-offset-gray-900;
+}
+
+[data-theme="dark"] .btn-danger:focus {
+  @apply ring-red-400 ring-offset-gray-900;
+}
+
+/* Light mode focus indicators */
+.btn-success:focus {
+  @apply ring-green-500 ring-offset-white;
+}
+
+.btn-warning:focus {
+  @apply ring-yellow-500 ring-offset-white;
+}
+
+.btn-danger:focus {
+  @apply ring-red-500 ring-offset-white;
 }

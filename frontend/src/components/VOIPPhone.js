@@ -4,6 +4,8 @@ import CallStatus from './CallStatus';
 import DTMFKeypad from './DTMFKeypad';
 import CallHistory from './CallHistory';
 import SIPManager from '../services/SIPManager';
+import SIPProviderManager from '../services/SIPProviderManager';
+import AudioFeedbackService from '../services/AudioFeedbackService';
 
 /**
  * VOIPPhone Component - Complete VOIP phone interface
@@ -15,8 +17,14 @@ const VOIPPhone = ({
   onCallLogged,
   sipConfig = null 
 }) => {
-  // SIP Manager instance
+  // SIP Manager, Provider Manager, and Audio Feedback instances
   const sipManagerRef = useRef(null);
+  const sipProviderManagerRef = useRef(null);
+  const audioFeedbackRef = useRef(null);
+  
+  // SIP provider state
+  const [sipProvider, setSipProvider] = useState('generic');
+  const [dtmfMethod, setDtmfMethod] = useState('rfc4733');
   
   // Phone state
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -39,23 +47,53 @@ const VOIPPhone = ({
   const [error, setError] = useState(null);
   const [callHistoryTrigger, setCallHistoryTrigger] = useState(0);
 
-  // Initialize SIP Manager
+  // Initialize SIP Manager, Provider Manager, and Audio Feedback
   useEffect(() => {
     sipManagerRef.current = new SIPManager();
+    sipProviderManagerRef.current = new SIPProviderManager();
+    audioFeedbackRef.current = new AudioFeedbackService();
+    
     const sip = sipManagerRef.current;
+    const sipProvider = sipProviderManagerRef.current;
+    const audioFeedback = audioFeedbackRef.current;
 
-    // Configure SIP if config provided
+    // Initialize SIP provider configuration
+    let providerConfig;
+    
     if (sipConfig) {
+      // Use provided configuration
       sip.configure(sipConfig);
+      providerConfig = sipConfig;
     } else {
-      // Demo configuration
-      sip.configure({
-        uri: 'demo@voip.example.com',
-        wsServers: 'wss://voip.example.com:7443',
-        displayName: 'Demo User',
-        authUser: 'demo',
-        password: 'demo123'
-      });
+      // Auto-detect and configure provider
+      try {
+        providerConfig = sipProvider.initializeFromEnvironment();
+        const sipConfiguration = sipProvider.getSIPConfiguration();
+        
+        sip.configure(sipConfiguration);
+        
+        // Set provider type and DTMF method
+        setSipProvider(sipProvider.activeProvider);
+        const dtmfConfig = sipProvider.getDTMFConfig();
+        setDtmfMethod(dtmfConfig.preferredMethod);
+        
+        console.log(`🔧 SIP provider initialized: ${providerConfig.name}`);
+        console.log(`🔢 DTMF method: ${dtmfConfig.preferredMethod}`);
+        
+      } catch (error) {
+        console.error('❌ Failed to initialize SIP provider:', error);
+        
+        // Fallback to demo configuration
+        sip.configure({
+          uri: 'demo@voip.example.com',
+          wsServers: 'wss://voip.example.com:7443',
+          displayName: 'Demo User',
+          authUser: 'demo',
+          password: 'demo123',
+          provider: 'generic',
+          dtmfType: 'rfc4733'
+        });
+      }
     }
 
     // Set up event listeners
@@ -69,6 +107,7 @@ const VOIPPhone = ({
     sip.on('callResumed', handleCallResumed);
     sip.on('muteChanged', handleMuteChanged);
     sip.on('dtmfSent', handleDTMFSent);
+    sip.on('audioFeedback', handleAudioFeedback);
 
     // Auto-register for demo
     setTimeout(() => {
@@ -87,26 +126,39 @@ const VOIPPhone = ({
     return () => {
       clearInterval(qualityInterval);
       sip.destroy();
+      audioFeedback.destroy();
     };
   }, [sipConfig]);
 
-  // SIP Event Handlers
+  // Enhanced SIP Event Handlers with Audio Feedback Integration
   const handleSipRegistered = (data) => {
     console.log('✅ SIP registered:', data);
     setSipRegistered(true);
     setError(null);
+    
+    // Audio feedback for SIP registration
+    audioFeedbackRef.current?.onCallStateChange('idle', { sipRegistered: true });
   };
 
   const handleSipRegistrationFailed = (data) => {
     console.error('❌ SIP registration failed:', data);
     setSipRegistered(false);
     setError(`SIP Registration Failed: ${data.error}`);
+    
+    // Audio feedback for registration failure
+    audioFeedbackRef.current?.playFeedback('error', 'SIP registration failed', { priority: 'critical' });
   };
 
   const handleCallProgress = ({ callSession, state }) => {
     console.log(`📞 Call progress: ${state}`);
     setCallState(state);
     setCurrentCall(callSession);
+    
+    // Enhanced audio feedback for call progress
+    audioFeedbackRef.current?.onCallStateChange(state, { 
+      phoneNumber: callSession?.number,
+      duration: callSession?.duration || 0 
+    });
     
     if (state === 'connecting') {
       setError(null);
@@ -118,6 +170,13 @@ const VOIPPhone = ({
     setCallState('active');
     setCurrentCall(callSession);
     setError(null);
+    
+    // High-priority audio feedback for successful connection
+    audioFeedbackRef.current?.onCallStateChange('connected', { 
+      phoneNumber: callSession?.number,
+      priority: 'critical',
+      vibrate: true 
+    });
   };
 
   const handleCallEnded = ({ callSession, reason }) => {
@@ -125,10 +184,17 @@ const VOIPPhone = ({
     setCallState('ended');
     setCurrentCall(callSession);
     
+    // Audio feedback for call termination
+    audioFeedbackRef.current?.onCallStateChange('ended', { 
+      reason,
+      duration: callSession?.duration || 0,
+      priority: 'high' 
+    });
+    
     // Log the call
     logCall(callSession, reason);
     
-    // Reset state after 2 seconds
+    // Reset state after 2 seconds with audio coordination
     setTimeout(() => {
       setCallState('idle');
       setCurrentCall(null);
@@ -136,6 +202,9 @@ const VOIPPhone = ({
       setIsOnHold(false);
       setIsRecording(false);
       setShowDTMFKeypad(false);
+      
+      // Final state reset
+      audioFeedbackRef.current?.onCallStateChange('idle');
     }, 2000);
   };
 
@@ -166,8 +235,18 @@ const VOIPPhone = ({
     setIsMuted(muted);
   };
 
-  const handleDTMFSent = ({ tones }) => {
-    console.log(`📟 DTMF sent: ${tones}`);
+  const handleDTMFSent = ({ tones, timestamp }) => {
+    console.log(`📟 DTMF sent: ${tones} at ${timestamp}`);
+    
+    // Play DTMF confirmation feedback
+    audioFeedbackRef.current?.playDTMFConfirmation(tones);
+  };
+
+  const handleAudioFeedback = ({ type, message }) => {
+    console.log(`🔊 Audio feedback: ${type} - ${message}`);
+    
+    // Play audio feedback
+    audioFeedbackRef.current?.playFeedback(type, message);
   };
 
   // Phone number input handling
@@ -212,20 +291,55 @@ const VOIPPhone = ({
   };
 
   const handleMuteToggle = () => {
-    sipManagerRef.current?.setMute(!isMuted);
+    const newMuteState = !isMuted;
+    sipManagerRef.current?.setMute(newMuteState);
+    
+    // Enhanced audio feedback for mute toggle
+    audioFeedbackRef.current?.playFeedback(
+      newMuteState ? 'muted' : 'unmuted', 
+      null, 
+      { priority: 'normal', vibrate: true }
+    );
   };
 
   const handleHoldToggle = () => {
-    if (isOnHold) {
-      sipManagerRef.current?.resumeCall();
-    } else {
+    console.log('🔄 VOIPPhone: Hold toggle requested');
+    console.log('🔄 Current hold state:', isOnHold);
+    console.log('🔄 Current call state:', callState);
+    
+    const newHoldState = !isOnHold;
+    
+    // Update local state immediately for UI responsiveness
+    setIsOnHold(newHoldState);
+    
+    if (newHoldState) {
+      // Putting call on hold
+      setCallState('hold');
       sipManagerRef.current?.holdCall();
+      audioFeedbackRef.current?.onCallStateChange('hold', { wasActive: callState === 'active' });
+      console.log('⏸️ Call placed on hold');
+    } else {
+      // Resuming call from hold
+      setCallState('active');
+      sipManagerRef.current?.resumeCall();
+      audioFeedbackRef.current?.onCallStateChange('resume', { previouslyOnHold: true });
+      console.log('▶️ Call resumed from hold');
     }
   };
 
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
-    // In a real implementation, this would adjust audio levels
+    
+    // Update audio feedback service volume
+    audioFeedbackRef.current?.setVolume(newVolume / 100);
+    
+    // Provide audio confirmation for volume changes
+    if (newVolume > 0) {
+      audioFeedbackRef.current?.playFeedback('qualityGood', `Volume ${newVolume}%`, { 
+        priority: 'low',
+        vibrate: false 
+      });
+    }
   };
 
   const handleTransfer = (transferNumber) => {
@@ -243,14 +357,48 @@ const VOIPPhone = ({
   };
 
   const handleRecord = () => {
-    setIsRecording(!isRecording);
+    const newRecordingState = !isRecording;
+    setIsRecording(newRecordingState);
+    
+    // Enhanced audio feedback for recording state
+    audioFeedbackRef.current?.playFeedback(
+      newRecordingState ? 'recordingStarted' : 'recordingStopped',
+      null,
+      { priority: 'normal', vibrate: true }
+    );
+    
     // In a real implementation, this would start/stop recording
-    console.log(`🔴 Recording: ${!isRecording ? 'started' : 'stopped'}`);
+    console.log(`🔴 Recording: ${newRecordingState ? 'started' : 'stopped'}`);
   };
 
-  // DTMF keypad handlers
-  const handleDTMFKeyPress = (key) => {
-    sipManagerRef.current?.sendDTMF(key);
+  // Enhanced DTMF keypad handlers with audio feedback
+  const handleDTMFKeyPress = (key, transmissionInfo = {}) => {
+    console.log(`🔢 DTMF key pressed: ${key}`, transmissionInfo);
+    
+    let success = transmissionInfo.transmitted;
+    
+    // If transmission info is provided, the keypad already sent it
+    // Otherwise, send via SIP manager as fallback
+    if (!transmissionInfo.transmitted) {
+      success = sipManagerRef.current?.sendDTMF(key);
+      
+      if (!success) {
+        setError('Failed to send DTMF tone - call may not be active');
+        audioFeedbackRef.current?.playFeedback('error', 'DTMF failed', { priority: 'normal' });
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+    }
+    
+    // Play realistic DTMF confirmation with enhanced feedback
+    if (success) {
+      audioFeedbackRef.current?.playDTMFConfirmation(key);
+    }
+    
+    // Log DTMF transmission for analytics
+    if (sipProviderManagerRef.current) {
+      console.log(`📊 DTMF Analytics: Key=${key}, Method=${transmissionInfo.method || dtmfMethod}, Success=${success}`);
+    }
   };
 
   const handleShowDTMF = () => {
@@ -412,13 +560,19 @@ const VOIPPhone = ({
               <button 
                 onClick={handleShowDTMF}
                 disabled={callState !== 'active'}
-                className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  callState === 'active'
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                title="Open DTMF keypad for menu navigation"
               >
-                🔢 DTMF
+                🔢 DTMF Keypad
               </button>
               <button 
                 onClick={handleHangup}
-                className="flex-1 btn-danger py-3 text-lg"
+                className="flex-1 py-3 text-lg bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                title="End call"
               >
                 📵 Hang Up
               </button>
@@ -441,7 +595,7 @@ const VOIPPhone = ({
 
       {/* Call Controls */}
       <CallControls
-        isInCall={callState === 'active'}
+        isInCall={callState === 'active' || callState === 'hold'}
         isMuted={isMuted}
         isOnHold={isOnHold}
         volume={volume}
@@ -454,6 +608,7 @@ const VOIPPhone = ({
         isRecording={isRecording}
         connectionQuality={connectionQuality}
         callDuration={currentCall?.duration || 0}
+        callState={callState}
       />
 
       {/* Call History */}
@@ -471,6 +626,8 @@ const VOIPPhone = ({
         onClose={() => setShowDTMFKeypad(false)}
         isInCall={callState === 'active'}
         showToneAnimation={true}
+        sipManager={sipManagerRef.current}
+        dtmfMethod={dtmfMethod}
       />
     </div>
   );

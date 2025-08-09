@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { callsService } from '../services';
 import CallControls from './CallControls';
-import CallStatus from './CallStatus';
 import DTMFKeypad from './DTMFKeypad';
 
 // Enhanced DialPad Component - Professional VOIP-enabled dialer
@@ -9,12 +9,15 @@ import DTMFKeypad from './DTMFKeypad';
 // Features: Call controls, status display, DTMF tones, and backend logging
 
 const DialPad = () => {
+  const location = useLocation();
+  
   // Call State Management
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
   const [callStartTime, setCallStartTime] = useState(null);
   const [callSessionId, setCallSessionId] = useState(null);
   const [callState, setCallState] = useState('idle'); // idle, connecting, ringing, active, hold, ended
+  const [leadData, setLeadData] = useState(null);
   
   // VOIP Controls State
   const [isMuted, setIsMuted] = useState(false);
@@ -33,9 +36,42 @@ const DialPad = () => {
   // Call outcomes for logging (available for future UI enhancements)
   // const callOutcomes = ['Connected', 'Voicemail', 'Busy', 'No Answer', 'Wrong Number', 'Callback Requested'];
 
+  // Handle navigation state from Kanban or other components
+  useEffect(() => {
+    if (location.state) {
+      const { phoneNumber: navPhoneNumber, leadData: navLeadData, autoFocus, fromKanban } = location.state;
+      
+      if (navPhoneNumber) {
+        console.log('📞 DialPad received phone number from navigation:', navPhoneNumber);
+        setPhoneNumber(navPhoneNumber);
+      }
+      
+      if (navLeadData) {
+        console.log('👤 DialPad received lead data from navigation:', navLeadData);
+        setLeadData(navLeadData);
+      }
+      
+      if (fromKanban) {
+        console.log('🎯 Call initiated from Kanban board');
+        // Could add special handling for Kanban-originated calls
+      }
+      
+      // Clear the navigation state to prevent it from persisting
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   // This function runs when someone clicks a number button
   const handleNumberClick = (number) => {
-    // Add the clicked number to the phone number
+    // Handle special case for + key - only allow at the beginning
+    if (number === '+') {
+      if (phoneNumber.length === 0) {
+        setPhoneNumber('+');
+      }
+      return;
+    }
+    
+    // Add the clicked number/symbol to the phone number
     setPhoneNumber(phoneNumber + number);
   };
 
@@ -58,11 +94,20 @@ const DialPad = () => {
       
       console.log('☎️ Starting VOIP call to:', formatPhoneNumber(phoneNumber));
       
-      // Start call session tracking
-      const sessionResponse = await callsService.startCallSession({
-        phone: phoneNumber,
-        timestamp: startTime.toISOString()
-      });
+      // Start call session tracking with lead data if available
+      const callSessionData = {
+        phoneNumber: phoneNumber,
+        timestamp: startTime.toISOString(),
+        ...(leadData && {
+          leadId: leadData.id,
+          leadName: leadData.name,
+          company: leadData.company,
+          notes: leadData.notes,
+          priority: leadData.priority
+        })
+      };
+      
+      const sessionResponse = await callsService.startCallSession(callSessionData);
       
       if (sessionResponse.success) {
         setCallSessionId(sessionResponse.data.sessionId);
@@ -230,20 +275,37 @@ const DialPad = () => {
     setError(null);
   };
 
-  // Format phone number to look nice (555) 123-4567
+  // Format phone number to look nice - supports international numbers
   const formatPhoneNumber = (num) => {
-    const cleaned = num.replace(/\D/g, '');
+    if (!num) return '';
+    
+    // Handle international numbers starting with +
+    if (num.startsWith('+')) {
+      // For international numbers, be more flexible with country code length
+      const digits = num.slice(1).replace(/[^\d*#]/g, ''); // Keep digits, *, # after +
+      
+      // Handle different country code lengths (1-4 digits)
+      if (digits.length === 0) return '+';
+      if (digits.length <= 2) return `+${digits}`;
+      if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+      if (digits.length <= 7) return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`;
+      return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+    }
+    
+    // Handle domestic numbers (preserve * and # symbols)
+    const cleaned = num.replace(/[^\d*#]/g, ''); // Keep digits, *, and #
     if (cleaned.length <= 3) return cleaned;
     if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
   };
 
-  // The buttons array makes it easy to create all number buttons
+  // The buttons array makes it easy to create all number buttons - including + key
   const buttons = [
     '1', '2', '3',
     '4', '5', '6',
     '7', '8', '9',
-    '*', '0', '#'
+    '*', '0', '#',
+    '+', '', '' // Add + key and empty spaces for layout
   ];
 
   return (
@@ -278,13 +340,65 @@ const DialPad = () => {
           )}
         </div>
       
+      {/* Lead information display */}
+      {leadData && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-center">
+            <div className="text-sm font-semibold text-blue-800 mb-1">
+              📋 Calling: {leadData.name}
+            </div>
+            {leadData.company && (
+              <div className="text-xs text-blue-600 mb-2">
+                🏢 {leadData.company}
+              </div>
+            )}
+            <div className="flex justify-center items-center gap-2">
+              {leadData.priority && (
+                <div className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                  leadData.priority === 'High' ? 'bg-red-100 text-red-700' :
+                  leadData.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-green-100 text-green-700'
+                }`}>
+                  {leadData.priority === 'High' ? '🔴' : leadData.priority === 'Medium' ? '🟡' : '🟢'} {leadData.priority}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Display area showing the typed number */}
       <div className="flex mb-4 gap-1">
         <input
           type="text"
           value={formatPhoneNumber(phoneNumber)}
-          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-          placeholder="Enter phone number"
+          onChange={(e) => {
+            // Allow +, *, #, and digits - preserve special characters
+            const cleaned = e.target.value.replace(/[^\d*#+()-\s]/g, '');
+            // Extract raw number (remove formatting but keep +, *, #)
+            const rawNumber = cleaned.replace(/[-() ]/g, '');
+            setPhoneNumber(rawNumber);
+          }}
+          onKeyDown={(e) => {
+            // Handle keyboard input for dialpad keys
+            const key = e.key;
+            if (/[0-9*#]/.test(key)) {
+              e.preventDefault();
+              handleNumberClick(key);
+            } else if (key === '+' && phoneNumber.length === 0) {
+              e.preventDefault();
+              handleNumberClick('+');
+            } else if (key === 'Backspace') {
+              e.preventDefault();
+              handleDelete();
+            } else if (key === 'Enter') {
+              e.preventDefault();
+              if (phoneNumber.length > 0) {
+                handleCall();
+              }
+            }
+          }}
+          placeholder="Enter phone number (+1234567890)"
           className="input-field flex-1 text-center text-lg"
         />
         <button 
@@ -295,17 +409,27 @@ const DialPad = () => {
         </button>
       </div>
 
-      {/* Number pad with all the buttons */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {buttons.map((btn) => (
-          <button
-            key={btn}
-            onClick={() => handleNumberClick(btn)}
-            disabled={isCalling}
-            className="p-4 text-xl bg-white border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {btn}
-          </button>
+      {/* Number pad with all the buttons - Updated with green styling and closer spacing */}
+      <div className="grid grid-cols-3 gap-1 mb-4">
+        {buttons.map((btn, index) => (
+          btn === '' ? (
+            // Empty placeholder for layout
+            <div key={`empty-${index}`} className="p-4"></div>
+          ) : (
+            <button
+              key={btn}
+              onClick={() => handleNumberClick(btn)}
+              disabled={isCalling || (btn === '+' && phoneNumber.length > 0)}
+              className={`p-4 text-xl text-white border-2 rounded-lg hover:shadow-lg active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold ${
+                btn === '+' 
+                  ? 'bg-blue-500 border-blue-400 hover:bg-blue-600 hover:border-blue-500' 
+                  : 'bg-green-500 border-green-400 hover:bg-green-600 hover:border-green-500'
+              }`}
+              title={btn === '+' ? 'International prefix (only at start)' : ''}
+            >
+              {btn}
+            </button>
+          )
         ))}
       </div>
 
@@ -315,7 +439,7 @@ const DialPad = () => {
           <button 
             onClick={handleCall} 
             disabled={phoneNumber.length === 0}
-            className="btn-primary w-full text-lg py-4 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="w-full text-lg py-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95 font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
           >
             📞 Call {formatPhoneNumber(phoneNumber)}
           </button>
@@ -326,14 +450,14 @@ const DialPad = () => {
               <button 
                 onClick={() => setShowDTMFKeypad(true)}
                 disabled={callState !== 'active'}
-                className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-colors"
+                className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95"
               >
                 🔢 DTMF
               </button>
               {callState === 'active' && (
                 <button 
                   onClick={handleRecord}
-                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95 ${
                     isRecording 
                       ? 'bg-red-500 text-white animate-pulse' 
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
@@ -345,32 +469,32 @@ const DialPad = () => {
             </div>
 
             {/* Quick outcome buttons during call */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <button 
                 onClick={() => handleQuickHangUp('Connected')}
                 disabled={isLogging}
-                className="px-3 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-colors"
+                className="px-3 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95"
               >
                 ✅ Connected
               </button>
               <button 
                 onClick={() => handleQuickHangUp('Voicemail')}
                 disabled={isLogging}
-                className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-colors"
+                className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95"
               >
                 📧 Voicemail
               </button>
               <button 
                 onClick={() => handleQuickHangUp('No Answer')}
                 disabled={isLogging}
-                className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-colors"
+                className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95"
               >
                 🔕 No Answer
               </button>
               <button 
                 onClick={() => handleQuickHangUp('Busy')}
                 disabled={isLogging}
-                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-colors"
+                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded text-sm font-medium transition-all duration-200 hover:shadow-md active:scale-95"
               >
                 📞 Busy
               </button>
@@ -380,7 +504,7 @@ const DialPad = () => {
             <button 
               onClick={() => handleHangUp()}
               disabled={isLogging}
-              className="btn-danger w-full text-lg py-4 disabled:opacity-50"
+              className="w-full text-lg py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95 font-semibold disabled:opacity-50 disabled:hover:shadow-none disabled:active:scale-100"
             >
               {isLogging ? '🔄 Logging Call...' : '📵 Hang Up'}
             </button>
@@ -458,18 +582,6 @@ const DialPad = () => {
       </div>
 
       {/* Advanced VOIP Components */}
-      
-      {/* Call Status Component */}
-      <CallStatus
-        callState={callState}
-        callerInfo={null} // Could be populated from lead data
-        callDuration={callStartTime ? Math.floor((new Date() - callStartTime) / 1000) : 0}
-        connectionQuality={connectionQuality}
-        sipStatus={sipRegistered ? 'registered' : 'unregistered'}
-        networkLatency={connectionQuality === 'excellent' ? 35 : connectionQuality === 'good' ? 65 : 120}
-        phoneNumber={phoneNumber}
-        startTime={callStartTime}
-      />
 
       {/* Call Controls Component */}
       <CallControls

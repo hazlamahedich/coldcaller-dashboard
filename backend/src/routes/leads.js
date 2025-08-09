@@ -114,6 +114,17 @@ router.get('/:id', getLeadById);
 router.post('/', createLeadValidation, handleValidationErrors, createLead);
 
 /**
+ * @route   PUT /api/leads/:id/status
+ * @desc    Update only lead status (for Kanban drag-and-drop)
+ * @access  Public
+ */
+router.put('/:id/status', [
+  body('status')
+    .isIn(['New', 'Follow-up', 'Qualified', 'Closed', 'Not Interested'])
+    .withMessage('Status must be one of: New, Follow-up, Qualified, Closed, Not Interested')
+], handleValidationErrors, updateLead);
+
+/**
  * @route   PUT /api/leads/:id
  * @desc    Update a lead
  * @access  Public

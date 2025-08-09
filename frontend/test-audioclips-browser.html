@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Audio Clips Data</title>
+</head>
+<body>
+    <h1>Audio Clips Data Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        // Import the data functions
+        import { dummyAudioClipsArray, convertAudioClipsToCategories } from '/src/data/dummyData.js';
+        
+        console.log('🧪 Testing audio clips data in browser...');
+        
+        // Test the array data
+        console.log('📋 Dummy clips array:', dummyAudioClipsArray);
+        console.log('📋 Array length:', dummyAudioClipsArray.length);
+        
+        // Test the conversion
+        const categorizedData = convertAudioClipsToCategories(dummyAudioClipsArray);
+        console.log('📂 Categorized data:', categorizedData);
+        console.log('📂 Categories:', Object.keys(categorizedData));
+        
+        // Check for custom category specifically
+        if (categorizedData['custom']) {
+            console.log('✅ Custom category found!');
+            console.log('🎤 Custom clips:', categorizedData['custom']);
+        } else {
+            console.log('❌ Custom category NOT found!');
+        }
+        
+        // Display results on page
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `
+            <h2>Results:</h2>
+            <p><strong>Total clips:</strong> ${dummyAudioClipsArray.length}</p>
+            <p><strong>Categories:</strong> ${Object.keys(categorizedData).join(', ')}</p>
+            <p><strong>Custom category:</strong> ${categorizedData['custom'] ? 'Found ✅' : 'Not found ❌'}</p>
+            <p><strong>Custom clips count:</strong> ${categorizedData['custom'] ? categorizedData['custom'].length : 0}</p>
+            
+            <h3>All Categories:</h3>
+            <ul>
+                ${Object.keys(categorizedData).map(cat => 
+                    `<li><strong>${cat}:</strong> ${categorizedData[cat].length} clips
+                        <ul>${categorizedData[cat].map(clip => `<li>${clip.name} (${clip.duration})</li>`).join('')}</ul>
+                    </li>`
+                ).join('')}
+            </ul>
+        `;
+        
+    </script>
+</body>
+</html>

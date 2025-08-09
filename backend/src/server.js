@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -27,6 +30,8 @@ const sipRoutes = require('./routes/sip');
 const healthRoutes = require('./routes/healthDetailed');
 const analyticsRoutes = require('./routes/analytics');
 const callAnalyticsRoutes = require('./routes/callAnalytics');
+const twilioRoutes = require('./routes/twilio');
+const twilioTestRoutes = require('./routes/twilio-test');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
@@ -78,6 +83,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:3002', // Allow React dev server on port 3002
       'https://coldcaller.com',
       'https://app.coldcaller.com'
     ];
@@ -160,6 +166,9 @@ app.use(express.urlencoded({
   limit: '10mb' 
 }));
 
+// Test endpoints (before security middleware to avoid blocking)
+app.use('/api/test-call', require('./routes/simple-call-test')); // Simple call test endpoints without authentication
+
 // Security middleware stack
 app.use(xssProtection);
 app.use(sqlInjectionProtection);
@@ -186,7 +195,7 @@ app.use(CallMonitoringMiddleware.memoryMonitor);
 app.get('/api/health', (req, res) => {
   const encryptionStatus = testEncryption();
   res.json({ 
-    status: 'OK', 
+    status: 'ok',  // Frontend expects lowercase 'ok'
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
@@ -200,6 +209,21 @@ app.get('/api/health', (req, res) => {
 // Authentication routes (public)
 app.use('/api/auth', authRoutes);
 
+// Public endpoints for dashboard stats (no auth required)
+const { getCallStats, getAllCallLogs } = require('./controllers/callsController');
+
+app.get('/api/calls/stats/today', (req, res) => {
+  req.query.period = 'today';
+  getCallStats(req, res);
+});
+
+app.get('/api/calls/recent', (req, res) => {
+  const { limit = 10 } = req.query;
+  req.query.limit = limit;
+  req.query.page = 1;
+  getAllCallLogs(req, res);
+});
+
 // Protected API routes (require authentication)
 app.use('/api/leads', authenticate, leadsRoutes);
 app.use('/api/scripts', authenticate, scriptsRoutes);
@@ -209,6 +233,7 @@ app.use('/api/audio', authenticate, secureFileUpload, enhancedAudioRoutes);
 
 app.use('/api/calls', authenticate, callsRoutes);
 app.use('/api/sip', authenticate, sipRoutes);
+app.use('/api/twilio', twilioRoutes); // Twilio webhooks need to be accessible without auth
 app.use('/api/health', authenticate, healthRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/call-analytics', authenticate, callAnalyticsRoutes);

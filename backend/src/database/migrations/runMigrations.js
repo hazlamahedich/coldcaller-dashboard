@@ -4,6 +4,10 @@
 
 const path = require('path');
 const fs = require('fs').promises;
+
+// Load environment variables first
+require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
+
 const { sequelize } = require('../config/database');
 
 // Migration tracking table

@@ -246,7 +246,7 @@ export const callsService = {
    */
   startCallSession: async (sessionData) => {
     try {
-      return await api.post('/calls/session/start', sessionData, {}, false);
+      return await api.post('/calls/start', sessionData, {}, false);
     } catch (error) {
       console.error('❌ Failed to start call session:', error);
       return {

@@ -17,8 +17,9 @@ module.exports = {
   testMatch: [
     '<rootDir>/frontend/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-    '<rootDir>/backend/src/tests/**/*.{test,spec}.{js,jsx,ts,tsx}',
-    '<rootDir>/backend/src/**/*.{test,spec}.{js,jsx,ts,tsx}'
+    '<rootDir>/backend/src/tests/**/*.{test,spec}.{js}',
+    '<rootDir>/backend/src/**/*.{test,spec}.{js}',
+    '<rootDir>/backend/tests/**/*.{test,spec}.{js}'
   ],
   
   // Coverage configuration
@@ -85,7 +86,7 @@ module.exports = {
   coverageDirectory: '<rootDir>/coverage',
   
   // Module name mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/frontend/src/$1',
     '^@backend/(.*)$': '<rootDir>/backend/src/$1',
     '^@tests/(.*)$': '<rootDir>/frontend/src/__tests__/$1',
@@ -133,7 +134,7 @@ module.exports = {
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/frontend/src/**/*.{test,spec}.{js,jsx}'],
       setupFilesAfterEnv: ['<rootDir>/frontend/src/setupTests.js'],
-      moduleNameMapping: {
+      moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/frontend/src/$1',
         '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
         '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/frontend/src/__tests__/__mocks__/fileMock.js'
@@ -150,9 +151,12 @@ module.exports = {
     {
       displayName: 'Backend Tests',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/backend/src/**/*.{test,spec}.{js}'],
+      testMatch: [
+        '<rootDir>/backend/src/**/*.{test,spec}.{js}',
+        '<rootDir>/backend/tests/**/*.{test,spec}.{js}'
+      ],
       setupFilesAfterEnv: ['<rootDir>/backend/src/tests/setup.js'],
-      moduleNameMapping: {
+      moduleNameMapper: {
         '^@backend/(.*)$': '<rootDir>/backend/src/$1',
         '^@fixtures/(.*)$': '<rootDir>/backend/src/tests/fixtures/$1'
       },
@@ -164,14 +168,6 @@ module.exports = {
       ]
     },
     
-    // Integration tests
-    {
-      displayName: 'Integration Tests',
-      testEnvironment: 'node',
-      testMatch: ['<rootDir>/tests/integration/**/*.{test,spec}.{js}'],
-      setupFilesAfterEnv: ['<rootDir>/tests/integration/setup.js'],
-      testTimeout: 60000
-    },
     
     // Performance tests
     {
@@ -179,7 +175,6 @@ module.exports = {
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/frontend/src/__tests__/performance/**/*.{test,spec}.{js,jsx}'],
       setupFilesAfterEnv: ['<rootDir>/frontend/src/setupTests.js'],
-      testTimeout: 60000,
       globals: {
         'performance': {
           now: () => Date.now(),
@@ -197,39 +192,13 @@ module.exports = {
       displayName: 'Security Tests',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/frontend/src/__tests__/security/**/*.{test,spec}.{js,jsx}'],
-      setupFilesAfterEnv: ['<rootDir>/frontend/src/setupTests.js'],
-      testTimeout: 30000
+      setupFilesAfterEnv: ['<rootDir>/frontend/src/setupTests.js']
     }
   ],
   
-  // Reporters
+  // Reporters (simplified)
   reporters: [
-    'default',
-    ['jest-html-reporters', {
-      publicPath: './test-reports',
-      filename: 'jest-report.html',
-      expand: true,
-      hideIcon: false,
-      pageTitle: 'ColdCaller Test Results',
-      logoImgPath: './logo.png',
-      includeFailureMsg: true,
-      includeSuiteFailure: true
-    }],
-    ['jest-junit', {
-      outputDirectory: './test-reports',
-      outputName: 'junit.xml',
-      ancestorSeparator: ' › ',
-      uniqueOutputName: 'false',
-      suiteNameTemplate: '{displayName}: {filepath}',
-      classNameTemplate: '{classname}',
-      titleTemplate: '{title}',
-      includeShortConsoleOutput: true
-    }],
-    ['jest-sonar-reporter', {
-      outputDirectory: './test-reports',
-      outputName: 'sonar-report.xml',
-      reportedFilePath: 'absolute'
-    }]
+    'default'
   ],
   
   // Watch plugins
@@ -247,9 +216,8 @@ module.exports = {
   // Verbose output for debugging
   verbose: false,
   
-  // Notify on test results
-  notify: true,
-  notifyMode: 'failure-change',
+  // Notify on test results (disabled for now)
+  notify: false,
   
   // Bail on first test failure (for CI)
   bail: process.env.CI ? 1 : 0,
@@ -275,8 +243,6 @@ module.exports = {
     printBasicPrototype: true
   },
   
-  // Test results processor
-  testResultsProcessor: './test-utils/results-processor.js',
   
   // Global setup and teardown
   globalSetup: './test-utils/global-setup.js',

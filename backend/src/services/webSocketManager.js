@@ -214,6 +214,26 @@ class WebSocketManager extends EventEmitter {
     });
   }
 
+  /**
+   * Send Twilio call status updates
+   */
+  sendCallUpdate(userId, callUpdate) {
+    this.broadcast('twilio-calls', {
+      type: 'callStatusUpdate',
+      data: { ...callUpdate, userId }
+    });
+  }
+
+  /**
+   * Broadcast Twilio test call events
+   */
+  broadcastTestCall(event, data) {
+    this.broadcast('test-calls', {
+      type: event,
+      data: data
+    });
+  }
+
   generateClientId() {
     return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

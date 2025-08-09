@@ -5,8 +5,9 @@
  */
 
 import React, { useState, useRef, useCallback } from 'react';
-import { audioManager } from '../services/AudioManager';
+import { audioManager } from '../services/WebAudioManager';
 import { audioService } from '../services';
+import { useTheme } from '../contexts/ThemeContext';
 
 const AudioUpload = ({ 
   onUploadComplete = () => {}, 
@@ -15,6 +16,7 @@ const AudioUpload = ({
   acceptedFormats = ['audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm', 'audio/mp4'],
   className = '' 
 }) => {
+  const { isDarkMode } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -298,8 +300,8 @@ const AudioUpload = ({
         ref={dropZoneRef}
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
           isDragging 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400'
+            ? isDarkMode ? 'border-blue-400 bg-blue-900/20' : 'border-blue-500 bg-blue-50'
+            : isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
         } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -313,15 +315,21 @@ const AudioUpload = ({
           </div>
           
           <div>
-            <p className="text-lg font-medium text-gray-700">
+            <p className={`text-lg font-medium ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
               {isDragging ? 'Drop your audio files here' : 'Upload Audio Files'}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className={`text-sm mt-1 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               Drag & drop or click to select files
             </p>
           </div>
           
-          <div className="text-xs text-gray-400">
+          <div className={`text-xs ${
+            isDarkMode ? 'text-gray-500' : 'text-gray-400'
+          }`}>
             <p>Supported: {acceptedFormats.map(f => f.split('/')[1].toUpperCase()).join(', ')}</p>
             <p>Max size: {formatFileSize(maxFileSize)} per file</p>
           </div>
@@ -340,13 +348,17 @@ const AudioUpload = ({
       {/* Upload Progress */}
       {isUploading && (
         <div className="mt-4">
-          <div className="bg-gray-200 rounded-full h-2">
+          <div className={`rounded-full h-2 ${
+            isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+          }`}>
             <div 
               className="bg-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-600 mt-1 text-center">
+          <p className={`text-sm mt-1 text-center ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             Uploading... {uploadProgress}%
           </p>
         </div>
@@ -356,12 +368,16 @@ const AudioUpload = ({
       {selectedFiles.length > 0 && !isUploading && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-medium text-gray-800">
+            <h3 className={`text-lg font-medium ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-800'
+            }`}>
               Selected Files ({selectedFiles.length})
             </h3>
             <button
               onClick={clearSelection}
-              className="text-sm text-red-600 hover:text-red-800"
+              className={`text-sm transition-colors ${
+                isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'
+              }`}
             >
               Clear All
             </button>
@@ -369,11 +385,17 @@ const AudioUpload = ({
           
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {selectedFiles.map(({ file, metadata: fileMeta }, index) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-lg border">
+              <div key={index} className={`p-4 rounded-lg border ${
+                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-800">{file.name}</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <h4 className={`font-medium ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{file.name}</h4>
+                    <div className={`text-sm space-y-1 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       <p>Size: {formatFileSize(file.size)}</p>
                       {fileMeta.duration > 0 && (
                         <p>Duration: {formatDuration(fileMeta.duration)}</p>
@@ -385,12 +407,16 @@ const AudioUpload = ({
                         <p>Format: {fileMeta.format}</p>
                       )}
                       {fileMeta.error && (
-                        <p className="text-red-600">Error: {fileMeta.error}</p>
+                        <p className={`${
+                          isDarkMode ? 'text-red-400' : 'text-red-600'
+                        }`}>Error: {fileMeta.error}</p>
                       )}
                     </div>
                   </div>
                   <div className="ml-4">
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800'
+                    }`}>
                       ✅ Valid
                     </span>
                   </div>
@@ -406,15 +432,23 @@ const AudioUpload = ({
 
       {/* Errors */}
       {errors.length > 0 && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h4 className="text-red-800 font-medium mb-2">Upload Errors:</h4>
+        <div className={`mt-4 p-4 border rounded-lg ${
+          isDarkMode ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'
+        }`}>
+          <h4 className={`font-medium mb-2 ${
+            isDarkMode ? 'text-red-200' : 'text-red-800'
+          }`}>Upload Errors:</h4>
           <div className="space-y-2">
             {errors.map((error, index) => (
               <div key={index} className="text-sm">
-                <span className="font-medium text-red-700">{error.file}:</span>
+                <span className={`font-medium ${
+                  isDarkMode ? 'text-red-300' : 'text-red-700'
+                }`}>{error.file}:</span>
                 <ul className="list-disc list-inside ml-4">
                   {error.errors.map((err, errIndex) => (
-                    <li key={errIndex} className="text-red-600">{err}</li>
+                    <li key={errIndex} className={`${
+                      isDarkMode ? 'text-red-400' : 'text-red-600'
+                    }`}>{err}</li>
                   ))}
                 </ul>
               </div>
@@ -428,6 +462,7 @@ const AudioUpload = ({
 
 // Upload Form Component
 const UploadForm = ({ files, onUpload }) => {
+  const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     category: 'greetings',
     name: '',
@@ -450,19 +485,29 @@ const UploadForm = ({ files, onUpload }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <h4 className="text-blue-800 font-medium mb-3">Upload Settings</h4>
+    <form onSubmit={handleSubmit} className={`mt-4 p-4 rounded-lg ${
+      isDarkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'
+    }`}>
+      <h4 className={`font-medium mb-3 ${
+        isDarkMode ? 'text-blue-200' : 'text-blue-800'
+      }`}>Upload Settings</h4>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={`block text-sm font-medium mb-1 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
             Category
           </label>
           <select
             name="category"
             value={formData.category}
             onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            className={`w-full p-2 border rounded-md text-sm ${
+              isDarkMode 
+                ? 'border-gray-600 bg-gray-800 text-gray-200'
+                : 'border-gray-300 bg-white text-gray-900'
+            }`}
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>
@@ -473,7 +518,9 @@ const UploadForm = ({ files, onUpload }) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={`block text-sm font-medium mb-1 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
             Name (optional)
           </label>
           <input
@@ -482,12 +529,18 @@ const UploadForm = ({ files, onUpload }) => {
             value={formData.name}
             onChange={handleInputChange}
             placeholder="Custom name"
-            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            className={`w-full p-2 border rounded-md text-sm ${
+              isDarkMode 
+                ? 'border-gray-600 bg-gray-800 text-gray-200 placeholder-gray-400'
+                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+            }`}
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={`block text-sm font-medium mb-1 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
             Description
           </label>
           <input
@@ -496,7 +549,11 @@ const UploadForm = ({ files, onUpload }) => {
             value={formData.description}
             onChange={handleInputChange}
             placeholder="Brief description"
-            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            className={`w-full p-2 border rounded-md text-sm ${
+              isDarkMode 
+                ? 'border-gray-600 bg-gray-800 text-gray-200 placeholder-gray-400'
+                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+            }`}
           />
         </div>
       </div>
@@ -504,7 +561,9 @@ const UploadForm = ({ files, onUpload }) => {
       <div className="flex justify-end mt-4">
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          className={`px-6 py-2 text-white rounded-md transition-colors ${
+            isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
           Upload {files.length} File{files.length > 1 ? 's' : ''}
         </button>

@@ -37,6 +37,9 @@ jest.mock('../../services/api', () => ({
 
 describe('Comprehensive Security Testing Suite', () => {
   let testSetup;
+  
+  // Increase timeout for security tests
+  jest.setTimeout(30000);
 
   beforeEach(() => {
     testSetup = setupTest({

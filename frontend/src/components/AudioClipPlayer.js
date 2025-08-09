@@ -35,6 +35,7 @@ const AudioClipPlayer = () => {
   const [showLibrary, setShowLibrary] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
   const [audioManagerReady, setAudioManagerReady] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Audio element reference for fallback playback
   const audioRef = useRef(null);
@@ -521,9 +522,49 @@ const AudioClipPlayer = () => {
   const currentClips = audioClips[selectedCategory] || [];
 
   return (
-    <div className="card max-w-md mx-2.5">
-      <div className="text-center mb-4">
-        <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>Audio Clips</h2>
+    <div className={`${themeClasses.cardBg} ${themeClasses.border} border rounded-lg w-full transition-all duration-300 overflow-hidden ${
+      isCollapsed ? 'pb-0' : 'pb-6'
+    }`}>
+      {/* Collapsible Header */}
+      <div className={`px-6 pt-6 ${isCollapsed ? 'pb-6' : 'pb-0'}`}>
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-3">
+            <h2 className={`text-lg font-semibold ${themeClasses.textPrimary}`}>Audio Library</h2>
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className={`p-1.5 rounded-full transition-all duration-200 hover:scale-110 ${
+                isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              }`}
+              title={isCollapsed ? 'Expand Audio Library' : 'Collapse Audio Library'}
+            >
+              <svg 
+                className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? 'rotate-90' : '-rotate-90'}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {isCollapsed && (
+          <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>
+            Click to expand audio library
+          </p>
+        )}
+      </div>
+
+      {/* Collapsible Content */}
+      <div className={`transition-all duration-300 ease-in-out ${
+        isCollapsed 
+          ? 'max-h-0 opacity-0 overflow-hidden' 
+          : 'max-h-[2000px] opacity-100'
+      }`}>
+        <div className="px-6 pb-2">
         {loading && (
           <div className="text-sm text-blue-600 mt-1">
             🔄 Loading audio clips...
@@ -963,6 +1004,7 @@ const AudioClipPlayer = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

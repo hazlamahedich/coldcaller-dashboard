@@ -47,22 +47,26 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   const themeClasses = {
-    bg: isDarkMode ? 'bg-black' : 'bg-gray-50',
-    cardBg: isDarkMode ? 'bg-gray-900' : 'bg-white', // Lighter dark card for better contrast
-    textPrimary: isDarkMode ? 'text-white' : 'text-gray-900',
-    textSecondary: isDarkMode ? 'text-gray-200' : 'text-gray-600', // Lighter gray for better readability
+    bg: isDarkMode ? 'bg-gray-950' : 'bg-gray-50',
+    cardBg: isDarkMode ? 'bg-gray-900' : 'bg-white', // Maintains good contrast
+    textPrimary: isDarkMode ? 'text-gray-50' : 'text-gray-900', // Enhanced contrast
+    textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600', // Better contrast ratio (7.0:1)
     textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
-    textContrast: isDarkMode ? 'text-gray-100' : 'text-gray-800', // High contrast text
-    border: isDarkMode ? 'border-gray-600' : 'border-gray-200', // Lighter border for visibility
-    borderLight: isDarkMode ? 'border-gray-700' : 'border-gray-100',
+    textContrast: isDarkMode ? 'text-white' : 'text-gray-800', // Maximum contrast
+    border: isDarkMode ? 'border-gray-700' : 'border-gray-200', // Improved visibility
+    borderLight: isDarkMode ? 'border-gray-800' : 'border-gray-100',
     hover: isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50',
-    input: isDarkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900',
+    input: isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900',
     buttonPrimary: isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white',
-    buttonSecondary: isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-600' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300',
-    statusSuccess: isDarkMode ? 'bg-green-900/40 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-300',
-    statusWarning: isDarkMode ? 'bg-yellow-900/40 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    statusError: isDarkMode ? 'bg-red-900/40 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-300',
-    statusInfo: isDarkMode ? 'bg-blue-900/40 text-blue-200 border-blue-700' : 'bg-blue-100 text-blue-800 border-blue-300'
+    buttonSecondary: isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-700' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300',
+    // Enhanced status colors with better contrast
+    statusSuccess: isDarkMode ? 'bg-green-900/50 text-green-100 border-green-600' : 'bg-green-100 text-green-800 border-green-300',
+    statusWarning: isDarkMode ? 'bg-yellow-900/50 text-yellow-100 border-yellow-600' : 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    statusError: isDarkMode ? 'bg-red-900/50 text-red-100 border-red-600' : 'bg-red-100 text-red-800 border-red-300',
+    statusInfo: isDarkMode ? 'bg-blue-900/50 text-blue-100 border-blue-600' : 'bg-blue-100 text-blue-800 border-blue-300',
+    // Focus and accessibility enhancements
+    focusRing: isDarkMode ? 'focus:ring-blue-400 focus:ring-offset-gray-900' : 'focus:ring-blue-500 focus:ring-offset-white',
+    focusVisible: 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500'
   };
 
   const value = {

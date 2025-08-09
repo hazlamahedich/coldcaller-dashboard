@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { leadsService } from '../services';
 import { dummyLeads } from '../data/dummyData';
 import { useSettings } from './SettingsContext';
+import { useAuth } from './AuthContext';
 
 // Create Lead Context
 const LeadContext = createContext();
@@ -18,6 +19,7 @@ export const useLead = () => {
 // Lead Provider Component
 export const LeadProvider = ({ children }) => {
   const { useMockData } = useSettings();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Lead data state
   const [leads, setLeads] = useState([]);
@@ -30,10 +32,13 @@ export const LeadProvider = ({ children }) => {
   const [apiConnected, setApiConnected] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Load leads from API on component mount or refresh trigger or mock data setting change
+  // Load leads when authentication completes or settings change
   useEffect(() => {
-    loadLeads();
-  }, [refreshTrigger, useMockData]);
+    // Only load leads when auth initialization is complete
+    if (!authLoading) {
+      loadLeads();
+    }
+  }, [refreshTrigger, useMockData, isAuthenticated, authLoading]);
 
   // Update selected lead when current index changes
   useEffect(() => {
@@ -47,16 +52,40 @@ export const LeadProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Check if mock data is disabled - return empty array for clean production state
-      if (!useMockData) {
-        console.log('🚫 Mock data disabled - production mode');
-        setLeads([]);
-        setApiConnected(false);
-        setError(null);
+      // Debug logging for authentication state
+      const token = localStorage.getItem('authToken');
+      console.log('🔍 LeadContext loadLeads debug:', {
+        isAuthenticated,
+        authLoading,
+        hasToken: !!token,
+        tokenLength: token ? token.length : 0,
+        useMockData
+      });
+      
+      // If user is not authenticated, only use mock data (if enabled)
+      if (!isAuthenticated && !authLoading) {
+        console.log('🔒 User not authenticated, skipping API call');
+        if (useMockData) {
+          console.log('📋 Using mock data (not authenticated)');
+          setLeads(dummyLeads);
+          setApiConnected(false);
+        } else {
+          console.log('❌ No authentication and mock data disabled');
+          setLeads([]);
+          setApiConnected(false);
+        }
         setLoading(false);
         return;
       }
       
+      // Skip if still loading auth state
+      if (authLoading) {
+        console.log('⏳ Authentication loading, skipping API call');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('🔄 Loading leads from API (authenticated)...');
       const response = await leadsService.getAllLeads();
       
       if (response.success && response.data) {
@@ -73,30 +102,24 @@ export const LeadProvider = ({ children }) => {
         if (leadData.length > 0) {
           setLeads(leadData);
           setApiConnected(true);
-          console.log('✅ Leads loaded from API:', leadData.length, 'leads');
+          console.log('✅ Leads loaded from API (authenticated):', leadData.length, 'leads');
         } else {
-          // Fallback to dummy data if API returns empty (only if mock data enabled)
-          console.log('⚠️ API returned empty data, using dummy data');
-          setLeads(dummyLeads);
-          setApiConnected(false);
+          // API returned empty, set appropriate state
+          console.log('⚠️ API returned empty data (authenticated)');
+          setLeads([]);
+          setApiConnected(true); // API is connected and authenticated, just no data
         }
       } else {
-        // Fallback to dummy data if API fails (only if mock data enabled)
-        console.log('⚠️ API unavailable, using dummy data');
-        setLeads(dummyLeads);
-        setApiConnected(false);
-      }
-    } catch (err) {
-      console.error('❌ Failed to load leads:', err);
-      setError('Failed to load leads from server');
-      // Fallback to dummy data (only if mock data enabled)
-      if (useMockData) {
-        setLeads(dummyLeads);
-        setApiConnected(false);
-      } else {
+        // API call failed
+        console.log('⚠️ API call failed (authenticated)');
         setLeads([]);
         setApiConnected(false);
       }
+    } catch (err) {
+      console.error('❌ Failed to load leads (authenticated):', err);
+      setError('Failed to load leads from server');
+      setLeads([]);
+      setApiConnected(false);
     } finally {
       setLoading(false);
     }

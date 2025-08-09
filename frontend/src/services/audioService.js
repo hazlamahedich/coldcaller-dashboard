@@ -220,26 +220,28 @@ export const audioService = {
       return await api.get('/audio/defaults', {}, true);
     } catch (error) {
       console.error('❌ Failed to get default audio clips:', error);
-      // Return fallback default audio structure
+      // Return fallback default audio structure as array (consistent with API)
+      const defaultClips = [
+        // Greetings
+        { id: 1, name: "Professional Intro", duration: "0:15", category: "greetings" },
+        { id: 2, name: "Casual Intro", duration: "0:12", category: "greetings" },
+        { id: 3, name: "Executive Intro", duration: "0:18", category: "greetings" },
+        // Objections
+        { id: 4, name: "Not Interested", duration: "0:20", category: "objections" },
+        { id: 5, name: "Too Busy", duration: "0:15", category: "objections" },
+        { id: 6, name: "Send Email", duration: "0:18", category: "objections" },
+        // Closing
+        { id: 7, name: "Schedule Meeting", duration: "0:22", category: "closing" },
+        { id: 8, name: "Trial Offer", duration: "0:25", category: "closing" },
+        { id: 9, name: "Next Steps", duration: "0:20", category: "closing" },
+        // Custom - This is key for showing custom category!
+        { id: 10, name: "My Custom Recording", duration: "0:30", category: "custom" },
+        { id: 11, name: "Personal Follow-up", duration: "0:25", category: "custom" }
+      ];
+      
       return {
         success: true,
-        data: {
-          greetings: [
-            { id: 1, name: "Professional Intro", duration: "0:15", category: "greetings" },
-            { id: 2, name: "Casual Intro", duration: "0:12", category: "greetings" },
-            { id: 3, name: "Executive Intro", duration: "0:18", category: "greetings" }
-          ],
-          objections: [
-            { id: 4, name: "Not Interested", duration: "0:20", category: "objections" },
-            { id: 5, name: "Too Busy", duration: "0:15", category: "objections" },
-            { id: 6, name: "Send Email", duration: "0:18", category: "objections" }
-          ],
-          closing: [
-            { id: 7, name: "Schedule Meeting", duration: "0:22", category: "closing" },
-            { id: 8, name: "Trial Offer", duration: "0:25", category: "closing" },
-            { id: 9, name: "Next Steps", duration: "0:20", category: "closing" }
-          ]
-        },
+        data: defaultClips,
         message: 'Default audio clips loaded'
       };
     }

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test User Recordings Storage</title>
+</head>
+<body>
+    <h1>User Recordings Storage Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="addTestRecording()">Add Test Recording</button>
+    <button onclick="viewRecordings()">View Recordings</button>
+    <button onclick="clearRecordings()">Clear All</button>
+    
+    <script>
+        function addTestRecording() {
+            const recordingData = {
+                id: Date.now(),
+                name: "Test Recording " + Math.floor(Math.random() * 100),
+                category: "custom",
+                description: "A test recording for verification",
+                duration: "0:15",
+                createdAt: new Date().toISOString()
+            };
+            
+            const existingRecordings = JSON.parse(localStorage.getItem('userRecordings') || '[]');
+            existingRecordings.push(recordingData);
+            localStorage.setItem('userRecordings', JSON.stringify(existingRecordings));
+            
+            console.log('✅ Added test recording:', recordingData);
+            viewRecordings();
+        }
+        
+        function viewRecordings() {
+            const recordings = JSON.parse(localStorage.getItem('userRecordings') || '[]');
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.innerHTML = `
+                <h2>Stored Recordings (${recordings.length}):</h2>
+                <ul>
+                    ${recordings.map(r => `
+                        <li>
+                            <strong>${r.name}</strong> - 
+                            Category: ${r.category} - 
+                            Duration: ${r.duration} - 
+                            Created: ${new Date(r.createdAt).toLocaleString()}
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            
+            console.log('📋 Current recordings:', recordings);
+        }
+        
+        function clearRecordings() {
+            localStorage.removeItem('userRecordings');
+            console.log('🗑️ Cleared all recordings');
+            viewRecordings();
+        }
+        
+        // Load on page start
+        viewRecordings();
+    </script>
+</body>
+</html>

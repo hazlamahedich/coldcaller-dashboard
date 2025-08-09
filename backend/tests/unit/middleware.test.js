@@ -1,5 +1,5 @@
-import { errorHandler, asyncHandler, ApiError } from '../../src/middleware/errorHandler.js';
-import { notFound } from '../../src/middleware/notFound.js';
+const { errorHandler, asyncHandler, ApiError } = require('../../src/middleware/errorHandler.js');
+const { notFound } = require('../../src/middleware/notFound.js');
 
 // Mock Express req, res, next
 const mockReq = (overrides = {}) => ({

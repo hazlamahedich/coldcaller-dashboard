@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useCall } from '../contexts/CallContext';
 import ThemeToggle from './ThemeToggle';
+import UserMenu from './UserMenu';
 import FloatingCallBar from './FloatingCallBar';
+import DTMFKeypad from './DTMFKeypad';
+import CallControlsDemo from './CallControlsDemo';
 
 function Layout({ children }) {
   const { isDarkMode, themeClasses } = useTheme();
+  const { isAuthenticated } = useAuth();
   const { 
     isCallActive, 
     callState, 
@@ -16,9 +21,15 @@ function Layout({ children }) {
     isOnHold,
     toggleMute,
     toggleHold,
-    endCall
+    endCall,
+    showDTMFKeypad,
+    toggleDTMFKeypad,
+    hideDTMFKeypad,
+    voiceAnnouncements,
+    setVoiceAnnouncements
   } = useCall();
   const location = useLocation();
+  const [showDemo, setShowDemo] = useState(false);
 
   const navigationItems = [
     {
@@ -114,6 +125,9 @@ function Layout({ children }) {
 
               {/* Theme Toggle */}
               <ThemeToggle />
+              
+              {/* User Menu - Only show if authenticated */}
+              {isAuthenticated && <UserMenu />}
             </div>
           </div>
 
@@ -135,6 +149,13 @@ function Layout({ children }) {
                 </Link>
               ))}
             </nav>
+            
+            {/* Mobile User Menu */}
+            {isAuthenticated && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <UserMenu />
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -157,8 +178,127 @@ function Layout({ children }) {
         onHold={toggleHold}
         onHangup={endCall}
         onTransfer={() => console.log('Transfer feature coming soon')}
-        onShowDialpad={() => console.log('Dialpad feature coming soon')}
+        onShowDialpad={toggleDTMFKeypad}
       />
+      
+      {/* DTMF Keypad Overlay */}
+      <DTMFKeypad
+        isVisible={showDTMFKeypad}
+        onKeyPress={(key) => console.log(`📟 DTMF tone sent: ${key}`)}
+        onClose={hideDTMFKeypad}
+        isInCall={['active', 'ringing', 'connecting'].includes(callState)}
+        showToneAnimation={true}
+      />
+      
+      {/* Debug Info for DTMF */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          background: '#FF6B35', 
+          color: 'white', 
+          padding: '12px', 
+          fontSize: '14px', 
+          zIndex: 9999,
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          border: '2px solid #FF8C42'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>🔢 DTMF DEBUG PANEL</div>
+          <div>Status: <span style={{background: showDTMFKeypad ? '#4CAF50' : '#F44336', padding: '2px 6px', borderRadius: '4px'}}>
+            {showDTMFKeypad ? 'VISIBLE' : 'HIDDEN'}
+          </span></div>
+          <div>Call State: <span style={{background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px'}}>
+            {callState || 'idle'}
+          </span></div>
+          <div style={{ marginTop: '8px', display: 'flex', gap: '4px', flexDirection: 'column' }}>
+            <button 
+              onClick={() => {
+                console.log('🧪 Test button: Manually toggling DTMF keypad');
+                console.log('🧪 Current showDTMFKeypad state:', showDTMFKeypad);
+                toggleDTMFKeypad();
+              }}
+              style={{ 
+                background: '#4CAF50', 
+                color: 'white', 
+                border: 'none', 
+                padding: '6px 12px', 
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}
+            >
+              🧪 Test Toggle DTMF
+            </button>
+            <button 
+              onClick={() => {
+                console.log('📞 Testing call initiation...');
+                // Simulate a call for testing
+                const testCall = {
+                  phoneNumber: '+1234567890',
+                  leadData: { id: 1, name: 'Test Lead', company: 'Test Co' },
+                  source: 'debug'
+                };
+                if (window.callContextMethods && window.callContextMethods.initiateCall) {
+                  window.callContextMethods.initiateCall(testCall);
+                } else {
+                  console.log('⚠️ Call context not available for direct testing');
+                }
+              }}
+              style={{ 
+                background: '#2196F3', 
+                color: 'white', 
+                border: 'none', 
+                padding: '6px 12px', 
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}
+            >
+              📞 Test Call
+            </button>
+            <button 
+              onClick={() => {
+                setVoiceAnnouncements(!voiceAnnouncements);
+                console.log('🗣️ Voice announcements:', !voiceAnnouncements ? 'ENABLED' : 'DISABLED');
+              }}
+              style={{ 
+                background: voiceAnnouncements ? '#9C27B0' : '#757575', 
+                color: 'white', 
+                border: 'none', 
+                padding: '6px 12px', 
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}
+            >
+              🗣️ Voice: {voiceAnnouncements ? 'ON' : 'OFF'}
+            </button>
+            <button 
+              onClick={() => setShowDemo(!showDemo)}
+              style={{ 
+                background: '#9C27B0', 
+                color: 'white', 
+                border: 'none', 
+                padding: '6px 12px', 
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}
+            >
+              🧪 {showDemo ? 'Hide' : 'Show'} Call Demo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Demo Panel */}
+      {showDemo && (
+        <div className="fixed top-20 right-4 z-40 max-w-sm">
+          <CallControlsDemo />
+        </div>
+      )}
 
       {/* Footer */}
       <footer className={`border-t ${themeClasses.border} mt-12 transition-colors duration-200`}>

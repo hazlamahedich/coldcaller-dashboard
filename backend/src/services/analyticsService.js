@@ -13,8 +13,13 @@ class AnalyticsService {
     this.subscribers = new Map(); // For WebSocket connections
     this.refreshInterval = 5 * 60 * 1000; // 5 minutes
     this.realTimeInterval = 30 * 1000; // 30 seconds
+    this.aggregateTimer = null;
+    this.realTimeTimer = null;
     
-    this.startRealTimeProcessing();
+    // Only start real-time processing if not in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      this.startRealTimeProcessing();
+    }
   }
 
   /**
@@ -22,14 +27,38 @@ class AnalyticsService {
    */
   startRealTimeProcessing() {
     // Aggregate data every 5 minutes
-    setInterval(() => {
+    this.aggregateTimer = setInterval(() => {
       this.aggregateData().catch(console.error);
     }, this.refreshInterval);
 
     // Update real-time metrics every 30 seconds
-    setInterval(() => {
+    this.realTimeTimer = setInterval(() => {
       this.updateRealTimeMetrics().catch(console.error);
     }, this.realTimeInterval);
+  }
+
+  /**
+   * Stop real-time processing and cleanup timers
+   */
+  stopRealTimeProcessing() {
+    if (this.aggregateTimer) {
+      clearInterval(this.aggregateTimer);
+      this.aggregateTimer = null;
+    }
+    if (this.realTimeTimer) {
+      clearInterval(this.realTimeTimer);
+      this.realTimeTimer = null;
+    }
+  }
+
+  /**
+   * Cleanup method for proper resource disposal
+   */
+  cleanup() {
+    this.stopRealTimeProcessing();
+    this.cache.clear();
+    this.realTimeMetrics.clear();
+    this.subscribers.clear();
   }
 
   /**

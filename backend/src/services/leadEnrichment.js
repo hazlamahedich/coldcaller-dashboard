@@ -1,65 +1,156 @@
 /**
- * Lead Enrichment Service
- * Enhances lead data with external information
+ * Lead Enrichment Service (Simplified)
  */
 
 /**
- * Enrich lead data with external sources
- * @param {Object} lead - Lead object
- * @returns {Object} Enriched data
+ * Enrich lead data
+ * @param {Object} lead - Lead object to enrich
+ * @returns {Object} Enriched lead data
  */
 const enrichLeadData = async (lead) => {
-  const enrichedData = {};
-  
+  const enrichment = {
+    enriched_at: new Date().toISOString(),
+    enrichment_source: 'internal',
+    quality_score: 50
+  };
+
   try {
-    // Email domain enrichment
+    // Basic email domain enrichment
     if (lead.email) {
-      const emailEnrichment = await enrichFromEmailDomain(lead.email);
-      Object.assign(enrichedData, emailEnrichment);
+      const domain = lead.email.split('@')[1];
+      if (domain) {
+        enrichment.email_domain = domain;
+        
+        // Basic business domain detection
+        const businessDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
+        if (!businessDomains.includes(domain.toLowerCase())) {
+          enrichment.email_type = 'business';
+          enrichment.business_likelihood = 'high';
+          
+          // Try to infer company from domain if not provided
+          if (!lead.company) {
+            enrichment.inferred_company = domain
+              .replace(/\.(com|org|net|edu|gov)$/i, '')
+              .replace(/[.-]/g, ' ')
+              .replace(/\b\w/g, l => l.toUpperCase());
+          }
+        } else {
+          enrichment.email_type = 'personal';
+          enrichment.business_likelihood = 'low';
+        }
+      }
     }
-    
-    // Company enrichment
+
+    // Basic phone number enrichment
+    if (lead.phone) {
+      const cleaned = lead.phone.replace(/\D/g, '');
+      if (cleaned.length === 10) {
+        enrichment.phone_formatted = `(${cleaned.slice(0,3)}) ${cleaned.slice(3,6)}-${cleaned.slice(6)}`;
+      } else if (cleaned.length === 11 && cleaned[0] === '1') {
+        const phone = cleaned.slice(1);
+        enrichment.phone_formatted = `+1 (${phone.slice(0,3)}) ${phone.slice(3,6)}-${phone.slice(6)}`;
+      }
+    }
+
+    // Basic title analysis
+    if (lead.title) {
+      const title = lead.title.toLowerCase();
+      if (title.includes('ceo') || title.includes('president') || title.includes('founder')) {
+        enrichment.seniority_level = 'executive';
+      } else if (title.includes('director') || title.includes('vp') || title.includes('vice president')) {
+        enrichment.seniority_level = 'senior';
+      } else if (title.includes('manager') || title.includes('lead')) {
+        enrichment.seniority_level = 'mid';
+      } else {
+        enrichment.seniority_level = 'individual_contributor';
+      }
+    }
+
+    // Basic company size inference
     if (lead.company) {
-      const companyEnrichment = await enrichCompanyData(lead.company);
-      Object.assign(enrichedData, companyEnrichment);
+      const company = lead.company.toLowerCase();
+      if (company.includes('corporation') || company.includes('international') || company.includes('global')) {
+        enrichment.inferred_company_size = '500+';
+      } else if (company.includes('enterprises') || company.includes('group')) {
+        enrichment.inferred_company_size = '200-500';
+      } else if (company.includes('solutions') || company.includes('services')) {
+        enrichment.inferred_company_size = '50-200';
+      } else {
+        enrichment.inferred_company_size = '10-50';
+      }
     }
-    
-    // Geographic enrichment
-    if (lead.address || enrichedData.address) {
-      const geoEnrichment = await enrichGeographicData(lead.address || enrichedData.address);
-      Object.assign(enrichedData, geoEnrichment);
-    }
-    
-    // Social media enrichment (placeholder)
-    if (lead.email || lead.name) {
-      const socialEnrichment = await enrichSocialMediaData(lead);
-      Object.assign(enrichedData, socialEnrichment);
-    }
-    
+
+    // Quality score calculation
+    let qualityScore = 0;
+    if (lead.email) qualityScore += 20;
+    if (lead.phone) qualityScore += 20;
+    if (lead.firstName && lead.lastName) qualityScore += 15;
+    if (lead.company) qualityScore += 15;
+    if (lead.title) qualityScore += 10;
+    if (lead.industry) qualityScore += 10;
+    if (lead.website) qualityScore += 5;
+    if (lead.addressCity && lead.addressState) qualityScore += 5;
+
+    enrichment.quality_score = qualityScore;
+
   } catch (error) {
-    console.warn('Lead enrichment failed:', error.message);
-    // Return partial enrichment if available
+    console.warn('Lead enrichment failed:', error);
+    enrichment.enrichment_error = error.message;
   }
-  
-  return enrichedData;
+
+  return enrichment;
 };
 
 /**
- * Enrich data from email domain
- * @param {string} email - Email address
- * @returns {Object} Domain-based enrichment data
+ * Batch enrich multiple leads
+ * @param {Array} leads - Array of leads to enrich
+ * @returns {Array} Array of enriched leads
  */
-const enrichFromEmailDomain = async (email) => {
-  const enrichment = {};
-  
-  try {
-    const domain = email.split('@')[1];
-    if (!domain) return enrichment;
-    
-    // Common business domain patterns
-    const businessDomains = {
-      'gmail.com': { type: 'personal', likelihood: 'low_business' },
-      'yahoo.com': { type: 'personal', likelihood: 'low_business' },
-      'hotmail.com': { type: 'personal', likelihood: 'low_business' },
-      'outlook.com': { type: 'personal', likelihood: 'medium_business' },
-    };\n    \n    if (businessDomains[domain]) {\n      enrichment.email_type = businessDomains[domain].type;\n      enrichment.business_likelihood = businessDomains[domain].likelihood;\n    } else {\n      // Custom domain likely indicates business\n      enrichment.email_type = 'business';\n      enrichment.business_likelihood = 'high_business';\n      \n      // Try to infer company from domain\n      if (!enrichment.company_domain_name) {\n        enrichment.company_domain_name = domain;\n        enrichment.inferred_company = domain\n          .replace(/\\.(com|org|net|edu|gov|mil|int|co\\.uk|co\\.au)$/i, '')\n          .replace(/[.-]/g, ' ')\n          .replace(/\\b\\w/g, l => l.toUpperCase());\n      }\n    }\n    \n    // Industry inference from domain\n    const industryPatterns = {\n      'tech|software|app|dev|digital': 'Technology',\n      'health|medical|pharma|bio': 'Healthcare',\n      'bank|finance|invest|capital': 'Financial Services',\n      'edu|school|university|college': 'Education',\n      'gov|government': 'Government',\n      'law|legal|attorney': 'Legal Services',\n      'consulting|consult': 'Consulting',\n      'marketing|advertis|media': 'Marketing & Advertising'\n    };\n    \n    Object.entries(industryPatterns).forEach(([pattern, industry]) => {\n      if (new RegExp(pattern, 'i').test(domain)) {\n        enrichment.inferred_industry = industry;\n      }\n    });\n    \n  } catch (error) {\n    console.warn('Email domain enrichment failed:', error);\n  }\n  \n  return enrichment;\n};\n\n/**\n * Enrich company data\n * @param {string} company - Company name\n * @returns {Object} Company enrichment data\n */\nconst enrichCompanyData = async (company) => {\n  const enrichment = {};\n  \n  try {\n    // Industry inference from company name\n    const industryKeywords = {\n      'Technology': ['tech', 'software', 'app', 'digital', 'cyber', 'data', 'cloud', 'ai', 'ml'],\n      'Healthcare': ['health', 'medical', 'pharma', 'bio', 'clinic', 'hospital', 'care'],\n      'Financial Services': ['bank', 'finance', 'invest', 'capital', 'insurance', 'credit'],\n      'Manufacturing': ['manufacturing', 'factory', 'industrial', 'production', 'materials'],\n      'Retail': ['retail', 'store', 'shop', 'commerce', 'marketplace'],\n      'Education': ['education', 'school', 'university', 'learning', 'training'],\n      'Consulting': ['consulting', 'advisory', 'services', 'solutions'],\n      'Real Estate': ['real estate', 'property', 'realty', 'construction', 'development'],\n      'Marketing': ['marketing', 'advertising', 'media', 'creative', 'agency'],\n      'Legal': ['law', 'legal', 'attorney', 'counsel']\n    };\n    \n    const companyLower = company.toLowerCase();\n    \n    Object.entries(industryKeywords).forEach(([industry, keywords]) => {\n      if (keywords.some(keyword => companyLower.includes(keyword))) {\n        enrichment.inferred_industry = industry;\n      }\n    });\n    \n    // Company size inference from name patterns\n    const sizeIndicators = {\n      '500+': ['corporation', 'corp', 'incorporated', 'international', 'global', 'worldwide'],\n      '200-500': ['company', 'enterprises', 'group', 'systems'],\n      '50-200': ['solutions', 'services', 'consulting'],\n      '10-50': ['studio', 'agency', 'partners']\n    };\n    \n    Object.entries(sizeIndicators).forEach(([size, indicators]) => {\n      if (indicators.some(indicator => companyLower.includes(indicator))) {\n        enrichment.inferred_company_size = size;\n      }\n    });\n    \n    // Technology stack inference\n    const techStack = {\n      '.NET': ['microsoft', '.net', 'sharepoint'],\n      'Java': ['java', 'spring', 'oracle'],\n      'Cloud': ['aws', 'azure', 'google cloud', 'cloud'],\n      'SaaS': ['saas', 'software as a service', 'platform']\n    };\n    \n    const inferredTech = [];\n    Object.entries(techStack).forEach(([tech, keywords]) => {\n      if (keywords.some(keyword => companyLower.includes(keyword))) {\n        inferredTech.push(tech);\n      }\n    });\n    \n    if (inferredTech.length > 0) {\n      enrichment.inferred_technology = inferredTech;\n    }\n    \n  } catch (error) {\n    console.warn('Company enrichment failed:', error);\n  }\n  \n  return enrichment;\n};\n\n/**\n * Enrich geographic data\n * @param {Object} address - Address object\n * @returns {Object} Geographic enrichment data\n */\nconst enrichGeographicData = async (address) => {\n  const enrichment = {};\n  \n  try {\n    if (!address || !address.city || !address.state) {\n      return enrichment;\n    }\n    \n    // Business climate data for major US cities\n    const cityBusinessData = {\n      'San Francisco': {\n        business_climate: 'excellent',\n        primary_industries: ['Technology', 'Financial Services', 'Healthcare'],\n        avg_deal_size: 'high',\n        competition_level: 'very_high',\n        time_zone: 'PST'\n      },\n      'New York': {\n        business_climate: 'excellent',\n        primary_industries: ['Financial Services', 'Technology', 'Media', 'Real Estate'],\n        avg_deal_size: 'very_high',\n        competition_level: 'very_high',\n        time_zone: 'EST'\n      },\n      'Chicago': {\n        business_climate: 'good',\n        primary_industries: ['Manufacturing', 'Technology', 'Financial Services'],\n        avg_deal_size: 'medium',\n        competition_level: 'high',\n        time_zone: 'CST'\n      },\n      'Austin': {\n        business_climate: 'excellent',\n        primary_industries: ['Technology', 'Healthcare', 'Education'],\n        avg_deal_size: 'medium',\n        competition_level: 'medium',\n        time_zone: 'CST'\n      },\n      'Boston': {\n        business_climate: 'excellent',\n        primary_industries: ['Healthcare', 'Technology', 'Education', 'Financial Services'],\n        avg_deal_size: 'high',\n        competition_level: 'high',\n        time_zone: 'EST'\n      },\n      'Seattle': {\n        business_climate: 'excellent',\n        primary_industries: ['Technology', 'Healthcare', 'Manufacturing'],\n        avg_deal_size: 'high',\n        competition_level: 'high',\n        time_zone: 'PST'\n      },\n      'Los Angeles': {\n        business_climate: 'good',\n        primary_industries: ['Media', 'Technology', 'Healthcare', 'Manufacturing'],\n        avg_deal_size: 'medium',\n        competition_level: 'high',\n        time_zone: 'PST'\n      }\n    };\n    \n    const cityData = cityBusinessData[address.city];\n    if (cityData) {\n      Object.assign(enrichment, {\n        market_data: cityData,\n        calling_time_zone: cityData.time_zone\n      });\n    }\n    \n    // State-level data\n    const stateBusinessData = {\n      'CA': { business_friendly: true, tax_climate: 'challenging', innovation_hub: true },\n      'NY': { business_friendly: true, tax_climate: 'challenging', innovation_hub: true },\n      'TX': { business_friendly: true, tax_climate: 'favorable', innovation_hub: true },\n      'FL': { business_friendly: true, tax_climate: 'favorable', innovation_hub: false },\n      'WA': { business_friendly: true, tax_climate: 'moderate', innovation_hub: true },\n      'MA': { business_friendly: true, tax_climate: 'challenging', innovation_hub: true }\n    };\n    \n    const stateData = stateBusinessData[address.state];\n    if (stateData) {\n      enrichment.state_business_climate = stateData;\n    }\n    \n  } catch (error) {\n    console.warn('Geographic enrichment failed:', error);\n  }\n  \n  return enrichment;\n};\n\n/**\n * Enrich social media data (placeholder for future integration)\n * @param {Object} lead - Lead object\n * @returns {Object} Social media enrichment data\n */\nconst enrichSocialMediaData = async (lead) => {\n  const enrichment = {};\n  \n  try {\n    // Placeholder for future social media API integrations\n    // This would integrate with LinkedIn Sales Navigator, Twitter API, etc.\n    \n    // For now, just add some basic inferences\n    if (lead.title) {\n      const seniorityLevel = getSeniorityLevel(lead.title);\n      enrichment.seniority_level = seniorityLevel;\n      enrichment.decision_making_power = getDecisionMakingPower(lead.title);\n    }\n    \n    // Professional network size estimation\n    if (lead.title && lead.industry) {\n      enrichment.estimated_network_size = estimateNetworkSize(lead.title, lead.industry);\n    }\n    \n  } catch (error) {\n    console.warn('Social media enrichment failed:', error);\n  }\n  \n  return enrichment;\n};\n\n/**\n * Determine seniority level from title\n * @param {string} title - Job title\n * @returns {string} Seniority level\n */\nconst getSeniorityLevel = (title) => {\n  const titleLower = title.toLowerCase();\n  \n  if (/\\b(ceo|cto|cfo|cmo|president|founder|owner)\\b/.test(titleLower)) {\n    return 'executive';\n  }\n  \n  if (/\\b(vp|vice president|director|head of)\\b/.test(titleLower)) {\n    return 'senior';\n  }\n  \n  if (/\\b(manager|lead|senior|principal)\\b/.test(titleLower)) {\n    return 'mid';\n  }\n  \n  if (/\\b(junior|associate|assistant|coordinator)\\b/.test(titleLower)) {\n    return 'junior';\n  }\n  \n  return 'mid'; // Default\n};\n\n/**\n * Determine decision making power from title\n * @param {string} title - Job title\n * @returns {string} Decision making power\n */\nconst getDecisionMakingPower = (title) => {\n  const titleLower = title.toLowerCase();\n  \n  if (/\\b(ceo|cto|cfo|cmo|president|founder|owner)\\b/.test(titleLower)) {\n    return 'high';\n  }\n  \n  if (/\\b(vp|vice president|director)\\b/.test(titleLower)) {\n    return 'high';\n  }\n  \n  if (/\\b(manager|head of)\\b/.test(titleLower)) {\n    return 'medium';\n  }\n  \n  return 'low';\n};\n\n/**\n * Estimate professional network size\n * @param {string} title - Job title\n * @param {string} industry - Industry\n * @returns {string} Estimated network size\n */\nconst estimateNetworkSize = (title, industry) => {\n  const seniority = getSeniorityLevel(title);\n  const highNetworkIndustries = ['Technology', 'Financial Services', 'Consulting', 'Media'];\n  \n  const isHighNetworkIndustry = highNetworkIndustries.includes(industry);\n  \n  if (seniority === 'executive') {\n    return isHighNetworkIndustry ? 'very_large' : 'large';\n  }\n  \n  if (seniority === 'senior') {\n    return isHighNetworkIndustry ? 'large' : 'medium';\n  }\n  \n  return 'medium';\n};\n\n/**\n * Batch enrich multiple leads\n * @param {Array} leads - Array of lead objects\n * @param {Object} options - Enrichment options\n * @returns {Array} Array of enrichment results\n */\nconst batchEnrichLeads = async (leads, options = {}) => {\n  const { \n    maxConcurrent = 5, \n    skipIfRecentlyEnriched = true,\n    enrichmentCacheHours = 24\n  } = options;\n  \n  const results = [];\n  \n  // Process leads in batches to avoid overwhelming external APIs\n  for (let i = 0; i < leads.length; i += maxConcurrent) {\n    const batch = leads.slice(i, i + maxConcurrent);\n    \n    const batchPromises = batch.map(async (lead) => {\n      try {\n        // Check if recently enriched\n        if (skipIfRecentlyEnriched && lead.last_enriched) {\n          const hoursSinceEnrichment = (new Date() - new Date(lead.last_enriched)) / (1000 * 60 * 60);\n          if (hoursSinceEnrichment < enrichmentCacheHours) {\n            return {\n              lead_id: lead.id,\n              success: true,\n              skipped: true,\n              reason: 'Recently enriched'\n            };\n          }\n        }\n        \n        const enrichedData = await enrichLeadData(lead);\n        \n        return {\n          lead_id: lead.id,\n          success: true,\n          enriched_data: enrichedData,\n          fields_enriched: Object.keys(enrichedData).length\n        };\n      } catch (error) {\n        return {\n          lead_id: lead.id,\n          success: false,\n          error: error.message\n        };\n      }\n    });\n    \n    const batchResults = await Promise.all(batchPromises);\n    results.push(...batchResults);\n    \n    // Small delay between batches to be respectful to external APIs\n    if (i + maxConcurrent < leads.length) {\n      await new Promise(resolve => setTimeout(resolve, 100));\n    }\n  }\n  \n  return results;\n};\n\n/**\n * Get enrichment statistics\n * @param {Array} leads - Array of leads\n * @returns {Object} Enrichment statistics\n */\nconst getEnrichmentStats = (leads) => {\n  const stats = {\n    total_leads: leads.length,\n    enriched_leads: 0,\n    enrichment_rate: 0,\n    avg_enriched_fields: 0,\n    last_enriched_distribution: {\n      never: 0,\n      last_24h: 0,\n      last_week: 0,\n      last_month: 0,\n      older: 0\n    },\n    enrichment_sources: {\n      email_domain: 0,\n      company_data: 0,\n      geographic: 0,\n      social_media: 0\n    }\n  };\n  \n  const now = new Date();\n  let totalEnrichedFields = 0;\n  \n  leads.forEach(lead => {\n    if (lead.last_enriched) {\n      stats.enriched_leads++;\n      \n      const enrichedHoursAgo = (now - new Date(lead.last_enriched)) / (1000 * 60 * 60);\n      \n      if (enrichedHoursAgo <= 24) {\n        stats.last_enriched_distribution.last_24h++;\n      } else if (enrichedHoursAgo <= 168) { // 7 days\n        stats.last_enriched_distribution.last_week++;\n      } else if (enrichedHoursAgo <= 720) { // 30 days\n        stats.last_enriched_distribution.last_month++;\n      } else {\n        stats.last_enriched_distribution.older++;\n      }\n      \n      // Count enriched fields (rough estimate)\n      const enrichmentIndicators = [\n        'inferred_industry', 'inferred_company_size', 'email_type',\n        'business_likelihood', 'market_data', 'seniority_level'\n      ];\n      \n      const enrichedFieldCount = enrichmentIndicators\n        .filter(field => lead[field]).length;\n      \n      totalEnrichedFields += enrichedFieldCount;\n    } else {\n      stats.last_enriched_distribution.never++;\n    }\n  });\n  \n  stats.enrichment_rate = leads.length > 0 ? \n    ((stats.enriched_leads / leads.length) * 100).toFixed(1) : 0;\n    \n  stats.avg_enriched_fields = stats.enriched_leads > 0 ? \n    (totalEnrichedFields / stats.enriched_leads).toFixed(1) : 0;\n  \n  return stats;\n};\n\nmodule.exports = {\n  enrichLeadData,\n  batchEnrichLeads,\n  getEnrichmentStats,\n  enrichFromEmailDomain,\n  enrichCompanyData,\n  enrichGeographicData,\n  enrichSocialMediaData\n};"
+const batchEnrichLeads = async (leads) => {
+  const enrichedLeads = [];
+
+  for (const lead of leads) {
+    try {
+      const enrichment = await enrichLeadData(lead);
+      enrichedLeads.push({
+        ...lead,
+        enrichment_data: enrichment
+      });
+    } catch (error) {
+      console.warn(`Failed to enrich lead ${lead.id}:`, error);
+      enrichedLeads.push({
+        ...lead,
+        enrichment_data: {
+          enrichment_error: error.message,
+          enriched_at: new Date().toISOString()
+        }
+      });
+    }
+  }
+
+  return enrichedLeads;
+};
+
+/**
+ * Get enrichment score for a lead
+ * @param {Object} lead - Lead object
+ * @returns {number} Enrichment score (0-100)
+ */
+const getEnrichmentScore = (lead) => {
+  let score = 0;
+  if (lead.email) score += 20;
+  if (lead.phone) score += 20;
+  if (lead.firstName && lead.lastName) score += 15;
+  if (lead.company) score += 15;
+  if (lead.title) score += 10;
+  if (lead.industry) score += 10;
+  if (lead.website) score += 5;
+  if (lead.addressCity && lead.addressState) score += 5;
+  return score;
+};
+
+module.exports = {
+  enrichLeadData,
+  batchEnrichLeads,
+  getEnrichmentScore
+};

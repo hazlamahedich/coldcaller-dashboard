@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * DTMFKeypad Component - In-call DTMF tone generation
@@ -10,8 +11,11 @@ const DTMFKeypad = ({
   onKeyPress,
   onClose,
   isInCall = false,
-  showToneAnimation = true 
+  showToneAnimation = true,
+  sipManager = null,
+  dtmfMethod = 'rfc4733'
 }) => {
+  const { isDarkMode } = useTheme();
   const [pressedKey, setPressedKey] = useState(null);
   const [toneHistory, setToneHistory] = useState('');
   const audioContextRef = useRef(null);
@@ -97,37 +101,52 @@ const DTMFKeypad = ({
     setPressedKey(key);
     setTimeout(() => setPressedKey(null), 150);
 
-    // Add to tone history
+    // Add to tone history with transmission method
     setToneHistory(prev => {
       const newHistory = prev + key;
       // Keep only last 20 characters
       return newHistory.length > 20 ? newHistory.slice(-20) : newHistory;
     });
 
-    // Play DTMF tone
+    // Send DTMF via SIP if manager available
+    let transmissionSuccess = false;
+    if (sipManager && typeof sipManager.sendDTMF === 'function') {
+      transmissionSuccess = sipManager.sendDTMF(key);
+      console.log(`📟 DTMF key ${key} transmitted via SIP: ${transmissionSuccess ? 'success' : 'failed'}`);
+    }
+
+    // Always play local DTMF tone for user feedback
     playDTMFTone(key);
 
-    // Notify parent component
-    onKeyPress?.(key);
+    // Notify parent component with transmission status
+    onKeyPress?.(key, {
+      transmitted: transmissionSuccess,
+      method: dtmfMethod,
+      timestamp: new Date()
+    });
   };
 
   // Handle keyboard input
   useEffect(() => {
-    if (!isVisible || !isInCall) return;
+    if (!isVisible) return;
 
     const handleKeyDown = (event) => {
       const key = event.key;
       if (dtmfFrequencies[key]) {
         event.preventDefault();
+        event.stopPropagation();
         handleKeyPress(key);
       } else if (key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('🔢 ESC key pressed - closing DTMF keypad');
         onClose?.();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible, isInCall]);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isVisible, isInCall, onClose]);
 
   // Clear tone history
   const clearHistory = () => {
@@ -138,13 +157,21 @@ const DTMFKeypad = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm mx-4">
+      <div className={`rounded-lg shadow-2xl p-6 max-w-sm mx-4 ${
+        isDarkMode ? 'bg-gray-800 border border-gray-600' : 'bg-white'
+      }`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-700">DTMF Keypad</h3>
+          <h3 className={`text-lg font-semibold ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-700'
+          }`}>DTMF Keypad</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
+            className={`text-xl transition-colors ${
+              isDarkMode 
+                ? 'text-gray-400 hover:text-gray-200' 
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
             title="Close keypad"
           >
             ✕
@@ -155,20 +182,38 @@ const DTMFKeypad = ({
         <div className="text-center mb-4">
           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
             isInCall 
-              ? 'bg-green-100 text-green-700' 
-              : 'bg-gray-100 text-gray-600'
+              ? isDarkMode 
+                ? 'bg-green-900/30 text-green-400 border border-green-700'
+                : 'bg-green-100 text-green-700'
+              : isDarkMode
+                ? 'bg-gray-700 text-gray-300 border border-gray-600'
+                : 'bg-gray-100 text-gray-600'
           }`}>
             <span className="mr-2">
               {isInCall ? '🟢' : '⭕'}
             </span>
-            {isInCall ? 'In Call - Send Tones' : 'No Active Call'}
+            {isInCall ? `In Call - ${dtmfMethod.toUpperCase()} Tones` : 'No Active Call'}
           </div>
+          
+          {/* DTMF Method Indicator */}
+          {isInCall && sipManager && (
+            <div className={`mt-1 text-xs ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              Method: {dtmfMethod.toUpperCase()}
+              {sipManager.isRegistered ? ' • SIP Connected' : ' • SIP Disconnected'}
+            </div>
+          )}
         </div>
 
         {/* Tone History Display */}
-        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+        <div className={`rounded-lg p-3 mb-4 ${
+          isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+        }`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Tones Sent:</span>
+            <span className={`text-sm font-medium ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>Tones Sent:</span>
             {toneHistory && (
               <button
                 onClick={clearHistory}
@@ -179,7 +224,11 @@ const DTMFKeypad = ({
             )}
           </div>
           <div className="text-center">
-            <code className="text-lg font-mono text-gray-800 bg-white px-3 py-2 rounded border min-h-[2.5rem] inline-block min-w-[200px]">
+            <code className={`text-lg font-mono px-3 py-2 rounded border min-h-[2.5rem] inline-block min-w-[200px] ${
+              isDarkMode 
+                ? 'text-gray-200 bg-gray-800 border-gray-600'
+                : 'text-gray-800 bg-white border-gray-300'
+            }`}>
               {toneHistory || '─'}
             </code>
           </div>
@@ -197,8 +246,12 @@ const DTMFKeypad = ({
                 ${pressedKey === key && showToneAnimation
                   ? 'bg-blue-500 text-white border-blue-500 transform scale-95 shadow-inner'
                   : isInCall
-                    ? 'bg-white hover:bg-blue-50 text-gray-800 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-md'
-                    : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    ? isDarkMode
+                      ? 'bg-gray-600 hover:bg-blue-600 text-gray-100 border-gray-500 hover:border-blue-400 shadow-sm hover:shadow-md'
+                      : 'bg-white hover:bg-blue-50 text-gray-800 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-md'
+                    : isDarkMode
+                      ? 'bg-gray-700 text-gray-500 border-gray-600 cursor-not-allowed'
+                      : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                 }
                 ${pressedKey === key && showToneAnimation ? 'animate-pulse' : ''}
               `}
@@ -215,11 +268,15 @@ const DTMFKeypad = ({
         </div>
 
         {/* Instructions */}
-        <div className="text-center text-sm text-gray-500">
+        <div className={`text-center text-sm ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           {isInCall ? (
             <div>
               <p className="mb-1">Click buttons or use keyboard</p>
-              <p>Press <kbd className="px-1 bg-gray-200 rounded text-xs">Esc</kbd> to close</p>
+              <p>Press <kbd className={`px-1 rounded text-xs ${
+                isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-800'
+              }`}>Esc</kbd> to close</p>
             </div>
           ) : (
             <p>Start a call to use DTMF tones</p>
@@ -228,8 +285,23 @@ const DTMFKeypad = ({
 
         {/* Audio Context Warning */}
         {isInCall && !audioContextRef.current && (
-          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+          <div className={`mt-3 p-2 border rounded text-xs ${
+            isDarkMode 
+              ? 'bg-yellow-900/30 border-yellow-700 text-yellow-400'
+              : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+          }`}>
             ⚠️ Audio tones not available in this browser
+          </div>
+        )}
+        
+        {/* SIP Connection Warning */}
+        {isInCall && sipManager && !sipManager.getRegistrationStatus() && (
+          <div className={`mt-3 p-2 border rounded text-xs ${
+            isDarkMode 
+              ? 'bg-red-900/30 border-red-700 text-red-400'
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            ⚠️ SIP not connected - DTMF may not transmit properly
           </div>
         )}
       </div>

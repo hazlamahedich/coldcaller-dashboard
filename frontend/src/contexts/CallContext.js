@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { callsService } from '../services';
+import { callStateAnnouncer } from '../services/CallStateAnnouncer';
 
 // Create Call Context
 const CallContext = createContext();
@@ -36,6 +37,9 @@ export const CallProvider = ({ children }) => {
   const oscillatorsRef = useRef([]);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [voiceAnnouncements, setVoiceAnnouncements] = useState(true);
+  
+  // Call state announcer
+  const announcerRef = useRef(callStateAnnouncer);
 
   // Call session management
   const [callSessionId, setCallSessionId] = useState(null);
@@ -197,8 +201,8 @@ export const CallProvider = ({ children }) => {
       console.log('📞 Making real API call to backend...');
       
       const callSessionData = {
-        phone: callData.phoneNumber,
-        leadId: callData.leadData?.id || null,
+        phoneNumber: callData.phoneNumber, // Backend expects 'phoneNumber', not 'phone'
+        leadId: callData.leadData?.id ? parseInt(callData.leadData.id) : undefined, // Backend expects positive integer or undefined
         source: callData.source || 'manual',
         timestamp: startTime.toISOString(),
         ...(callData.leadData && {
@@ -212,7 +216,9 @@ export const CallProvider = ({ children }) => {
       // Update UI to show connecting state
       setCallState('connecting');
       if (voiceAnnouncements) {
-        setTimeout(() => speakText('Connecting call'), 500);
+        announcerRef.current?.announceCallState('connecting', {
+          phoneNumber: callData.phoneNumber
+        });
       }
 
       // Make the API call to our fixed backend
@@ -225,7 +231,9 @@ export const CallProvider = ({ children }) => {
         setTimeout(() => {
           setCallState('ringing');
           if (voiceAnnouncements) {
-            setTimeout(() => speakText('Ringing'), 500);
+            announcerRef.current?.announceCallState('ringing', {
+              phoneNumber: callData.phoneNumber
+            });
           }
         }, 1000);
 
@@ -235,7 +243,9 @@ export const CallProvider = ({ children }) => {
           console.log('✅ Call connected (real Twilio call)');
           setTimeout(() => playCallConnectedFeedback(), 500);
           if (voiceAnnouncements) {
-            setTimeout(() => speakText('Call connected'), 1000);
+            announcerRef.current?.announceCallState('active', {
+              phoneNumber: callData.phoneNumber
+            });
           }
         }, 3000);
         
@@ -260,6 +270,11 @@ export const CallProvider = ({ children }) => {
     
     setCallState('ending');
     
+    // Announce call ending
+    if (voiceAnnouncements) {
+      announcerRef.current?.announceCallState('ending');
+    }
+    
     try {
       // End call session if exists
       if (callSessionId) {
@@ -277,6 +292,15 @@ export const CallProvider = ({ children }) => {
     // Reset all call state
     setTimeout(() => {
       console.log('📵 Resetting all call state');
+      
+      // Announce call ended with duration
+      if (voiceAnnouncements) {
+        announcerRef.current?.announceCallState('ended', {
+          duration: callDuration,
+          reason: 'completed'
+        });
+      }
+      
       setIsCallActive(false);
       setCallState('idle');
       setCurrentCall(null);
@@ -295,6 +319,14 @@ export const CallProvider = ({ children }) => {
   const handleCallFailure = (reason) => {
     console.error('📵 CallContext: Call failed:', reason);
     setCallState('ended');
+    
+    // Announce call failure
+    if (voiceAnnouncements) {
+      announcerRef.current?.announceCallState('ended', {
+        reason: 'failed',
+        duration: callDuration
+      });
+    }
     
     setTimeout(() => {
       setIsCallActive(false);
@@ -316,35 +348,41 @@ export const CallProvider = ({ children }) => {
     
     // Voice announcement
     if (voiceAnnouncements) {
-      speakText(newMuteState ? 'Call muted' : 'Call unmuted');
+      announcerRef.current?.announceCallState(newMuteState ? 'muted' : 'unmuted');
     }
   };
 
-  // Toggle hold
+  // Toggle hold - Fixed to work as a proper toggle
   const toggleHold = () => {
     console.log('🔄 toggleHold called');
     console.log('🔄 Current callState:', callState);
     console.log('🔄 Current isOnHold:', isOnHold);
     
+    // Only allow hold toggle when call is active or already on hold
     if (callState === 'active' || callState === 'hold') {
       const newHoldState = !isOnHold;
       console.log('🔄 Setting new hold state to:', newHoldState);
       
+      // Update hold state immediately
       setIsOnHold(newHoldState);
-      setCallState(newHoldState ? 'hold' : 'active');
+      
+      // Update call state based on hold status
+      const newCallState = newHoldState ? 'hold' : 'active';
+      setCallState(newCallState);
       
       console.log(`⏸️ Hold state changed: ${newHoldState ? 'Call On Hold' : 'Call Resumed'}`);
-      console.log('⏸️ New call state will be:', newHoldState ? 'hold' : 'active');
+      console.log('⏸️ New call state:', newCallState);
       
       // Play audio feedback
       playHoldToggleFeedback(newHoldState);
       
-      // Voice announcement
+      // Voice announcement with proper state
       if (voiceAnnouncements) {
-        speakText(newHoldState ? 'Call on hold' : 'Call resumed');
+        announcerRef.current?.announceCallState(newHoldState ? 'hold' : 'resumed');
       }
     } else {
       console.warn('🔄 Cannot toggle hold - call state is:', callState);
+      console.warn('🔄 Hold toggle only works when call is active or on hold');
     }
   };
 
@@ -839,7 +877,10 @@ export const CallProvider = ({ children }) => {
     
     // Voice settings
     voiceAnnouncements,
-    setVoiceAnnouncements
+    setVoiceAnnouncements,
+    
+    // Call state announcer
+    callStateAnnouncer: announcerRef.current
   };
 
   return (

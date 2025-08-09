@@ -679,7 +679,7 @@ class NotesService {
     let summary = content
       .replace(/#{1,6}\s/g, '') // Remove headers
       .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-      .replace/\*(.*?)\*/g, '$1') // Remove italic
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic
       .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links
       .replace(/\n+/g, ' ') // Replace newlines with spaces
       .trim();

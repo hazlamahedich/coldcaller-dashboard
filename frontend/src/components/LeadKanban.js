@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { leadsService } from '../services';
 import { useTheme } from '../contexts/ThemeContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { useCall } from '../contexts/CallContext';
-import { dummyLeads } from '../data/dummyData';
+import { useLead } from '../contexts/LeadContext';
+import EmailComposer from './EmailComposer';
+import NotesEditor from './NotesEditor';
 
 /**
  * LeadKanban - Kanban-style lead pipeline management
@@ -14,16 +14,37 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
   console.log('🔄 [LeadKanban] Component rendering with props:', { refreshTrigger });
   
   const { isDarkMode, themeClasses } = useTheme();
-  const { useMockData } = useSettings();
   const { initiateCall } = useCall();
   const navigate = useNavigate();
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Use shared LeadContext instead of separate state
+  const { 
+    leads, 
+    loading, 
+    error, 
+    apiConnected,
+    updateLeadStatus,
+    updateLead,
+    refreshLeads 
+  } = useLead();
+  
+  // Debug log for shared context data
+  console.log('🔍 [LeadKanban] Shared context data:', {
+    leadsCount: leads?.length,
+    loading,
+    error,
+    apiConnected,
+    leadsData: leads
+  });
+  
   const [draggedLead, setDraggedLead] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
-  const [usingMockData, setUsingMockData] = useState(false);
   const [moveStatus, setMoveStatus] = useState(null); // 'success', 'error', null
+  
+  // Modal states for email and notes
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [selectedLeadForAction, setSelectedLeadForAction] = useState(null);
 
   // Get theme-aware column styles
   const getColumnStyles = (colorName) => {
@@ -91,12 +112,13 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     }
   ];
 
-  // Load leads
+  // Refresh leads when refreshTrigger changes (uses shared LeadContext)
   useEffect(() => {
-    console.log('🔄 [LeadKanban] useEffect triggered, calling loadLeads...');
-    console.log('📊 [LeadKanban] useEffect dependencies:', { refreshTrigger, useMockData });
-    loadLeads();
-  }, [refreshTrigger, useMockData]);
+    if (refreshTrigger > 0) {
+      console.log('🔄 [LeadKanban] Refresh triggered, using shared context');
+      refreshLeads();
+    }
+  }, [refreshTrigger, refreshLeads]);
 
   // Disable browser phone number auto-detection
   useEffect(() => {
@@ -130,90 +152,7 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     return () => clearTimeout(timeout);
   }, [leads]);
 
-  const loadLeads = async () => {
-    console.log('🚀 [LeadKanban] loadLeads() called - starting API request');
-    console.log('⚙️ [LeadKanban] useMockData setting:', useMockData);
-    
-    try {
-      console.log('⏳ [LeadKanban] Setting loading to true');
-      setLoading(true);
-      setError(null);
-      setUsingMockData(false);
-      
-      // Use mock data if enabled
-      if (useMockData) {
-        console.log('🎭 [LeadKanban] Mock data enabled - using dummy data');
-        setLeads(dummyLeads);
-        setUsingMockData(true);
-        return;
-      }
-      
-      console.log('📡 [LeadKanban] Calling leadsService.getAllLeads with limit: 200');
-      const startTime = Date.now();
-      const response = await leadsService.getAllLeads({ limit: 200 });
-      const endTime = Date.now();
-      console.log(`⏱️ [LeadKanban] API call completed in ${endTime - startTime}ms`);
-      
-      console.log('📥 [LeadKanban] API Response received:', {
-        response,
-        success: response?.success,
-        dataType: typeof response?.data,
-        dataIsArray: Array.isArray(response?.data),
-        dataLength: response?.data?.length,
-        keys: response ? Object.keys(response) : 'No response'
-      });
-      
-      if (response && response.success && response.data) {
-        // Handle both array and object responses
-        let leadData = [];
-        if (Array.isArray(response.data)) {
-          leadData = response.data;
-        } else if (response.data.leads && Array.isArray(response.data.leads)) {
-          leadData = response.data.leads;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          leadData = response.data.data;
-        }
-
-        if (leadData.length > 0) {
-          console.log('✅ [LeadKanban] API success with data, setting leads:', leadData.length, 'leads');
-          setLeads(leadData);
-          setUsingMockData(false);
-        } else {
-          // Fallback to dummy data if API returns empty (only if mock data enabled)
-          console.log('⚠️ [LeadKanban] API returned empty data, using dummy data');
-          setLeads(dummyLeads);
-          setUsingMockData(true);
-        }
-      } else {
-        // Fallback to dummy data if API fails (only if mock data enabled)
-        console.log('⚠️ [LeadKanban] API unavailable or failed, using dummy data');
-        setLeads(dummyLeads);
-        setUsingMockData(true);
-      }
-      
-    } catch (err) {
-      console.error('💥 [LeadKanban] Error in loadLeads:', err);
-      console.error('💥 [LeadKanban] Error details:', {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      });
-      
-      // Fallback to dummy data if API fails (only if mock data enabled)
-      if (useMockData) {
-        console.log('🔄 [LeadKanban] Using dummy data as fallback');
-        setLeads(dummyLeads);
-        setUsingMockData(true);
-        setError(null); // Clear error since we have fallback data
-      } else {
-        setError(`API Error: ${err.message}`);
-        setLeads([]); // Ensure leads is always an array
-      }
-    } finally {
-      console.log('🏁 [LeadKanban] loadLeads finally block - setting loading to false');
-      setLoading(false);
-    }
-  };
+  // Removed separate loadLeads function - now uses shared LeadContext
 
   // Get leads by status with safety check
   const getLeadsByStatus = (status) => {
@@ -252,55 +191,24 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     }
 
     const oldStatus = draggedLead.status;
-    
-    // Optimistically update UI first
-    setLeads(prevLeads =>
-      prevLeads.map(lead =>
-        lead.id === draggedLead.id ? { ...lead, status: columnId } : lead
-      )
-    );
-    
     console.log(`🔄 Moving lead ${draggedLead.name} from ${oldStatus} to ${columnId}`);
     setMoveStatus('pending');
 
     try {
-      // Only try API call if not using mock data
-      if (!useMockData) {
-        const response = await leadsService.updateLeadStatus(draggedLead.id, columnId);
-        
-        if (response && response.success) {
-          console.log(`✅ Lead ${draggedLead.name} successfully moved to ${columnId} via API`);
-          setMoveStatus('success');
-        } else {
-          // API failed but we'll keep the local change
-          console.warn('⚠️ API update failed, keeping local change:', response?.message || 'No response');
-          setMoveStatus('warning');
-        }
-      } else {
-        console.log(`💾 Lead ${draggedLead.name} moved to ${columnId} (mock data mode)`);
+      // Use shared LeadContext updateLeadStatus function
+      const response = await updateLeadStatus(draggedLead.id, columnId);
+      
+      if (response && response.success) {
+        console.log(`✅ Lead ${draggedLead.name} successfully moved to ${columnId} via shared context`);
         setMoveStatus('success');
+      } else {
+        // API failed - LeadContext handles the error, no local state to revert
+        console.warn('⚠️ API update failed:', response?.message || 'No response');
+        setMoveStatus('error');
       }
     } catch (error) {
-      console.error('❌ API Error when moving lead:', error);
-      
-      // Check if it's a 404 or network error
-      if (error.response?.status === 404) {
-        console.warn('🔍 API endpoint not found - keeping local change (development mode)');
-        setMoveStatus('warning');
-      } else if (error.code === 'ECONNREFUSED' || error.message.includes('Network')) {
-        console.warn('🌐 API server not available - keeping local change (development mode)');
-        setMoveStatus('warning');
-      } else {
-        // For other errors, revert the change
-        console.error('🔄 Reverting lead move due to error');
-        setLeads(prevLeads =>
-          prevLeads.map(lead =>
-            lead.id === draggedLead.id ? { ...lead, status: oldStatus } : lead
-          )
-        );
-        setMoveStatus('error');
-        setError(`Failed to move lead: ${error.message}`);
-      }
+      console.error('❌ Error when moving lead:', error);
+      setMoveStatus('error');
     } finally {
       setDraggedLead(null);
       // Clear move status after 3 seconds
@@ -350,14 +258,13 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     
     console.log(`📞 Initiating call to ${lead.name} at ${lead.phone}`);
     
-    // Update call attempts counter immediately (optimistic update)
-    setLeads(prevLeads =>
-      prevLeads.map(l =>
-        l.id === lead.id 
-          ? { ...l, call_attempts: (l.call_attempts || 0) + 1, last_contact: new Date().toISOString() }
-          : l
-      )
-    );
+    // Update call attempts counter using shared context
+    const updatedLead = { 
+      ...lead, 
+      call_attempts: (lead.call_attempts || 0) + 1, 
+      last_contact: new Date().toISOString() 
+    };
+    updateLead(updatedLead);
     
     // Use CallContext to initiate call - this will show the floating call bar
     try {
@@ -377,52 +284,82 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
       console.error('❌ Failed to initiate call:', error);
       alert('Failed to start call. Please try again.');
       
-      // Revert the optimistic update on error
-      setLeads(prevLeads =>
-        prevLeads.map(l =>
-          l.id === lead.id 
-            ? { ...l, call_attempts: Math.max(0, (l.call_attempts || 1) - 1) }
-            : l
-        )
-      );
+      // Revert the optimistic update on error using shared context
+      const revertedLead = { 
+        ...lead, 
+        call_attempts: Math.max(0, (lead.call_attempts || 1) - 1) 
+      };
+      updateLead(revertedLead);
     }
   };
 
-  // Handle email lead action
+  // Handle email lead action with enhanced modal
   const handleEmailLead = (lead) => {
     if (!lead.email) {
       alert('No email address available for this lead');
       return;
     }
     
-    // Create mailto link with pre-filled subject and basic template
-    const subject = `Following up with ${lead.company || lead.name}`;
-    const body = `Hi ${lead.name.split(' ')[0]},\n\nI hope this email finds you well. I wanted to follow up regarding our previous conversation about your needs at ${lead.company || 'your company'}.\n\nBest regards,\n[Your Name]`;
-    
-    const mailtoLink = `mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
+    console.log(`📧 Opening email composer for ${lead.name} at ${lead.email}`);
+    setSelectedLeadForAction(lead);
+    setEmailModalVisible(true);
+  };
+  
+  // Handle email send
+  const handleEmailSend = async (emailData) => {
+    try {
+      console.log('📧 Email sent:', emailData);
+      
+      // Update lead's last contact time using shared context
+      const targetLead = leads.find(l => l.id === emailData.leadId);
+      if (targetLead) {
+        const updatedLead = { 
+          ...targetLead, 
+          last_contact: new Date().toISOString() 
+        };
+        updateLead(updatedLead);
+      }
+      
+      // Here you could also save the email to your backend if needed
+      // await leadsService.logEmail(emailData);
+      
+    } catch (error) {
+      console.error('❌ Error logging email:', error);
+    }
   };
 
-  // Handle add note action
+  // Handle add note action with enhanced modal
   const handleAddNote = (lead) => {
-    const currentNotes = lead.notes || '';
-    const newNote = prompt(`Add a note for ${lead.name}:`, currentNotes);
-    
-    if (newNote !== null && newNote !== currentNotes) {
-      // Update the lead with new notes
-      setLeads(prevLeads =>
-        prevLeads.map(l =>
-          l.id === lead.id 
-            ? { ...l, notes: newNote, last_contact: new Date().toISOString() }
-            : l
-        )
-      );
+    console.log(`📝 Opening notes editor for ${lead.name}`);
+    setSelectedLeadForAction(lead);
+    setNotesModalVisible(true);
+  };
+  
+  // Handle notes save
+  const handleNotesSave = async (notesData) => {
+    try {
+      console.log('📝 Notes saved:', notesData);
       
-      // If using API and not mock data, try to save to server
-      if (!useMockData) {
-        // Note: This would normally use leadsService.updateLeadNotes
-        console.log(`📝 Note updated for lead ${lead.name}: ${newNote}`);
+      // Update the lead with new notes using shared context
+      const targetLead = leads.find(l => l.id === notesData.leadId);
+      if (targetLead) {
+        const updatedLead = {
+          ...targetLead,
+          notes: notesData.notes,
+          last_contact: new Date().toISOString()
+        };
+        updateLead(updatedLead);
       }
+      
+      // If using API, save to server through LeadContext
+      if (apiConnected) {
+        console.log(`📝 Note updated for lead via API: ${notesData.notes}`);
+        // The updateLead function handles API calls automatically
+      }
+      
+    } catch (error) {
+      console.error('❌ Error saving notes:', error);
+      throw error; // Re-throw to show error in modal
     }
   };
 
@@ -465,7 +402,7 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
             isDarkMode ? 'text-gray-400' : 'text-gray-500'
           }`}>{error}</p>
           <button
-            onClick={loadLeads}
+            onClick={refreshLeads}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Retry
@@ -484,13 +421,13 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
             <h2 className={`text-2xl font-bold ${
               isDarkMode ? 'text-gray-100' : 'text-gray-900'
             }`}>Lead Pipeline</h2>
-            {usingMockData && (
+            {!apiConnected && (
               <span className={`px-2 py-1 text-xs rounded-full ${
                 isDarkMode 
-                  ? 'bg-amber-900/40 text-amber-200 border border-amber-700' 
-                  : 'bg-amber-100 text-amber-800'
+                  ? 'bg-red-900/40 text-red-200 border border-red-700' 
+                  : 'bg-red-100 text-red-800'
               }`}>
-                📋 Demo Data
+                📡 Offline
               </span>
             )}
           </div>
@@ -527,7 +464,7 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
               Total: {leads.length} leads
             </div>
             <button
-              onClick={loadLeads}
+              onClick={refreshLeads}
               className={`px-3 py-1 text-sm border rounded-md ${
                 isDarkMode 
                   ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
@@ -858,6 +795,28 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
       }`}>
         💡 Drag leads between columns to update their status
       </div>
+      
+      {/* Email Composer Modal */}
+      <EmailComposer
+        isVisible={emailModalVisible}
+        leadData={selectedLeadForAction}
+        onClose={() => {
+          setEmailModalVisible(false);
+          setSelectedLeadForAction(null);
+        }}
+        onSend={handleEmailSend}
+      />
+      
+      {/* Notes Editor Modal */}
+      <NotesEditor
+        isVisible={notesModalVisible}
+        leadData={selectedLeadForAction}
+        onClose={() => {
+          setNotesModalVisible(false);
+          setSelectedLeadForAction(null);
+        }}
+        onSave={handleNotesSave}
+      />
     </div>
   );
 };

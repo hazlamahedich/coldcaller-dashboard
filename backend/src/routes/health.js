@@ -1,5 +1,5 @@
-import express from 'express';
-import { asyncHandler } from '../middleware/errorHandler.js';
+const express = require('express');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -77,4 +77,4 @@ router.get('/detailed', asyncHandler(async (req, res) => {
   });
 }));
 
-export default router;
+module.exports = router;

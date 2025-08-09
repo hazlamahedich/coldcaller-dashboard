@@ -9,8 +9,10 @@ export const dummyLeads = [
     phone: "(555) 123-4567",
     email: "john@techsolutions.com",
     status: "New",
+    priority: "High",
     lastContact: "Never",
-    notes: "Interested in cloud services"
+    notes: "Interested in cloud services",
+    call_attempts: 0
   },
   {
     id: 2,
@@ -19,8 +21,10 @@ export const dummyLeads = [
     phone: "(555) 234-5678",
     email: "sarah@digitalmpro.com",
     status: "Follow-up",
+    priority: "Medium",
     lastContact: "2024-01-15",
-    notes: "Requested pricing information"
+    notes: "Requested pricing information",
+    call_attempts: 3
   },
   {
     id: 3,
@@ -29,8 +33,34 @@ export const dummyLeads = [
     phone: "(555) 345-6789",
     email: "mike@startupv.com",
     status: "Qualified",
+    priority: "Low",
     lastContact: "2024-01-10",
-    notes: "Decision maker, budget approved"
+    notes: "Decision maker, budget approved",
+    call_attempts: 1
+  },
+  {
+    id: 4,
+    name: "Emma Rodriguez",
+    company: "Future Innovations",
+    phone: "",
+    email: "",
+    status: "New", 
+    priority: "Medium",
+    lastContact: "Never",
+    notes: "Lead from trade show, contact info missing",
+    call_attempts: 0
+  },
+  {
+    id: 5,
+    name: "David Park",
+    company: "Growth Corp",
+    phone: "(555) 456-7890",
+    email: "",
+    status: "Not Interested",
+    priority: "Low",
+    lastContact: "2024-01-08",
+    notes: "Has phone but no email - prefers calls only",
+    call_attempts: 2
   }
 ];
 
@@ -59,20 +89,58 @@ export const dummyScripts = {
 
 export const dummyAudioClips = {
   greetings: [
-    { id: 1, name: "Professional Intro", duration: "0:15" },
-    { id: 2, name: "Casual Intro", duration: "0:12" },
-    { id: 3, name: "Executive Intro", duration: "0:18" }
+    { id: 1, name: "Professional Intro", duration: "0:15", category: "greetings" },
+    { id: 2, name: "Casual Intro", duration: "0:12", category: "greetings" },
+    { id: 3, name: "Executive Intro", duration: "0:18", category: "greetings" }
   ],
   objections: [
-    { id: 4, name: "Not Interested", duration: "0:20" },
-    { id: 5, name: "Too Busy", duration: "0:15" },
-    { id: 6, name: "Send Email", duration: "0:18" }
+    { id: 4, name: "Not Interested", duration: "0:20", category: "objections" },
+    { id: 5, name: "Too Busy", duration: "0:15", category: "objections" },
+    { id: 6, name: "Send Email", duration: "0:18", category: "objections" }
   ],
   closing: [
-    { id: 7, name: "Schedule Meeting", duration: "0:22" },
-    { id: 8, name: "Trial Offer", duration: "0:25" },
-    { id: 9, name: "Next Steps", duration: "0:20" }
+    { id: 7, name: "Schedule Meeting", duration: "0:22", category: "closing" },
+    { id: 8, name: "Trial Offer", duration: "0:25", category: "closing" },
+    { id: 9, name: "Next Steps", duration: "0:20", category: "closing" }
+  ],
+  custom: [
+    { id: 10, name: "My Custom Recording", duration: "0:30", category: "custom" },
+    { id: 11, name: "Personal Follow-up", duration: "0:25", category: "custom" }
   ]
+};
+
+// Convert object format to array format (for compatibility with API format)
+export const dummyAudioClipsArray = [
+  // Greetings
+  { id: 1, name: "Professional Intro", duration: "0:15", category: "greetings" },
+  { id: 2, name: "Casual Intro", duration: "0:12", category: "greetings" },
+  { id: 3, name: "Executive Intro", duration: "0:18", category: "greetings" },
+  // Objections  
+  { id: 4, name: "Not Interested", duration: "0:20", category: "objections" },
+  { id: 5, name: "Too Busy", duration: "0:15", category: "objections" },
+  { id: 6, name: "Send Email", duration: "0:18", category: "objections" },
+  // Closing
+  { id: 7, name: "Schedule Meeting", duration: "0:22", category: "closing" },
+  { id: 8, name: "Trial Offer", duration: "0:25", category: "closing" },
+  { id: 9, name: "Next Steps", duration: "0:20", category: "closing" },
+  // Custom - This will show the custom category!
+  { id: 10, name: "My Custom Recording", duration: "0:30", category: "custom" },
+  { id: 11, name: "Personal Follow-up", duration: "0:25", category: "custom" }
+];
+
+// Helper function to convert object format to categorized format
+export const convertAudioClipsToCategories = (audioClipsArray) => {
+  if (!audioClipsArray || !Array.isArray(audioClipsArray)) {
+    return {};
+  }
+  
+  return audioClipsArray.reduce((acc, clip) => {
+    if (!acc[clip.category]) {
+      acc[clip.category] = [];
+    }
+    acc[clip.category].push(clip);
+    return acc;
+  }, {});
 };
 
 export const dummyCallLog = [

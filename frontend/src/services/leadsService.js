@@ -19,19 +19,41 @@ export const leadsService = {
    */
   getAllLeads: async (params = {}) => {
     try {
+      console.log('🚀 [leadsService] getAllLeads called with params:', params);
       const queryString = new URLSearchParams(params).toString();
       const url = queryString ? `/leads?${queryString}` : '/leads';
+      console.log('📡 [leadsService] Making API request to:', url);
       
-      return await api.get(url, {}, true); // With retry
+      const result = await api.get(url, {}, true); // With retry
+      console.log('✅ [leadsService] API response received:', {
+        result,
+        type: typeof result,
+        keys: result ? Object.keys(result) : 'No result',
+        hasSuccess: result?.hasOwnProperty('success'),
+        hasData: result?.hasOwnProperty('data'),
+        successValue: result?.success,
+        dataType: typeof result?.data,
+        dataIsArray: Array.isArray(result?.data)
+      });
+      
+      return result;
     } catch (error) {
-      console.error('❌ Failed to fetch leads:', error);
+      console.error('❌ [leadsService] Failed to fetch leads:', error);
+      console.error('❌ [leadsService] Error details:', {
+        name: error.name,
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      });
       // Return fallback data structure
-      return {
+      const fallback = {
         success: false,
         data: [],
         pagination: { total: 0, page: 1, limit: 10 },
-        message: 'Failed to load leads'
+        message: error.message || 'Failed to load leads'
       };
+      console.log('🔄 [leadsService] Returning fallback data:', fallback);
+      return fallback;
     }
   },
   

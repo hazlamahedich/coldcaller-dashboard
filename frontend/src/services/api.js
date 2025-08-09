@@ -31,9 +31,14 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Log API requests in development
+    // Log API requests in development with token info
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, config);
+      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+        hasAuthHeader: !!config.headers.Authorization,
+        tokenPreview: config.headers.Authorization ? 
+          `${config.headers.Authorization.substring(0, 20)}...` : 'None',
+        url: config.url
+      });
     }
     
     return config;

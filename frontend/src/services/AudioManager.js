@@ -5,7 +5,7 @@
  */
 
 import { audioService } from './audioService';
-import { validateAudioFile, extractAudioMetadata, formatDuration, formatFileSize } from '../utils/audioUtils';
+import { validateAudioFile, extractAudioMetadata, formatFileSize } from '../utils/audioUtils';
 
 export class AudioManager {
   constructor() {
@@ -464,9 +464,29 @@ export class AudioManager {
   }
 
   /**
+   * Stop all currently playing audio
+   */
+  stopAllAudio() {
+    // Find all audio elements and stop them
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+    
+    // Emit event for tracking
+    this.emit('allAudioStopped');
+    console.log('🔇 All audio stopped');
+  }
+
+  /**
    * Cleanup resources
    */
   destroy() {
+    // Stop all audio before cleanup
+    this.stopAllAudio();
     this.cache.clear();
     this.listeners.clear();
     console.log('🗑️ AudioManager destroyed');

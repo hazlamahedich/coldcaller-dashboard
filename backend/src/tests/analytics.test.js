@@ -8,21 +8,22 @@ const express = require('express');
 const analyticsController = require('../controllers/analyticsController');
 const analyticsModel = require('../models/analyticsModel');
 const analyticsService = require('../services/analyticsService');
+const { validateAnalyticsParams, validateReportRequest, validateExportParams } = require('../middleware/analyticsValidation');
 
 // Mock express app for testing
 const app = express();
 app.use(express.json());
 
-// Mock routes for testing
-app.get('/api/analytics/leads', analyticsController.getLeadAnalytics);
-app.get('/api/analytics/conversion', analyticsController.getConversionAnalytics);
-app.get('/api/analytics/sources', analyticsController.getSourceAnalytics);
-app.get('/api/analytics/agents', analyticsController.getAgentAnalytics);
-app.get('/api/analytics/forecasting', analyticsController.getForecastingAnalytics);
-app.get('/api/analytics/dashboard', analyticsController.getDashboardData);
+// Mock routes for testing WITH validation middleware
+app.get('/api/analytics/leads', validateAnalyticsParams, analyticsController.getLeadAnalytics);
+app.get('/api/analytics/conversion', validateAnalyticsParams, analyticsController.getConversionAnalytics);
+app.get('/api/analytics/sources', validateAnalyticsParams, analyticsController.getSourceAnalytics);
+app.get('/api/analytics/agents', validateAnalyticsParams, analyticsController.getAgentAnalytics);
+app.get('/api/analytics/forecasting', validateAnalyticsParams, analyticsController.getForecastingAnalytics);
+app.get('/api/analytics/dashboard', validateAnalyticsParams, analyticsController.getDashboardData);
 app.get('/api/analytics/real-time', analyticsController.getRealTimeMetrics);
-app.get('/api/analytics/kpis', analyticsController.getKPIs);
-app.post('/api/analytics/reports/generate', analyticsController.generateCustomReport);
+app.get('/api/analytics/kpis', validateAnalyticsParams, analyticsController.getKPIs);
+app.post('/api/analytics/reports/generate', validateReportRequest, analyticsController.generateCustomReport);
 
 // Mock data for testing
 const mockLeads = [
@@ -294,7 +295,7 @@ describe('Analytics API Endpoints', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Report type is required');
+      expect(response.body.message).toContain('reportType is required');
     });
   });
 });

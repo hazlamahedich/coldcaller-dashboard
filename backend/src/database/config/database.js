@@ -6,6 +6,9 @@
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
+// Load environment variables
+require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
+
 // Environment configuration
 const env = process.env.NODE_ENV || 'development';
 const isDev = env === 'development';
@@ -39,10 +42,10 @@ const config = {
   production: {
     dialect: 'postgres',
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+    port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME || 'coldcaller_prod',
     username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '',
+    password: String(process.env.DB_PASSWORD || ''),
     logging: false,
     pool: {
       max: 20,

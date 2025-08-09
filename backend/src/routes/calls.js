@@ -96,8 +96,20 @@ const startCallValidation = [
     .isInt({ min: 1 })
     .withMessage('Lead ID must be a positive integer'),
   body('phoneNumber')
-    .matches(/^\+?[1-9]\d{1,14}$/)
-    .withMessage('Valid phone number is required (E.164 format preferred)'),
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .custom((value) => {
+      // More flexible phone number validation for international numbers
+      // Allow: +, digits, spaces, dashes, dots, parentheses
+      const phoneRegex = /^[\+]?[\d\s\-\(\)\.]{8,20}$/;
+      const cleanPhone = value.replace(/[\s\-\(\)\.]/g, '');
+      
+      // Must start with digit 1-9 after cleaning, and have appropriate length
+      if (!phoneRegex.test(value) || !/^[\+]?[1-9]\d*$/.test(cleanPhone) || cleanPhone.length < 8 || cleanPhone.length > 16) {
+        throw new Error('Invalid phone number format. Must be 8-16 digits, optionally starting with + and may contain spaces, dashes, dots, or parentheses');
+      }
+      return true;
+    }),
   body('agentId')
     .optional()
     .trim()
@@ -202,6 +214,29 @@ router.get('/metrics/realtime', getRealTimeMetrics);
  * @access  Public
  */
 router.get('/', getAllCallLogs);
+
+/**
+ * @route   GET /api/calls/stats/today
+ * @desc    Get today's call statistics
+ * @access  Public
+ */
+router.get('/stats/today', (req, res) => {
+  req.query.period = 'today';
+  getCallStats(req, res);
+});
+
+/**
+ * @route   GET /api/calls/recent
+ * @desc    Get recent call logs
+ * @query   limit (optional: number of calls to return, default 10)
+ * @access  Public
+ */
+router.get('/recent', (req, res) => {
+  const { limit = 10 } = req.query;
+  req.query.limit = limit;
+  req.query.page = 1;
+  getAllCallLogs(req, res);
+});
 
 /**
  * @route   GET /api/calls/stats

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { leadsService } from '../services';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * LeadDetailModal - Comprehensive lead management modal
@@ -13,6 +14,7 @@ const LeadDetailModal = ({
   onDelete,
   isNewLead = false 
 }) => {
+  const { isDarkMode, themeClasses } = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     company: '',
@@ -214,29 +216,29 @@ const LeadDetailModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className={`${themeClasses.cardBg} rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border ${themeClasses.border}`}>
         {/* Header */}
-        <div className="bg-blue-600 text-white p-6 flex justify-between items-center">
+        <div className={`${isDarkMode ? 'bg-blue-700' : 'bg-blue-600'} text-white p-6 flex justify-between items-center`}>
           <div>
             <h2 className="text-2xl font-bold">
               {isNewLead ? 'Create New Lead' : `${formData.name || 'Lead Details'}`}
             </h2>
             {!isNewLead && (
-              <p className="text-blue-100 text-sm mt-1">
+              <p className={`${isDarkMode ? 'text-blue-200' : 'text-blue-100'} text-sm mt-1`}>
                 {formData.company} • {formData.status}
               </p>
             )}
           </div>
           <button 
             onClick={onClose}
-            className="text-white hover:text-gray-200 text-2xl font-bold"
+            className={`text-white ${isDarkMode ? 'hover:text-gray-300' : 'hover:text-gray-200'} text-2xl font-bold`}
           >
             ×
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="border-b">
+        <div className={`border-b ${themeClasses.border}`}>
           <nav className="flex space-x-8 px-6">
             {['details', 'timeline', 'notes'].map(tab => (
               <button
@@ -245,11 +247,13 @@ const LeadDetailModal = ({
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                   activeTab === tab
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : isDarkMode
+                      ? 'border-transparent text-gray-400 hover:text-gray-200'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {tab === 'timeline' && !isNewLead && timeline.length > 0 && (
-                  <span className="bg-blue-100 text-blue-800 text-xs rounded-full px-2 py-1 ml-2">
+                  <span className={`${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'} text-xs rounded-full px-2 py-1 ml-2`}>
                     {timeline.length}
                   </span>
                 )}
@@ -263,8 +267,8 @@ const LeadDetailModal = ({
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {/* Error message */}
           {errors.general && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800">{errors.general}</p>
+            <div className={`mb-6 p-4 ${isDarkMode ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'} border rounded-md`}>
+              <p className={`${isDarkMode ? 'text-red-300' : 'text-red-800'}`}>{errors.general}</p>
             </div>
           )}
 
@@ -273,64 +277,72 @@ const LeadDetailModal = ({
             <div className="space-y-6">
               {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                <h3 className={`text-lg font-semibold mb-4 ${themeClasses.textPrimary}`}>Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium ${themeClasses.textSecondary} mb-1`}>
                       Full Name *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={`w-full p-3 border rounded-lg ${
-                        errors.name ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        errors.name 
+                          ? 'border-red-500' 
+                          : isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                       placeholder="Enter full name"
                     />
                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium ${themeClasses.textSecondary} mb-1`}>
                       Company
                     </label>
                     <input
                       type="text"
                       value={formData.company}
                       onChange={(e) => handleInputChange('company', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                       placeholder="Company name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium ${themeClasses.textSecondary} mb-1`}>
                       Phone Number *
                     </label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full p-3 border rounded-lg ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        errors.phone 
+                          ? 'border-red-500' 
+                          : isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                       placeholder="(555) 123-4567"
                     />
                     {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium ${themeClasses.textSecondary} mb-1`}>
                       Email
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full p-3 border rounded-lg ${
-                        errors.email ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        errors.email 
+                          ? 'border-red-500' 
+                          : isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                       placeholder="email@example.com"
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -366,7 +378,7 @@ const LeadDetailModal = ({
 
               {/* Status and Priority */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Lead Status</h3>
+                <h3 className={`text-lg font-semibold mb-4 ${themeClasses.textPrimary}`}>Lead Status</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -375,7 +387,9 @@ const LeadDetailModal = ({
                     <select
                       value={formData.status}
                       onChange={(e) => handleInputChange('status', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                     >
                       <option value="New">New</option>
                       <option value="Follow-up">Follow-up</option>
@@ -392,7 +406,9 @@ const LeadDetailModal = ({
                     <select
                       value={formData.priority}
                       onChange={(e) => handleInputChange('priority', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                     >
                       <option value="Low">Low</option>
                       <option value="Medium">Medium</option>
@@ -407,7 +423,9 @@ const LeadDetailModal = ({
                     <select
                       value={formData.company_size}
                       onChange={(e) => handleInputChange('company_size', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg"
+                      className={`w-full p-3 border rounded-lg ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                        isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                      } focus:ring-2 focus:ring-blue-500/20`}
                     >
                       <option value="">Select size</option>
                       <option value="1-10">1-10 employees</option>
@@ -422,7 +440,7 @@ const LeadDetailModal = ({
 
               {/* Address */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Address</h3>
+                <h3 className={`text-lg font-semibold mb-4 ${themeClasses.textPrimary}`}>Address</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <input
@@ -474,7 +492,7 @@ const LeadDetailModal = ({
 
               {/* Tags */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Tags</h3>
+                <h3 className={`text-lg font-semibold mb-4 ${themeClasses.textPrimary}`}>Tags</h3>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {formData.tags.map((tag, index) => (
                     <span
@@ -529,16 +547,18 @@ const LeadDetailModal = ({
                     </div>
                   ) : timeline.length > 0 ? (
                     timeline.map((event, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                        <div className="bg-blue-500 text-white rounded-full p-2 text-xs">
+                      <div key={index} className={`flex items-start space-x-3 p-4 rounded-lg ${
+                        isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50'
+                      }`}>
+                        <div className={`${isDarkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white rounded-full p-2 text-xs`}>
                           {event.type === 'call' ? '📞' : 
                            event.type === 'email' ? '📧' : 
                            event.type === 'note' ? '📝' : '📅'}
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium">{event.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                          <p className="text-xs text-gray-400 mt-2">
+                          <h4 className={`font-medium ${themeClasses.textPrimary}`}>{event.title}</h4>
+                          <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>{event.description}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-400'} mt-2`}>
                             {new Date(event.timestamp).toLocaleString()}
                           </p>
                         </div>
@@ -546,7 +566,7 @@ const LeadDetailModal = ({
                     ))
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">No activity recorded yet</p>
+                      <p className={`${themeClasses.textSecondary}`}>No activity recorded yet</p>
                     </div>
                   )}
                 </div>
@@ -557,11 +577,13 @@ const LeadDetailModal = ({
           {/* Notes Tab */}
           {activeTab === 'notes' && (
             <div>
-              <h3 className="text-lg font-semibold mb-4">Notes</h3>
+              <h3 className={`text-lg font-semibold mb-4 ${themeClasses.textPrimary}`}>Notes</h3>
               <textarea
                 value={formData.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
-                className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-y"
+                className={`w-full h-64 p-4 border rounded-lg resize-y ${themeClasses.cardBg} ${themeClasses.textPrimary} ${
+                  isDarkMode ? 'border-gray-600 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'
+                } focus:ring-2 focus:ring-blue-500/20`}
                 placeholder="Add your notes about this lead..."
               />
             </div>
@@ -569,7 +591,7 @@ const LeadDetailModal = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-gray-50 p-6 flex justify-between">
+        <div className={`border-t ${themeClasses.border} ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} p-6 flex justify-between`}>
           <div>
             {!isNewLead && (
               <button

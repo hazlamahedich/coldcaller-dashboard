@@ -406,6 +406,55 @@ export const sortAudioClips = (audioClips, sortBy = 'name', order = 'asc') => {
 };
 
 /**
+ * Extract audio metadata from file
+ * @param {File} file - Audio file to extract metadata from
+ * @returns {Promise<Object>} Audio metadata
+ */
+export const extractAudioMetadata = async (file) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const audio = new Audio();
+      const url = URL.createObjectURL(file);
+      
+      audio.addEventListener('loadedmetadata', () => {
+        const metadata = {
+          duration: audio.duration,
+          size: file.size,
+          type: file.type,
+          name: file.name,
+          lastModified: file.lastModified,
+          bitrate: calculateEstimatedBitrate(file.size, audio.duration),
+          format: getAudioFormatInfo(file.type)
+        };
+        
+        URL.revokeObjectURL(url);
+        resolve(metadata);
+      });
+      
+      audio.addEventListener('error', (error) => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load audio metadata: ' + error.message));
+      });
+      
+      audio.src = url;
+    } catch (error) {
+      reject(new Error('Failed to extract audio metadata: ' + error.message));
+    }
+  });
+};
+
+/**
+ * Calculate estimated bitrate from file size and duration
+ * @param {number} fileSize - File size in bytes
+ * @param {number} duration - Duration in seconds
+ * @returns {number} Estimated bitrate in kbps
+ */
+const calculateEstimatedBitrate = (fileSize, duration) => {
+  if (!fileSize || !duration || duration <= 0) return 0;
+  return Math.round((fileSize * 8) / (duration * 1000));
+};
+
+/**
  * Browser compatibility checks
  * @returns {Object} Compatibility information
  */
@@ -421,6 +470,7 @@ export const checkBrowserCompatibility = () => {
 
 export default {
   validateAudioFile,
+  extractAudioMetadata,
   formatFileSize,
   formatDuration,
   parseDuration,

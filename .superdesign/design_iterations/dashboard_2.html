@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Caller Dashboard - Professional Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --background: #ffffff;
+            --foreground: #0f172a;
+            --card: #ffffff;
+            --card-foreground: #0f172a;
+            --primary: #3b82f6;
+            --primary-foreground: #ffffff;
+            --secondary: #f1f5f9;
+            --secondary-foreground: #475569;
+            --muted: #f8fafc;
+            --muted-foreground: #64748b;
+            --accent: #10b981;
+            --accent-foreground: #ffffff;
+            --destructive: #ef4444;
+            --destructive-foreground: #ffffff;
+            --border: #e2e8f0;
+            --input: #ffffff;
+            --ring: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --radius: 8px;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --background: #0f172a;
+            --foreground: #f8fafc;
+            --card: #1e293b;
+            --card-foreground: #f8fafc;
+            --primary: #3b82f6;
+            --primary-foreground: #ffffff;
+            --secondary: #334155;
+            --secondary-foreground: #cbd5e1;
+            --muted: #1e293b;
+            --muted-foreground: #94a3b8;
+            --accent: #10b981;
+            --accent-foreground: #ffffff;
+            --destructive: #ef4444;
+            --destructive-foreground: #ffffff;
+            --border: #334155;
+            --input: #1e293b;
+            --ring: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        }
+
+        body {
+            background-color: var(--background) !important;
+            color: var(--foreground) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .card {
+            background-color: var(--card) !important;
+            color: var(--card-foreground) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            box-shadow: var(--shadow) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Updated dialpad styling - GREEN and CLOSER */
+        .dialpad-key {
+            width: 65px !important;
+            height: 65px !important;
+            font-size: 22px !important;
+            font-weight: 600 !important;
+            border-radius: var(--radius) !important;
+            background: #22c55e !important; /* Green background */
+            border: 2px solid #16a34a !important; /* Darker green border */
+            color: #ffffff !important; /* White text */
+            transition: all 0.2s ease !important;
+            box-shadow: var(--shadow) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 2px !important; /* Closer spacing */
+        }
+
+        .dialpad-key:hover {
+            background: #16a34a !important; /* Darker green on hover */
+            color: #ffffff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: var(--shadow-lg) !important;
+            border-color: #15803d !important;
+        }
+
+        .dialpad-key:active {
+            transform: translateY(0) !important;
+            box-shadow: var(--shadow) !important;
+            background: #15803d !important;
+        }
+
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: var(--muted);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+        }
+
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            top: 3px;
+            left: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        [data-theme="dark"] .theme-toggle::after {
+            left: 32px;
+        }
+
+        /* Call Button - GREEN */
+        .btn-call {
+            background: #22c55e !important;
+            color: #ffffff !important;
+            border: 2px solid #16a34a !important;
+            padding: 12px 24px !important;
+            border-radius: var(--radius) !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            font-size: 16px !important;
+        }
+
+        .btn-call:hover {
+            background: #16a34a !important;
+            transform: translateY(-1px) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        /* Hang Up Button - RED */
+        .btn-hangup {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: 2px solid #dc2626 !important;
+            padding: 12px 24px !important;
+            border-radius: var(--radius) !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            font-size: 16px !important;
+        }
+
+        .btn-hangup:hover {
+            background: #dc2626 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        /* Mute Button - DARK YELLOW */
+        .btn-mute {
+            background: #d97706 !important;
+            color: #ffffff !important;
+            border: 2px solid #b45309 !important;
+            padding: 12px 24px !important;
+            border-radius: var(--radius) !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            font-size: 16px !important;
+        }
+
+        .btn-mute:hover {
+            background: #b45309 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .btn-primary {
+            background: var(--primary) !important;
+            color: var(--primary-foreground) !important;
+            border: 1px solid var(--primary) !important;
+            padding: 8px 16px !important;
+            border-radius: var(--radius) !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .btn-secondary {
+            background: var(--secondary) !important;
+            color: var(--secondary-foreground) !important;
+            border: 1px solid var(--border) !important;
+            padding: 8px 16px !important;
+            border-radius: var(--radius) !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-secondary:hover {
+            background: var(--muted) !important;
+        }
+
+        .audio-clip-btn {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 12px 16px !important;
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            color: var(--foreground) !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+            width: 100% !important;
+        }
+
+        .audio-clip-btn:hover {
+            background: var(--accent) !important;
+            color: var(--accent-foreground) !important;
+            border-color: var(--accent) !important;
+        }
+
+        .status-badge {
+            padding: 4px 8px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+        }
+
+        .status-success {
+            background: var(--success) !important;
+            color: white !important;
+        }
+
+        .status-warning {
+            background: var(--warning) !important;
+            color: white !important;
+        }
+
+        .status-info {
+            background: var(--info) !important;
+            color: white !important;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        /* Script card styling */
+        .script-card {
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            padding: 16px !important;
+            margin-bottom: 12px !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .script-card:hover {
+            border-color: var(--primary) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .script-card.active {
+            border-color: var(--primary) !important;
+            background: rgba(59, 130, 246, 0.05) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Cold Caller Dashboard</h1>
+                    <span class="status-badge status-success">Live</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Connected: SIP/2.0</span>
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i data-lucide="sun" class="w-4 h-4 text-yellow-500"></i>
+                        <i data-lucide="moon" class="w-4 h-4 text-blue-500"></i>
+                    </button>
+                    <button class="btn-primary">
+                        <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Sidebar - Navigation & Performance -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- Navigation -->
+                <div class="card p-6">
+                    <h2 class="text-lg font-semibold mb-4">Navigation</h2>
+                    <nav class="space-y-2">
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+                            <i data-lucide="home" class="w-4 h-4 mr-3"></i>
+                            Dashboard
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i data-lucide="users" class="w-4 h-4 mr-3"></i>
+                            Leads
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i data-lucide="music" class="w-4 h-4 mr-3"></i>
+                            Audio Clips
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i data-lucide="file-text" class="w-4 h-4 mr-3"></i>
+                            Scripts
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 mr-3"></i>
+                            Analytics
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i data-lucide="clock" class="w-4 h-4 mr-3"></i>
+                            Call History
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="card metric-card p-6">
+                    <h2 class="text-lg font-semibold mb-4 text-white">Today's Performance</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/80">Total Calls</span>
+                            <span class="text-2xl font-bold text-white">45</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/80">Success Rate</span>
+                            <span class="text-2xl font-bold text-white">68%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/80">Avg Call Time</span>
+                            <span class="text-2xl font-bold text-white">2m 15s</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/80">Emails Sent</span>
+                            <span class="text-2xl font-bold text-white">12</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Dialpad & Audio Clips -->
+            <div class="lg:col-span-6 space-y-6">
+                <!-- Dialpad -->
+                <div class="card p-6">
+                    <h2 class="text-lg font-semibold mb-4">Dialpad</h2>
+                    
+                    <!-- Phone Number Input -->
+                    <div class="mb-6">
+                        <input type="tel" id="phoneInput" 
+                               class="w-full px-4 py-3 text-xl text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter phone number"
+                               value="+1 (555) 123-4567">
+                    </div>
+
+                    <!-- Dialpad Keys - CLOSER SPACING & GREEN -->
+                    <div class="grid grid-cols-3 gap-1 mb-6 justify-items-center max-w-xs mx-auto">
+                        <button class="dialpad-key" onclick="addDigit('1')">1</button>
+                        <button class="dialpad-key" onclick="addDigit('2')">2</button>
+                        <button class="dialpad-key" onclick="addDigit('3')">3</button>
+                        <button class="dialpad-key" onclick="addDigit('4')">4</button>
+                        <button class="dialpad-key" onclick="addDigit('5')">5</button>
+                        <button class="dialpad-key" onclick="addDigit('6')">6</button>
+                        <button class="dialpad-key" onclick="addDigit('7')">7</button>
+                        <button class="dialpad-key" onclick="addDigit('8')">8</button>
+                        <button class="dialpad-key" onclick="addDigit('9')">9</button>
+                        <button class="dialpad-key" onclick="addDigit('*')">*</button>
+                        <button class="dialpad-key" onclick="addDigit('0')">0</button>
+                        <button class="dialpad-key" onclick="addDigit('#')">#</button>
+                    </div>
+
+                    <!-- Call Controls - COLORED BUTTONS -->
+                    <div class="flex justify-center space-x-4">
+                        <button class="btn-call">
+                            <i data-lucide="phone-call" class="w-5 h-5 mr-2"></i>
+                            Call
+                        </button>
+                        <button class="btn-hangup">
+                            <i data-lucide="phone-off" class="w-5 h-5 mr-2"></i>
+                            Hang Up
+                        </button>
+                        <button class="btn-mute">
+                            <i data-lucide="mic-off" class="w-5 h-5 mr-2"></i>
+                            Mute
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Clips -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Audio Clips</h2>
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary">
+                                <i data-lucide="mic" class="w-4 h-4 mr-2"></i>
+                                Record
+                            </button>
+                            <button class="btn-secondary">
+                                <i data-lucide="upload" class="w-4 h-4 mr-2"></i>
+                                Upload
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button class="audio-clip-btn">
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                            <span>Introduction Script</span>
+                            <span class="ml-auto text-sm text-gray-500">0:15</span>
+                        </button>
+                        <button class="audio-clip-btn">
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                            <span>Product Pitch</span>
+                            <span class="ml-auto text-sm text-gray-500">0:45</span>
+                        </button>
+                        <button class="audio-clip-btn">
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                            <span>Objection Handler</span>
+                            <span class="ml-auto text-sm text-gray-500">0:30</span>
+                        </button>
+                        <button class="audio-clip-btn">
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                            <span>Closing Script</span>
+                            <span class="ml-auto text-sm text-gray-500">0:25</span>
+                        </button>
+                        <button class="audio-clip-btn">
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                            <span>Thank You Message</span>
+                            <span class="ml-auto text-sm text-gray-500">0:10</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TEXT SCRIPTS SECTION - ADDED BACK -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Call Scripts</h2>
+                        <button class="btn-secondary">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            New Script
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        <div class="script-card active" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2 text-blue-600">Opening Introduction</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "Hi, this is [Your Name] from [Company]. I hope you're having a great day. I'm calling because we help businesses like yours reduce costs by up to 30% while improving efficiency. Do you have 2 minutes to hear how we might be able to help you?"
+                            </p>
+                        </div>
+                        
+                        <div class="script-card" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2">Product Benefits</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "Our solution has helped over 500 companies save an average of $50,000 annually. The key benefits include automated processes, real-time reporting, and 24/7 support. Most clients see results within the first 30 days."
+                            </p>
+                        </div>
+                        
+                        <div class="script-card" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2">Objection: Price</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "I understand budget is always a concern. The question is, what's the cost of not taking action? Based on your current situation, you could be losing $X per month. Our solution typically pays for itself within 3 months."
+                            </p>
+                        </div>
+                        
+                        <div class="script-card" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2">Objection: Not Interested</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "I completely understand - you probably get a lot of sales calls. But this isn't just another pitch. We've specifically researched your industry and have a solution that's working for your competitors. Can I share just one quick example?"
+                            </p>
+                        </div>
+                        
+                        <div class="script-card" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2">Closing - Demo Request</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "Based on our conversation, it sounds like this could be a perfect fit for your business. I'd love to show you exactly how this works with a quick 15-minute demo. Are you available this Thursday at 2 PM or would Friday at 10 AM work better?"
+                            </p>
+                        </div>
+                        
+                        <div class="script-card" onclick="selectScript(this)">
+                            <h3 class="font-semibold text-sm mb-2">Follow-up Thank You</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                "Thank you so much for your time today. I'll send you the information we discussed via email within the next hour. I'll also follow up on [specific date] to see if you have any questions. Have a wonderful rest of your day!"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Lead Info & History -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- Current Lead -->
+                <div class="card p-6">
+                    <h2 class="text-lg font-semibold mb-4">Current Lead</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg">John Smith</h3>
+                            <p class="text-gray-600 dark:text-gray-400">john.smith@email.com</p>
+                            <p class="text-gray-600 dark:text-gray-400">ABC Company</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="status-badge status-info">New Lead</span>
+                            <span class="status-badge status-success">Score: 85</span>
+                        </div>
+                        
+                        <!-- Call Notes -->
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium mb-2">Call Notes</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                      rows="4" 
+                                      placeholder="Enter call notes..."></textarea>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="space-y-2">
+                            <button class="btn-primary w-full">
+                                <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                                Schedule Follow-up
+                            </button>
+                            <button class="btn-secondary w-full">
+                                <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                                Send Email
+                            </button>
+                            <button class="btn-secondary w-full">
+                                <i data-lucide="message-square" class="w-4 h-4 mr-2"></i>
+                                Send SMS
+                            </button>
+                            <button class="btn-secondary w-full">
+                                <i data-lucide="arrow-right" class="w-4 h-4 mr-2"></i>
+                                Next Lead
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Call History -->
+                <div class="card p-6">
+                    <h2 class="text-lg font-semibold mb-4">Recent Calls</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div>
+                                <p class="font-medium">10:30 AM</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">+1 (555) 123-4567</p>
+                            </div>
+                            <span class="status-badge status-success">Success</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div>
+                                <p class="font-medium">10:15 AM</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">+1 (555) 987-6543</p>
+                            </div>
+                            <span class="status-badge status-warning">Voicemail</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div>
+                                <p class="font-medium">09:45 AM</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">+1 (555) 456-7890</p>
+                            </div>
+                            <span class="status-badge status-info">No Answer</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <div>
+                                <p class="font-medium">09:30 AM</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">+1 (555) 321-0987</p>
+                            </div>
+                            <span class="status-badge status-warning">Busy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        // Dialpad Functionality
+        function addDigit(digit) {
+            const input = document.getElementById('phoneInput');
+            input.value += digit;
+            
+            // Add click animation
+            event.target.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                event.target.style.transform = 'scale(1)';
+            }, 100);
+        }
+
+        // Script Selection
+        function selectScript(element) {
+            // Remove active class from all script cards
+            document.querySelectorAll('.script-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Add active class to selected script
+            element.classList.add('active');
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Load theme on page load
+        loadTheme();
+
+        // Add some interactive feedback
+        document.querySelectorAll('.audio-clip-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('[data-lucide="play"]');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'pause');
+                    lucide.createIcons();
+                    
+                    // Simulate playing, then reset after 2 seconds
+                    setTimeout(() => {
+                        icon.setAttribute('data-lucide', 'play');
+                        lucide.createIcons();
+                    }, 2000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

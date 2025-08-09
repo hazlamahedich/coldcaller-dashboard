@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * CallStatus Component - Real-time call status display
@@ -16,6 +17,7 @@ const CallStatus = ({
   phoneNumber = '',
   startTime = null
 }) => {
+  const { isDarkMode, themeClasses } = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update time every second for live duration display
@@ -157,9 +159,9 @@ const CallStatus = ({
   }
 
   return (
-    <div className="card">
+    <div>
       <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-700">Call Status</h3>
+        <h3 className={`text-lg font-semibold ${themeClasses.textPrimary}`}>Call Status</h3>
       </div>
 
       {/* Call State Display */}
@@ -174,7 +176,7 @@ const CallStatus = ({
         {/* Call Duration */}
         {(callState === 'active' || callState === 'hold' || callState === 'ended') && (
           <div className="mt-2">
-            <span className="text-2xl font-mono text-gray-700">
+            <span className={`text-2xl font-mono ${themeClasses.textPrimary}`}>
               {getLiveDuration()}
             </span>
           </div>
@@ -183,23 +185,23 @@ const CallStatus = ({
 
       {/* Caller Information */}
       {(phoneNumber || callerInfo) && (
-        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+        <div className={`${themeClasses.cardBg} rounded-lg p-3 mb-4 border ${themeClasses.border}`}>
           <div className="text-center">
             {callerInfo?.name && (
-              <div className="text-lg font-semibold text-gray-800 mb-1">
+              <div className={`text-lg font-semibold ${themeClasses.textPrimary} mb-1`}>
                 {callerInfo.name}
               </div>
             )}
             {callerInfo?.company && (
-              <div className="text-sm text-gray-600 mb-1">
+              <div className={`text-sm ${themeClasses.textSecondary} mb-1`}>
                 {callerInfo.company}
               </div>
             )}
-            <div className="text-lg font-mono text-blue-600">
+            <div className={`text-lg font-mono ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
               {formatPhoneNumber(phoneNumber || callerInfo?.phone)}
             </div>
             {callerInfo?.location && (
-              <div className="text-sm text-gray-500 mt-1">
+              <div className={`text-sm ${themeClasses.textSecondary} mt-1`}>
                 📍 {callerInfo.location}
               </div>
             )}
@@ -211,7 +213,7 @@ const CallStatus = ({
       <div className="space-y-3">
         {/* Signal Quality */}
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-600">Signal Quality:</span>
+          <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>Signal Quality:</span>
           <div className="flex items-center">
             <div className="flex gap-0.5 mr-2">
               {[...Array(4)].map((_, i) => (
@@ -234,7 +236,7 @@ const CallStatus = ({
         {/* Network Latency */}
         {networkLatency > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-600">Latency:</span>
+            <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>Latency:</span>
             <span className={`text-sm font-medium ${
               networkLatency < 100 ? 'text-green-500' :
               networkLatency < 200 ? 'text-yellow-500' :
@@ -248,7 +250,7 @@ const CallStatus = ({
         {/* Audio Quality */}
         {callState === 'active' && (
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-600">Audio Quality:</span>
+            <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>Audio Quality:</span>
             <span className={`text-sm font-medium ${audioInfo.color}`}>
               {audioInfo.text}
             </span>
@@ -256,8 +258,8 @@ const CallStatus = ({
         )}
 
         {/* SIP Registration Status */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-          <span className="text-sm font-medium text-gray-600">SIP Status:</span>
+        <div className={`flex items-center justify-between pt-2 border-t ${themeClasses.border}`}>
+          <span className={`text-sm font-medium ${themeClasses.textSecondary}`}>SIP Status:</span>
           <div className="flex items-center">
             <span className="mr-1">{sipInfo.icon}</span>
             <span className={`text-sm font-medium ${sipInfo.color}`}>
@@ -269,8 +271,8 @@ const CallStatus = ({
 
       {/* Call Start Time */}
       {startTime && callState !== 'idle' && (
-        <div className="mt-3 pt-3 border-t border-gray-200 text-center">
-          <div className="text-xs text-gray-500">
+        <div className={`mt-3 pt-3 border-t ${themeClasses.border} text-center`}>
+          <div className={`text-xs ${themeClasses.textSecondary}`}>
             Call started: {new Date(startTime).toLocaleTimeString('en-US', {
               hour: 'numeric',
               minute: '2-digit',
