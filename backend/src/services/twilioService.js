@@ -62,7 +62,7 @@ class TwilioService {
   }
 
   /**
-   * Make outbound call
+   * Make outbound call with recording preferences
    */
   async makeCall(from, to, options = {}) {
     if (!this.client) {
@@ -70,6 +70,10 @@ class TwilioService {
     }
 
     try {
+      // Handle recording preferences
+      const recordingEnabled = options.record !== false; // Default to true for backward compatibility
+      const recordingSettings = options.recordingSettings || {};
+      
       const callOptions = {
         from: from || this.phoneNumber,
         to: to,
@@ -77,10 +81,59 @@ class TwilioService {
         statusCallback: options.statusCallback || process.env.TWILIO_STATUS_WEBHOOK_URL,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
         statusCallbackMethod: 'POST',
-        record: options.record || false,
-        timeout: options.timeout || 60,
-        ...options
+        record: recordingEnabled,
+        timeout: options.timeout || 60
       };
+
+      // Add recording-specific options if recording is enabled
+      if (recordingEnabled) {
+        callOptions.recordingStatusCallback = options.recordingStatusCallback || process.env.TWILIO_RECORDING_WEBHOOK_URL;
+        callOptions.recordingStatusCallbackEvent = ['completed'];
+        callOptions.recordingStatusCallbackMethod = 'POST';
+        
+        // Add recording metadata for webhook processing
+        if (recordingSettings.autoTranscribe || recordingSettings.speechAnalytics) {
+          callOptions.recordingChannels = 'dual'; // Better for transcription
+        }
+      }
+
+      // Add custom parameters for webhook processing
+      const customParameters = {};
+      if (options.leadId) {
+        customParameters.leadId = options.leadId;
+      }
+      if (recordingSettings.autoTranscribe) {
+        customParameters.autoTranscribe = 'true';
+      }
+      if (recordingSettings.speechAnalytics) {
+        customParameters.speechAnalytics = 'true';
+      }
+      if (recordingSettings.direction) {
+        customParameters.callDirection = recordingSettings.direction;
+      }
+
+      // Add custom parameters to status callback URL
+      if (Object.keys(customParameters).length > 0) {
+        const params = new URLSearchParams(customParameters);
+        callOptions.statusCallback = `${callOptions.statusCallback}?${params.toString()}`;
+        
+        if (recordingEnabled && callOptions.recordingStatusCallback) {
+          // Add user preferences for transcription processing
+          const recordingParams = new URLSearchParams({
+            ...customParameters,
+            userId: recordingSettings.userId || 'unknown',
+            autoTranscribe: recordingSettings.autoTranscribe ? 'true' : 'false',
+            speechAnalytics: recordingSettings.speechAnalytics ? 'true' : 'false'
+          });
+          callOptions.recordingStatusCallback = `${callOptions.recordingStatusCallback}?${recordingParams.toString()}`;
+        }
+      }
+
+      // Add any other custom options
+      Object.assign(callOptions, options);
+      
+      // Remove our custom options that Twilio doesn't recognize
+      delete callOptions.recordingSettings;
 
       const call = await this.client.calls.create(callOptions);
       

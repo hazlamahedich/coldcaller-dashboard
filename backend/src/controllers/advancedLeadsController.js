@@ -124,11 +124,36 @@ const getLeadScoreBreakdown = async (req, res) => {
  */
 const getLeadTimeline = async (req, res) => {
   try {
+    const { id } = req.params;
+    const { 
+      limit = 50, 
+      activity_types = null, 
+      start_date = null, 
+      end_date = null, 
+      include_system = true 
+    } = req.query;
+    
+    // Import leadTracking service
+    const { getLeadTimeline: getTimeline } = require('../services/leadTracking');
+    
+    const options = {
+      limit: parseInt(limit),
+      activity_types: activity_types ? activity_types.split(',') : null,
+      start_date,
+      end_date,
+      include_system: include_system === 'true'
+    };
+    
+    const timeline = getTimeline(id, options);
+    
     return ResponseFormatter.success(res, {
-      timeline: [],
-      total_events: 0
-    }, 'Timeline retrieved');
+      timeline,
+      total_events: timeline.length,
+      lead_id: id,
+      options
+    }, 'Timeline retrieved successfully');
   } catch (error) {
+    console.error('Failed to get lead timeline:', error);
     return ResponseFormatter.error(res, error.message);
   }
 };

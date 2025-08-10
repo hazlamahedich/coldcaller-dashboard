@@ -30,12 +30,18 @@ router.post('/token', authenticate, async (req, res) => {
 });
 
 /**
- * Make outbound call
+ * Make outbound call with recording preferences
  * POST /api/twilio/call
  */
 router.post('/call', authenticate, async (req, res) => {
   try {
-    const { to, from, record = false } = req.body;
+    const { 
+      to, 
+      from, 
+      record = true, 
+      recordingSettings = {},
+      leadId 
+    } = req.body;
     const userId = req.user.id;
 
     if (!to) {
@@ -55,9 +61,20 @@ router.post('/call', authenticate, async (req, res) => {
       });
     }
 
+    // Prepare comprehensive recording settings
+    const enhancedRecordingSettings = {
+      autoTranscribe: recordingSettings.autoTranscribe || false,
+      speechAnalytics: recordingSettings.speechAnalytics || false,
+      direction: 'outbound',
+      userId: userId,
+      ...recordingSettings
+    };
+
     const callResult = await TwilioService.makeCall(from, to, {
       record: record,
-      statusCallback: `${process.env.TWILIO_STATUS_WEBHOOK_URL}?userId=${userId}`,
+      recordingSettings: enhancedRecordingSettings,
+      leadId: leadId,
+      statusCallback: `${process.env.TWILIO_STATUS_WEBHOOK_URL}?userId=${userId}&leadId=${leadId || ''}`,
       recordingStatusCallback: process.env.TWILIO_RECORDING_WEBHOOK_URL
     });
 
@@ -75,7 +92,24 @@ router.post('/call', authenticate, async (req, res) => {
         initiatedAt: new Date().toISOString()
       };
 
-      // You can integrate this with your existing call logging service
+      // Log activity to lead timeline
+      if (req.body.leadId) {
+        try {
+          const { logLeadActivity } = require('../services/leadTracking');
+          await logLeadActivity(req.body.leadId, 'call_made', {
+            call_sid: callResult.callSid,
+            phone_number: to,
+            direction: 'outbound',
+            provider: 'twilio',
+            agent_id: userId,
+            status: callResult.status
+          }, `user-${userId}`);
+          console.log('📝 Call activity logged to timeline');
+        } catch (activityError) {
+          console.error('Failed to log call activity:', activityError);
+        }
+      }
+
       console.log('📞 Call initiated:', callLogData);
     }
 
@@ -312,7 +346,20 @@ router.post('/status', async (req, res) => {
       completedAt: ['completed', 'failed', 'canceled', 'busy', 'no-answer'].includes(CallStatus) ? new Date().toISOString() : null
     };
 
-    // Integrate with your existing call logging system here
+    // Log call status updates to lead timeline
+    if (CallStatus === 'completed' && userId) {
+      try {
+        // Try to find the lead ID from the original call log
+        // In production, you'd query your database for the leadId by CallSid
+        const { logLeadActivity } = require('../services/leadTracking');
+        
+        // For now, we'll log without specific leadId - you can enhance this
+        console.log('📝 Call completed - would log to timeline if leadId available');
+      } catch (activityError) {
+        console.error('Failed to log call completion activity:', activityError);
+      }
+    }
+
     console.log('📝 Call status update:', callUpdate);
 
     // Send real-time update via WebSocket if available
@@ -328,18 +375,25 @@ router.post('/status', async (req, res) => {
 });
 
 /**
- * Twilio Recording webhook - handles recording completion
+ * Twilio Recording webhook - handles recording completion with user preferences
  * POST /api/twilio/recording
  */
 router.post('/recording', async (req, res) => {
   try {
     const { CallSid, RecordingSid, RecordingUrl, RecordingDuration } = req.body;
     
+    // Extract user preferences from query parameters (passed from call initiation)
+    const { autoTranscribe, speechAnalytics, userId, leadId } = req.query;
+    
     console.log('🎙️ Recording completed:', {
       callSid: CallSid,
       recordingSid: RecordingSid,
       duration: RecordingDuration,
-      url: RecordingUrl
+      url: RecordingUrl,
+      userId: userId,
+      leadId: leadId,
+      autoTranscribe: autoTranscribe,
+      speechAnalytics: speechAnalytics
     });
 
     // Save recording information to database
@@ -349,11 +403,71 @@ router.post('/recording', async (req, res) => {
       url: RecordingUrl,
       duration: parseInt(RecordingDuration),
       provider: 'twilio',
+      userId: userId,
+      leadId: leadId,
       createdAt: new Date().toISOString()
     };
 
     // Integrate with your existing audio storage system
     console.log('💾 Recording saved:', recordingData);
+
+    // Start automatic transcription based on user preferences
+    const shouldTranscribe = autoTranscribe === 'true' && parseInt(RecordingDuration) > 5;
+    
+    if (shouldTranscribe) {
+      try {
+        const TranscriptionService = require('../services/transcriptionService');
+        
+        console.log('🤖 Starting user-requested automatic transcription for call:', CallSid);
+        
+        // Use user's speech analytics preference
+        const includeAnalytics = speechAnalytics === 'true';
+        
+        // Start transcription in background (don't wait for completion)
+        TranscriptionService.transcribeRecording({
+          callId: CallSid,
+          recordingUrl: RecordingUrl,
+          provider: 'whisper', // Default to Whisper
+          language: 'en',
+          includeAnalytics: includeAnalytics,
+          userId: userId,
+          leadId: leadId
+        }).then(transcriptionResult => {
+          console.log('✅ Transcription completed for call:', CallSid);
+          console.log('📝 Transcription result:', {
+            wordCount: transcriptionResult.wordCount,
+            confidence: transcriptionResult.confidence,
+            processingTime: transcriptionResult.processingTime,
+            analyticsIncluded: includeAnalytics
+          });
+          
+          // Log transcription completion to lead timeline
+          if (leadId && userId) {
+            try {
+              const { logLeadActivity } = require('../services/leadTracking');
+              logLeadActivity(leadId, 'call_transcribed', {
+                call_sid: CallSid,
+                transcription_confidence: transcriptionResult.confidence,
+                word_count: transcriptionResult.wordCount,
+                speech_analytics: includeAnalytics
+              }, `user-${userId}`);
+            } catch (activityError) {
+              console.error('Failed to log transcription activity:', activityError);
+            }
+          }
+          
+        }).catch(transcriptionError => {
+          console.error('❌ Transcription failed for call:', CallSid, transcriptionError.message);
+        });
+        
+      } catch (transcriptionError) {
+        console.error('❌ Failed to start transcription:', transcriptionError);
+      }
+    } else if (parseInt(RecordingDuration) <= 5) {
+      console.log('⏭️ Skipping transcription for short recording (<5 seconds)');
+    } else {
+      console.log('⏭️ Transcription disabled by user preferences');
+    }
 
     res.status(200).send('OK');
   } catch (error) {

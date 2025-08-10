@@ -3,17 +3,18 @@ import CallControls from './CallControls';
 import CallStatus from './CallStatus';
 import DTMFKeypad from './DTMFKeypad';
 import CallHistory from './CallHistory';
+import RecordingSettings, { useRecordingSettings } from './RecordingSettings';
 import SIPManager from '../services/SIPManager';
 import SIPProviderManager from '../services/SIPProviderManager';
 import AudioFeedbackService from '../services/AudioFeedbackService';
 import callService from '../services/callService';
 
 /**
- * VOIPPhone Component - Complete VOIP phone interface
- * Unified interface combining all VOIP functionality with professional features
+ * Enhanced VOIPPhone with Recording Controls
+ * Complete VOIP phone interface with recording preference management
  */
 
-const VOIPPhone = ({ 
+const EnhancedVOIPPhoneWithRecording = ({ 
   leadInfo = null,
   onCallLogged,
   sipConfig = null 
@@ -23,13 +24,16 @@ const VOIPPhone = ({
   const sipProviderManagerRef = useRef(null);
   const audioFeedbackRef = useRef(null);
   
+  // Recording settings hook
+  const recordingSettings = useRecordingSettings();
+  
   // SIP provider state
   const [sipProvider, setSipProvider] = useState('generic');
   const [dtmfMethod, setDtmfMethod] = useState('rfc4733');
   
   // Phone state
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [callState, setCallState] = useState('idle'); // idle, connecting, ringing, active, hold, ended
+  const [callState, setCallState] = useState('idle');
   const [currentCall, setCurrentCall] = useState(null);
   
   // Call controls state
@@ -45,6 +49,7 @@ const VOIPPhone = ({
   
   // UI state
   const [showDTMFKeypad, setShowDTMFKeypad] = useState(false);
+  const [showRecordingSettings, setShowRecordingSettings] = useState(false);
   const [error, setError] = useState(null);
   const [callHistoryTrigger, setCallHistoryTrigger] = useState(0);
 
@@ -62,18 +67,15 @@ const VOIPPhone = ({
     let providerConfig;
     
     if (sipConfig) {
-      // Use provided configuration
       sip.configure(sipConfig);
       providerConfig = sipConfig;
     } else {
-      // Auto-detect and configure provider
       try {
         providerConfig = sipProvider.initializeFromEnvironment();
         const sipConfiguration = sipProvider.getSIPConfiguration();
         
         sip.configure(sipConfiguration);
         
-        // Set provider type and DTMF method
         setSipProvider(sipProvider.activeProvider);
         const dtmfConfig = sipProvider.getDTMFConfig();
         setDtmfMethod(dtmfConfig.preferredMethod);
@@ -84,7 +86,7 @@ const VOIPPhone = ({
       } catch (error) {
         console.error('❌ Failed to initialize SIP provider:', error);
         
-        // Fallback to demo configuration
+        // Fallback configuration
         sip.configure({
           uri: 'demo@voip.example.com',
           wsServers: 'wss://voip.example.com:7443',
@@ -110,12 +112,12 @@ const VOIPPhone = ({
     sip.on('dtmfSent', handleDTMFSent);
     sip.on('audioFeedback', handleAudioFeedback);
 
-    // Auto-register for demo
+    // Auto-register
     setTimeout(() => {
       sip.register();
     }, 1000);
 
-    // Set up quality monitoring
+    // Quality monitoring
     const qualityInterval = setInterval(() => {
       if (callState === 'active') {
         const quality = sip.getConnectionQuality();
@@ -131,13 +133,11 @@ const VOIPPhone = ({
     };
   }, [sipConfig]);
 
-  // Enhanced SIP Event Handlers with Audio Feedback Integration
+  // SIP Event Handlers
   const handleSipRegistered = (data) => {
     console.log('✅ SIP registered:', data);
     setSipRegistered(true);
     setError(null);
-    
-    // Audio feedback for SIP registration
     audioFeedbackRef.current?.onCallStateChange('idle', { sipRegistered: true });
   };
 
@@ -145,8 +145,6 @@ const VOIPPhone = ({
     console.error('❌ SIP registration failed:', data);
     setSipRegistered(false);
     setError(`SIP Registration Failed: ${data.error}`);
-    
-    // Audio feedback for registration failure
     audioFeedbackRef.current?.playFeedback('error', 'SIP registration failed', { priority: 'critical' });
   };
 
@@ -155,7 +153,6 @@ const VOIPPhone = ({
     setCallState(state);
     setCurrentCall(callSession);
     
-    // Enhanced audio feedback for call progress
     audioFeedbackRef.current?.onCallStateChange(state, { 
       phoneNumber: callSession?.number,
       duration: callSession?.duration || 0 
@@ -163,6 +160,12 @@ const VOIPPhone = ({
     
     if (state === 'connecting') {
       setError(null);
+      
+      // Auto-start recording if enabled in settings
+      if (recordingSettings.autoRecord) {
+        setIsRecording(true);
+        console.log('🎙️ Auto-recording enabled for call');
+      }
     }
   };
 
@@ -172,7 +175,6 @@ const VOIPPhone = ({
     setCurrentCall(callSession);
     setError(null);
     
-    // High-priority audio feedback for successful connection
     audioFeedbackRef.current?.onCallStateChange('connected', { 
       phoneNumber: callSession?.number,
       priority: 'critical',
@@ -185,17 +187,16 @@ const VOIPPhone = ({
     setCallState('ended');
     setCurrentCall(callSession);
     
-    // Audio feedback for call termination
     audioFeedbackRef.current?.onCallStateChange('ended', { 
       reason,
       duration: callSession?.duration || 0,
       priority: 'high' 
     });
     
-    // Log the call
+    // Log the call with recording info
     logCall(callSession, reason);
     
-    // Reset state after 2 seconds with audio coordination
+    // Reset state
     setTimeout(() => {
       setCallState('idle');
       setCurrentCall(null);
@@ -203,8 +204,6 @@ const VOIPPhone = ({
       setIsOnHold(false);
       setIsRecording(false);
       setShowDTMFKeypad(false);
-      
-      // Final state reset
       audioFeedbackRef.current?.onCallStateChange('idle');
     }, 2000);
   };
@@ -214,7 +213,6 @@ const VOIPPhone = ({
     setCallState('ended');
     setError(`Call Failed: ${error}`);
     
-    // Reset state after 3 seconds
     setTimeout(() => {
       setCallState('idle');
       setCurrentCall(null);
@@ -238,15 +236,11 @@ const VOIPPhone = ({
 
   const handleDTMFSent = ({ tones, timestamp }) => {
     console.log(`📟 DTMF sent: ${tones} at ${timestamp}`);
-    
-    // Play DTMF confirmation feedback
     audioFeedbackRef.current?.playDTMFConfirmation(tones);
   };
 
   const handleAudioFeedback = ({ type, message }) => {
     console.log(`🔊 Audio feedback: ${type} - ${message}`);
-    
-    // Play audio feedback
     audioFeedbackRef.current?.playFeedback(type, message);
   };
 
@@ -255,7 +249,6 @@ const VOIPPhone = ({
     if (callState === 'idle') {
       setPhoneNumber(prev => prev + digit);
     } else if (callState === 'active') {
-      // Send DTMF during call
       sipManagerRef.current?.sendDTMF(digit);
     }
   };
@@ -268,7 +261,7 @@ const VOIPPhone = ({
     setPhoneNumber('');
   };
 
-  // Call control handlers
+  // Enhanced call handler that includes recording preferences
   const handleCall = async () => {
     if (!phoneNumber.trim() || !sipRegistered) {
       setError(sipRegistered ? 'Please enter a phone number' : 'Not connected to SIP server');
@@ -278,34 +271,56 @@ const VOIPPhone = ({
     try {
       setError(null);
       
-      // Default recording settings for standard VOIP phone
-      const defaultRecordingSettings = {
-        autoRecord: true,
-        autoTranscribe: false,
-        speechAnalytics: false,
-        recordInbound: true,
-        recordOutbound: true
-      };
+      // Make both SIP call (for real-time audio) and backend call (for recording)
+      console.log('📞 Initiating dual call approach:', {
+        phoneNumber,
+        recordingSettings,
+        leadId: leadInfo?.id
+      });
 
-      // Start backend call for recording (optional, fire-and-forget)
-      try {
-        await callService.makeCall(
-          phoneNumber,
-          { 
-            leadId: leadInfo?.id || null,
-            from: null 
-          },
-          defaultRecordingSettings
-        );
-        console.log('✅ Backend recording call initiated');
-      } catch (backendError) {
-        console.warn('⚠️ Backend call failed, continuing with SIP only:', backendError.message);
+      // 1. Start backend Twilio call with recording
+      const backendCallPromise = callService.makeCall(
+        phoneNumber,
+        { 
+          leadId: leadInfo?.id || null,
+          from: null // Let backend use default
+        },
+        recordingSettings
+      );
+
+      // 2. Start SIP call for real-time audio
+      const sipCallPromise = sipManagerRef.current.makeCall(phoneNumber, {
+        record: recordingSettings.autoRecord
+      });
+
+      // Wait for both calls to initiate
+      const [backendResult, sipResult] = await Promise.allSettled([
+        backendCallPromise,
+        sipCallPromise
+      ]);
+
+      // Log results
+      if (backendResult.status === 'fulfilled') {
+        console.log('✅ Backend call initiated:', backendResult.value);
+      } else {
+        console.error('❌ Backend call failed:', backendResult.reason);
       }
 
-      // Start SIP call for real-time audio
-      await sipManagerRef.current.makeCall(phoneNumber);
+      if (sipResult.status === 'fulfilled') {
+        console.log('✅ SIP call initiated');
+      } else {
+        console.error('❌ SIP call failed:', sipResult.reason);
+        // If SIP fails but backend succeeds, that's still okay
+      }
+
+      // Auto-start recording UI if enabled in settings
+      if (recordingSettings.autoRecord) {
+        setIsRecording(true);
+        console.log('🎙️ Auto-recording enabled for call');
+      }
       
     } catch (error) {
+      console.error('❌ Call initiation error:', error);
       setError(`Failed to make call: ${error.message}`);
     }
   };
@@ -322,7 +337,6 @@ const VOIPPhone = ({
     const newMuteState = !isMuted;
     sipManagerRef.current?.setMute(newMuteState);
     
-    // Enhanced audio feedback for mute toggle
     audioFeedbackRef.current?.playFeedback(
       newMuteState ? 'muted' : 'unmuted', 
       null, 
@@ -331,37 +345,24 @@ const VOIPPhone = ({
   };
 
   const handleHoldToggle = () => {
-    console.log('🔄 VOIPPhone: Hold toggle requested');
-    console.log('🔄 Current hold state:', isOnHold);
-    console.log('🔄 Current call state:', callState);
-    
     const newHoldState = !isOnHold;
-    
-    // Update local state immediately for UI responsiveness
     setIsOnHold(newHoldState);
     
     if (newHoldState) {
-      // Putting call on hold
       setCallState('hold');
       sipManagerRef.current?.holdCall();
       audioFeedbackRef.current?.onCallStateChange('hold', { wasActive: callState === 'active' });
-      console.log('⏸️ Call placed on hold');
     } else {
-      // Resuming call from hold
       setCallState('active');
       sipManagerRef.current?.resumeCall();
       audioFeedbackRef.current?.onCallStateChange('resume', { previouslyOnHold: true });
-      console.log('▶️ Call resumed from hold');
     }
   };
 
   const handleVolumeChange = (newVolume) => {
     setVolume(newVolume);
-    
-    // Update audio feedback service volume
     audioFeedbackRef.current?.setVolume(newVolume / 100);
     
-    // Provide audio confirmation for volume changes
     if (newVolume > 0) {
       audioFeedbackRef.current?.playFeedback('qualityGood', `Volume ${newVolume}%`, { 
         priority: 'low',
@@ -372,14 +373,12 @@ const VOIPPhone = ({
 
   const handleTransfer = (transferNumber) => {
     console.log(`📞 Transferring call to: ${transferNumber}`);
-    // In a real implementation, this would perform call transfer
     setError('Call transfer feature coming soon');
     setTimeout(() => setError(null), 3000);
   };
 
   const handleConference = () => {
     console.log('👥 Starting conference call');
-    // In a real implementation, this would start conference
     setError('Conference call feature coming soon');
     setTimeout(() => setError(null), 3000);
   };
@@ -388,25 +387,20 @@ const VOIPPhone = ({
     const newRecordingState = !isRecording;
     setIsRecording(newRecordingState);
     
-    // Enhanced audio feedback for recording state
     audioFeedbackRef.current?.playFeedback(
       newRecordingState ? 'recordingStarted' : 'recordingStopped',
       null,
       { priority: 'normal', vibrate: true }
     );
     
-    // In a real implementation, this would start/stop recording
     console.log(`🔴 Recording: ${newRecordingState ? 'started' : 'stopped'}`);
   };
 
-  // Enhanced DTMF keypad handlers with audio feedback
   const handleDTMFKeyPress = (key, transmissionInfo = {}) => {
     console.log(`🔢 DTMF key pressed: ${key}`, transmissionInfo);
     
     let success = transmissionInfo.transmitted;
     
-    // If transmission info is provided, the keypad already sent it
-    // Otherwise, send via SIP manager as fallback
     if (!transmissionInfo.transmitted) {
       success = sipManagerRef.current?.sendDTMF(key);
       
@@ -418,14 +412,8 @@ const VOIPPhone = ({
       }
     }
     
-    // Play realistic DTMF confirmation with enhanced feedback
     if (success) {
       audioFeedbackRef.current?.playDTMFConfirmation(key);
-    }
-    
-    // Log DTMF transmission for analytics
-    if (sipProviderManagerRef.current) {
-      console.log(`📊 DTMF Analytics: Key=${key}, Method=${transmissionInfo.method || dtmfMethod}, Success=${success}`);
     }
   };
 
@@ -435,7 +423,6 @@ const VOIPPhone = ({
     }
   };
 
-  // Quick dial from call history
   const handleQuickDial = (number, callInfo) => {
     setPhoneNumber(number);
     if (leadInfo && callInfo) {
@@ -443,7 +430,7 @@ const VOIPPhone = ({
     }
   };
 
-  // Log call to backend
+  // Enhanced call logging with recording information
   const logCall = async (callSession, reason) => {
     if (!callSession) return;
 
@@ -455,14 +442,18 @@ const VOIPPhone = ({
         notes: `VOIP call ${reason}`,
         timestamp: callSession.startTime?.toISOString(),
         endTime: callSession.endTime?.toISOString(),
-        leadId: leadInfo?.id || null
+        leadId: leadInfo?.id || null,
+        recordingInfo: {
+          wasRecorded: isRecording,
+          recordingSettings: recordingSettings,
+          autoTranscribeEnabled: recordingSettings.autoTranscribe
+        }
       };
 
       if (onCallLogged) {
         await onCallLogged(callData);
       }
 
-      // Refresh call history
       setCallHistoryTrigger(prev => prev + 1);
 
     } catch (error) {
@@ -508,28 +499,70 @@ const VOIPPhone = ({
 
   return (
     <div className="flex flex-col space-y-4 max-w-md mx-auto">
-      {/* Header */}
+      {/* Header with Recording Settings Toggle */}
       <div className="card">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-700">VOIP Phone</h2>
-          
-          {/* SIP Status */}
-          <div className={`inline-flex items-center mt-2 px-3 py-1 rounded-full text-sm ${
-            sipRegistered 
-              ? 'bg-green-100 text-green-700' 
-              : 'bg-red-100 text-red-700'
-          }`}>
-            <span className="mr-2">
-              {sipRegistered ? '🟢' : '🔴'}
-            </span>
-            {sipRegistered ? 'Connected' : 'Disconnected'}
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-center flex-1">
+            <h2 className="text-xl font-semibold text-gray-700">VOIP Phone</h2>
+            
+            {/* SIP Status */}
+            <div className={`inline-flex items-center mt-2 px-3 py-1 rounded-full text-sm ${
+              sipRegistered 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-red-100 text-red-700'
+            }`}>
+              <span className="mr-2">
+                {sipRegistered ? '🟢' : '🔴'}
+              </span>
+              {sipRegistered ? 'Connected' : 'Disconnected'}
+            </div>
           </div>
+          
+          {/* Recording Settings Button */}
+          <button
+            onClick={() => setShowRecordingSettings(!showRecordingSettings)}
+            className={`p-2 rounded-lg transition-colors ${
+              recordingSettings.autoRecord
+                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            title="Recording Settings"
+          >
+            <span className="text-lg">
+              {recordingSettings.autoRecord ? '🔴' : '⚪'}
+            </span>
+          </button>
         </div>
+
+        {/* Recording Settings Panel */}
+        {showRecordingSettings && (
+          <div className="mb-4">
+            <RecordingSettings 
+              compact={true}
+              onSettingsChange={(settings) => {
+                console.log('Recording settings updated:', settings);
+              }}
+            />
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
           <div className="text-sm text-red-600 mb-4 bg-red-50 p-3 rounded-lg">
             ⚠️ {error}
+          </div>
+        )}
+
+        {/* Recording Status Indicator */}
+        {recordingSettings.autoRecord && (
+          <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-red-700">🎙️ Auto-recording enabled</span>
+              <div className="flex items-center space-x-2 text-xs text-red-600">
+                {recordingSettings.autoTranscribe && <span>📝 Transcription</span>}
+                {recordingSettings.speechAnalytics && <span>📊 Analytics</span>}
+              </div>
+            </div>
           </div>
         )}
 
@@ -580,10 +613,10 @@ const VOIPPhone = ({
             className="btn-primary w-full text-lg py-4 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             📞 Call {phoneNumber ? formatPhoneNumber(phoneNumber) : ''}
+            {recordingSettings.autoRecord && <span className="ml-2 text-sm">🔴</span>}
           </button>
         ) : (
           <div className="space-y-2">
-            {/* DTMF and Hang up buttons */}
             <div className="flex gap-2">
               <button 
                 onClick={handleShowDTMF}
@@ -593,14 +626,12 @@ const VOIPPhone = ({
                     ? 'bg-blue-500 hover:bg-blue-600 text-white'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                title="Open DTMF keypad for menu navigation"
               >
                 🔢 DTMF Keypad
               </button>
               <button 
                 onClick={handleHangup}
                 className="flex-1 py-3 text-lg bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
-                title="End call"
               >
                 📵 Hang Up
               </button>
@@ -661,4 +692,4 @@ const VOIPPhone = ({
   );
 };
 
-export default VOIPPhone;
+export default EnhancedVOIPPhoneWithRecording;
