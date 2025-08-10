@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import SIPProviderManager from '../services/SIPProviderManager';
+import SIPConfigManager from '../services/SIPConfigManager';
 
 /**
  * SIPConfiguration Component - SIP provider setup and testing interface
@@ -13,6 +14,10 @@ const SIPConfiguration = ({
 }) => {
   const { isDarkMode } = useTheme();
   const sipProviderManagerRef = useRef(null);
+  const sipConfigManagerRef = useRef(null);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState('basic');
   
   // Configuration state
   const [selectedProvider, setSelectedProvider] = useState('generic');
@@ -21,16 +26,47 @@ const SIPConfiguration = ({
       username: '',
       password: '',
       realm: '',
-      displayName: 'ColdCaller User'
+      displayName: 'ColdCaller User',
+      authMethod: 'digest',
+      token: ''
     },
     connection: {
       wsServers: [''],
-      stunServers: ['stun:stun.l.google.com:19302']
+      stunServers: ['stun:stun.l.google.com:19302'],
+      turnServers: [],
+      transport: 'wss',
+      port: 5060,
+      registerExpires: 300
+    },
+    media: {
+      codecs: ['opus', 'g722', 'pcmu', 'pcma'],
+      primaryCodec: 'opus',
+      sampleRate: 48000,
+      bitrate: 64000,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      jitterBuffer: 'adaptive'
     },
     dtmf: {
       method: 'rfc4733',
       duration: 200,
-      interToneGap: 50
+      interToneGap: 50,
+      payloadType: 101
+    },
+    network: {
+      iceTimeout: 5000,
+      natTraversal: 'auto',
+      keepAliveInterval: 30,
+      heartbeatInterval: 25,
+      maxReconnectAttempts: 5,
+      reconnectTimeout: 4
+    },
+    security: {
+      encryption: 'auto',
+      certificateVerification: true,
+      tlsVersion: '1.2',
+      sipAuth: 'digest'
     }
   });
   
@@ -41,9 +77,10 @@ const SIPConfiguration = ({
   const [availableProviders, setAvailableProviders] = useState([]);
   const [providerCapabilities, setProviderCapabilities] = useState(null);
 
-  // Initialize provider manager
+  // Initialize provider and config managers
   useEffect(() => {
     sipProviderManagerRef.current = new SIPProviderManager();
+    sipConfigManagerRef.current = new SIPConfigManager();
     
     // Load available providers
     const providers = sipProviderManagerRef.current.getAvailableProviders();

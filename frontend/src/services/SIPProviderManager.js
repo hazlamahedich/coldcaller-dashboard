@@ -4,155 +4,48 @@
  * Handles DTMF transmission methods and SIP-specific configurations
  */
 
+import { SIP_PROVIDER_PRESETS, getProviderPreset, detectProviderFromURI } from './SIPProviderPresets';
+import SIPDiagnostics from './SIPDiagnostics';
+
 class SIPProviderManager {
   constructor() {
     this.providers = new Map();
     this.activeProvider = null;
+    this.diagnostics = new SIPDiagnostics();
     this.setupProviders();
+    this.bindEvents();
   }
 
   /**
    * Setup supported SIP providers
    */
   setupProviders() {
-    // Twilio SIP Configuration
-    this.providers.set('twilio', {
-      name: 'Twilio',
-      type: 'cloud',
-      wsServers: ['wss://chunder.twilio.com/v1/wsserver'],
-      dtmfSupport: {
-        rfc4733: true,
-        info: true,
-        inband: false,
-        preferred: 'rfc4733'
-      },
-      audioCodecs: ['opus', 'pcmu', 'pcma'],
-      features: {
-        recording: true,
-        conferencing: true,
-        transcription: true,
-        sipTrunking: true
-      },
-      authentication: {
-        method: 'token',
-        tokenEndpoint: '/api/twilio/token'
-      },
-      configuration: {
-        stunServers: [
-          'stun:global.stun.twilio.com:3478',
-          'stun:stun.l.google.com:19302'
-        ],
-        turnServers: [], // Twilio provides TURN automatically
-        rtpEventPayloadType: 101,
-        dtmfDuration: 200,
-        dtmfInterToneGap: 50
-      }
-    });
-
-    // Generic SIP Provider Template
-    this.providers.set('generic', {
-      name: 'Generic SIP',
-      type: 'generic',
-      wsServers: null, // To be configured
-      dtmfSupport: {
-        rfc4733: true,
-        info: true,
-        inband: false,
-        preferred: 'rfc4733'
-      },
-      audioCodecs: ['opus', 'g722', 'pcmu', 'pcma'],
-      features: {
-        recording: false,
-        conferencing: false,
-        transcription: false,
-        sipTrunking: true
-      },
-      authentication: {
-        method: 'digest',
-        realm: null,
-        username: null,
-        password: null
-      },
-      configuration: {
-        stunServers: [
-          'stun:stun.l.google.com:19302',
-          'stun:stun1.l.google.com:19302'
-        ],
-        turnServers: [],
-        rtpEventPayloadType: 101,
-        dtmfDuration: 200,
-        dtmfInterToneGap: 50
-      }
-    });
-
-    // Asterisk/FreePBX Configuration
-    this.providers.set('asterisk', {
-      name: 'Asterisk/FreePBX',
-      type: 'pbx',
-      wsServers: null, // To be configured based on PBX
-      dtmfSupport: {
-        rfc4733: true,
-        info: true,
-        inband: true,
-        preferred: 'rfc4733'
-      },
-      audioCodecs: ['opus', 'g722', 'pcmu', 'pcma', 'g729'],
-      features: {
-        recording: true,
-        conferencing: true,
-        transcription: false,
-        sipTrunking: true
-      },
-      authentication: {
-        method: 'digest',
-        realm: null,
-        username: null,
-        password: null
-      },
-      configuration: {
-        stunServers: [
-          'stun:stun.l.google.com:19302'
-        ],
-        turnServers: [],
-        rtpEventPayloadType: 101,
-        dtmfDuration: 160,
-        dtmfInterToneGap: 40
-      }
-    });
-
-    // 3CX Configuration
-    this.providers.set('3cx', {
-      name: '3CX',
-      type: 'pbx',
-      wsServers: null, // 3CX WebRTC gateway
-      dtmfSupport: {
-        rfc4733: true,
-        info: true,
-        inband: false,
-        preferred: 'rfc4733'
-      },
-      audioCodecs: ['opus', 'g722', 'pcmu', 'pcma'],
-      features: {
-        recording: true,
-        conferencing: true,
-        transcription: false,
-        sipTrunking: true
-      },
-      authentication: {
-        method: 'digest',
-        realm: null,
-        username: null,
-        password: null
-      },
-      configuration: {
-        stunServers: [
-          'stun:stun.l.google.com:19302'
-        ],
-        turnServers: [],
-        rtpEventPayloadType: 101,
-        dtmfDuration: 200,
-        dtmfInterToneGap: 50
-      }
+    // Load providers from presets
+    Object.entries(SIP_PROVIDER_PRESETS).forEach(([id, preset]) => {
+      this.providers.set(id, {
+        ...preset,
+        id,
+        // Convert preset format to legacy format for compatibility
+        wsServers: preset.wsServers,
+        dtmfSupport: {
+          ...preset.dtmf.supportedMethods.reduce((acc, method) => {
+            acc[method] = true;
+            return acc;
+          }, {}),
+          preferred: preset.dtmf.preferred
+        },
+        audioCodecs: preset.media.supportedCodecs,
+        configuration: {
+          stunServers: preset.connection.stunServers,
+          turnServers: preset.connection.turnServers || [],
+          rtpEventPayloadType: preset.dtmf.payloadType,
+          dtmfDuration: preset.dtmf.duration,
+          dtmfInterToneGap: preset.dtmf.interToneGap,
+          registerExpires: preset.connection.registerExpires,
+          transport: preset.connection.transport,
+          port: preset.connection.port
+        }
+      });
     });
   }
 
@@ -501,6 +394,322 @@ class SIPProviderManager {
     this.activeProvider = null;
     this.setupProviders();
     console.log('🔄 SIP provider configuration reset');
+  }
+
+  /**
+   * Bind diagnostic events
+   */
+  bindEvents() {
+    this.diagnostics.on('diagnosticsCompleted', (results) => {
+      console.log('📊 Diagnostics completed:', results);
+    });
+
+    this.diagnostics.on('monitoringUpdate', (update) => {
+      console.log('📈 Monitoring update:', update);
+    });
+  }
+
+  /**
+   * Get comprehensive provider information
+   */
+  getProviderInfo(providerType = null) {
+    const config = this.getProviderConfig(providerType);
+    const preset = getProviderPreset(config.id || providerType);
+    
+    return {
+      ...config,
+      preset: {
+        description: preset.description,
+        category: preset.category,
+        documentation: preset.documentation,
+        limitations: preset.limitations
+      }
+    };
+  }
+
+  /**
+   * Auto-detect provider from SIP URI
+   */
+  detectProviderFromSIPURI(sipUri) {
+    const detectedProvider = detectProviderFromURI(sipUri);
+    
+    if (detectedProvider !== 'generic') {
+      console.log(`🔍 Auto-detected provider: ${detectedProvider} from URI: ${sipUri}`);
+    }
+    
+    return detectedProvider;
+  }
+
+  /**
+   * Get codec recommendations for provider
+   */
+  getCodecRecommendations(providerType = null) {
+    const config = this.getProviderConfig(providerType);
+    const preset = getProviderPreset(config.id || providerType);
+    
+    return {
+      preferred: preset.media.preferredCodecs,
+      supported: preset.media.supportedCodecs,
+      primary: preset.media.primaryCodec,
+      bandwidth: {
+        opus: { min: 24000, max: 64000, recommended: 32000 },
+        g722: { min: 64000, max: 64000, recommended: 64000 },
+        pcmu: { min: 80000, max: 80000, recommended: 80000 },
+        pcma: { min: 80000, max: 80000, recommended: 80000 },
+        g729: { min: 24000, max: 24000, recommended: 24000 }
+      }
+    };
+  }
+
+  /**
+   * Get transport protocol recommendations
+   */
+  getTransportRecommendations(providerType = null) {
+    const config = this.getProviderConfig(providerType);
+    const preset = getProviderPreset(config.id || providerType);
+    
+    return {
+      preferred: preset.connection.transport,
+      supported: ['wss', 'ws', 'udp', 'tcp', 'tls'],
+      security: {
+        wss: 'Secure WebSocket (Recommended)',
+        ws: 'WebSocket (Less secure)',
+        tls: 'TLS over TCP (Secure)',
+        tcp: 'TCP (Less secure)',
+        udp: 'UDP (Fastest, less reliable)'
+      },
+      port: preset.connection.port
+    };
+  }
+
+  /**
+   * Run comprehensive diagnostics
+   */
+  async runDiagnostics(providerType = null) {
+    const config = this.getSIPConfiguration(providerType);
+    
+    try {
+      const results = await this.diagnostics.runComprehensiveDiagnostics({
+        authentication: config,
+        connection: {
+          wsServers: config.wsServers,
+          stunServers: config.pcConfig.iceServers.map(server => server.urls),
+          turnServers: [],
+          transport: 'wss',
+          registerExpires: 300
+        },
+        media: {
+          codecs: this.getCodecRecommendations(providerType).supported,
+          primaryCodec: this.getCodecRecommendations(providerType).primary,
+          echoCancellation: config.mediaConstraints.audio.echoCancellation,
+          noiseSuppression: config.mediaConstraints.audio.noiseSuppression,
+          autoGainControl: config.mediaConstraints.audio.autoGainControl
+        },
+        dtmf: config.dtmfOptions,
+        network: {
+          iceTimeout: 5000,
+          natTraversal: 'auto'
+        },
+        security: {
+          encryption: 'auto'
+        }
+      });
+      
+      return results;
+    } catch (error) {
+      console.error('❌ Diagnostics failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Start real-time monitoring
+   */
+  startConnectionMonitoring(providerType = null, interval = 30000) {
+    const config = this.getSIPConfiguration(providerType);
+    
+    this.diagnostics.startMonitoring({
+      authentication: config,
+      connection: {
+        wsServers: config.wsServers,
+        stunServers: config.pcConfig.iceServers.map(server => server.urls)
+      }
+    }, interval);
+    
+    console.log('📊 Started SIP connection monitoring');
+  }
+
+  /**
+   * Stop connection monitoring
+   */
+  stopConnectionMonitoring() {
+    this.diagnostics.stopMonitoring();
+    console.log('⏹️ Stopped SIP connection monitoring');
+  }
+
+  /**
+   * Get connection health metrics
+   */
+  getConnectionMetrics() {
+    return this.diagnostics.getConnectionMetrics();
+  }
+
+  /**
+   * Export configuration profile
+   */
+  exportConfigurationProfile(providerType = null) {
+    const config = this.getProviderConfig(providerType);
+    const preset = getProviderPreset(config.id || providerType);
+    
+    return {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      provider: {
+        id: config.id || providerType,
+        name: config.name,
+        type: config.type
+      },
+      configuration: {
+        authentication: {
+          method: config.authentication.method,
+          realm: config.authentication.realm,
+          username: config.authentication.username,
+          displayName: config.authentication.displayName
+          // Note: Password excluded for security
+        },
+        connection: config.configuration,
+        media: preset.media,
+        dtmf: preset.dtmf,
+        features: config.features
+      }
+    };
+  }
+
+  /**
+   * Import configuration profile
+   */
+  importConfigurationProfile(profile) {
+    try {
+      if (profile.version !== '1.0') {
+        throw new Error('Unsupported configuration profile version');
+      }
+      
+      const providerType = profile.provider.id;
+      const config = {
+        ...profile.configuration.authentication,
+        configuration: profile.configuration.connection
+      };
+      
+      return this.configureProvider(providerType, config);
+    } catch (error) {
+      console.error('❌ Failed to import configuration profile:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get provider setup wizard steps
+   */
+  getProviderSetupSteps(providerType) {
+    const preset = getProviderPreset(providerType);
+    
+    const commonSteps = [
+      {
+        id: 'provider',
+        title: 'Select Provider',
+        description: 'Choose your SIP service provider',
+        fields: ['provider']
+      },
+      {
+        id: 'authentication',
+        title: 'Authentication',
+        description: 'Enter your SIP credentials',
+        fields: ['username', 'password', 'realm', 'displayName']
+      },
+      {
+        id: 'connection',
+        title: 'Connection Settings',
+        description: 'Configure connection parameters',
+        fields: ['wsServers', 'transport', 'port']
+      },
+      {
+        id: 'media',
+        title: 'Audio Settings',
+        description: 'Configure audio codecs and quality',
+        fields: ['primaryCodec', 'echoCancellation', 'noiseSuppression']
+      },
+      {
+        id: 'test',
+        title: 'Test Connection',
+        description: 'Verify your configuration',
+        fields: []
+      }
+    ];
+    
+    // Add provider-specific steps
+    if (preset.type === 'cloud' && preset.authentication.method === 'token') {
+      commonSteps.splice(2, 0, {
+        id: 'token',
+        title: 'API Token',
+        description: 'Configure API authentication',
+        fields: ['apiKey', 'apiSecret', 'accountSid']
+      });
+    }
+    
+    return commonSteps;
+  }
+
+  /**
+   * Validate provider configuration
+   */
+  validateProviderConfiguration(providerType, config) {
+    const errors = [];
+    const warnings = [];
+    const preset = getProviderPreset(providerType);
+    
+    // Required fields validation
+    if (!config.authentication?.username) {
+      errors.push('Username is required');
+    }
+    
+    if (!config.authentication?.password && preset.authentication.method !== 'token') {
+      errors.push('Password is required');
+    }
+    
+    if (!config.authentication?.realm) {
+      errors.push('SIP domain/realm is required');
+    }
+    
+    // Provider-specific validation
+    if (providerType === 'twilio' && !config.authentication?.apiKey) {
+      warnings.push('API Key recommended for Twilio');
+    }
+    
+    // Connection validation
+    if (!config.connection?.wsServers || config.connection.wsServers.length === 0) {
+      errors.push('WebSocket server URL is required');
+    }
+    
+    // Media validation
+    if (config.media?.primaryCodec && !preset.media.supportedCodecs.includes(config.media.primaryCodec)) {
+      warnings.push(`Codec ${config.media.primaryCodec} may not be supported by ${preset.name}`);
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      score: Math.max(0, 100 - (errors.length * 25) - (warnings.length * 10))
+    };
+  }
+
+  /**
+   * Destroy and cleanup
+   */
+  destroy() {
+    this.diagnostics.destroy();
+    this.providers.clear();
+    console.log('🧹 SIP Provider Manager destroyed');
   }
 }
 

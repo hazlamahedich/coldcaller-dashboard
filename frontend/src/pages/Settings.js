@@ -5,6 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import ThemeToggle from '../components/ThemeToggle';
 import CalendarIntegration from '../components/CalendarIntegration';
 import EmailIntegration from '../components/EmailIntegration';
+import SIPConfigurationTabs from '../components/SIPConfigurationTabs';
 
 function Settings() {
   const { isDarkMode, themeClasses } = useTheme();
@@ -15,7 +16,7 @@ function Settings() {
   // Handle URL tab parameters
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && ['general', 'calling', 'notifications', 'integrations', 'calendar', 'email'].includes(tab)) {
+    if (tab && ['general', 'calling', 'sip', 'notifications', 'integrations', 'calendar', 'email'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -37,6 +38,7 @@ function Settings() {
   const tabs = [
     { id: 'general', name: 'General', icon: '🏠' },
     { id: 'calling', name: 'Calling', icon: '📞' },
+    { id: 'sip', name: 'SIP Configuration', icon: '🔧' },
     { id: 'notifications', name: 'Notifications', icon: '🔔' },
     { id: 'integrations', name: 'Integrations', icon: '🔗' },
     { id: 'calendar', name: 'Calendar', icon: '📅' },
@@ -206,7 +208,7 @@ function Settings() {
             </div>
 
             <div>
-              <h3 className={`text-lg font-medium ${themeClasses.textPrimary} mb-4`}>SIP Configuration</h3>
+              <h3 className={`text-lg font-medium ${themeClasses.textPrimary} mb-4`}>Basic SIP Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField
                   label="SIP Server"
@@ -220,6 +222,18 @@ function Settings() {
                   onChange={(value) => handleSettingChange('calling', 'sipPort', value)}
                   placeholder="5060"
                 />
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => handleTabChange('sip')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <span className="mr-2">🔧</span>
+                  Advanced SIP Configuration
+                </button>
+                <p className={`text-xs ${themeClasses.textSecondary} mt-2`}>
+                  Access provider presets, diagnostics, codecs, and security settings
+                </p>
               </div>
             </div>
 
@@ -362,6 +376,25 @@ function Settings() {
 
       case 'email':
         return <EmailIntegration />;
+
+      case 'sip':
+        return (
+          <div>
+            <div className="mb-6">
+              <h3 className={`text-xl font-semibold ${themeClasses.textPrimary} mb-2`}>Advanced SIP Configuration</h3>
+              <p className={`text-sm ${themeClasses.textSecondary}`}>
+                Configure SIP providers, test connections, optimize audio codecs, and monitor call quality
+              </p>
+            </div>
+            <SIPConfigurationTabs 
+              onConfigurationSave={(config) => {
+                console.log('SIP Configuration saved:', config);
+                // You can integrate this with your settings context if needed
+                alert('SIP configuration saved successfully!');
+              }}
+            />
+          </div>
+        );
 
       default:
         return null;
