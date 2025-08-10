@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { leadsService } from '../services';
 import { useTheme } from '../contexts/ThemeContext';
+import TwilioCostMonitoring from './TwilioCostMonitoring';
 
 /**
  * LeadAnalyticsDashboard - Comprehensive analytics and insights
@@ -35,6 +36,7 @@ const LeadAnalyticsDashboard = () => {
   const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState('30'); // days
   const [refreshInterval, setRefreshInterval] = useState(null);
+  const [activeSection, setActiveSection] = useState('leads');
 
   // Load analytics data
   const loadAnalytics = async () => {
@@ -202,18 +204,25 @@ const LeadAnalyticsDashboard = () => {
     loadAnalytics();
   }, [dateRange]);
 
-  // Auto-refresh setup
+  // Auto-refresh disabled to prevent continuous loading cycles
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadAnalytics();
-    }, 30000); // Refresh every 30 seconds
-
-    setRefreshInterval(interval);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [dateRange]);
+    // Auto-refresh disabled for now to prevent UI loading issues
+    // Users can manually refresh using the refresh button
+    // 
+    // if (activeSection !== 'leads') {
+    //   return;
+    // }
+    // 
+    // const interval = setInterval(() => {
+    //   loadAnalytics();
+    // }, 2 * 60 * 1000);
+    // 
+    // setRefreshInterval(interval);
+    // 
+    // return () => {
+    //   if (interval) clearInterval(interval);
+    // };
+  }, [dateRange, activeSection]);
 
   // Get trend indicator with dark mode support
   const getTrendIndicator = (current, previous) => {
@@ -299,32 +308,64 @@ const LeadAnalyticsDashboard = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className={`text-2xl font-bold ${themeClasses.textPrimary}`}>Lead Analytics</h2>
+          <h2 className={`text-2xl font-bold ${themeClasses.textPrimary}`}>Analytics Dashboard</h2>
           <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>
-            Performance insights and trends
+            Comprehensive performance insights and cost monitoring
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className={`px-4 py-2 ${themeClasses.input} rounded-lg ${themeClasses.focusRing} focus:ring-2`}
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last year</option>
-          </select>
-          <button
-            onClick={loadAnalytics}
-            className={`px-4 py-2 ${themeClasses.buttonPrimary} rounded-lg`}
-          >
-            🔄 Refresh
-          </button>
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button
+              onClick={() => setActiveSection('leads')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeSection === 'leads'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              📊 Lead Analytics
+            </button>
+            <button
+              onClick={() => setActiveSection('costs')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeSection === 'costs'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              💰 Cost Monitoring
+            </button>
+          </div>
+          {activeSection === 'leads' && (
+            <>
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className={`px-4 py-2 ${themeClasses.input} rounded-lg ${themeClasses.focusRing} focus:ring-2`}
+              >
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+              </select>
+              <button
+                onClick={loadAnalytics}
+                className={`px-4 py-2 ${themeClasses.buttonPrimary} rounded-lg`}
+              >
+                🔄 Refresh
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Content Sections */}
+      {activeSection === 'costs' ? (
+        <TwilioCostMonitoring />
+      ) : (
+        <>
+          {/* Lead Analytics Content */}
+          {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
           <div className="flex items-center justify-between">
@@ -535,6 +576,8 @@ const LeadAnalyticsDashboard = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

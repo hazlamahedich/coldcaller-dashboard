@@ -6,3 +6,4 @@ export { default as callsService } from './callsService';
 export { default as scriptsService } from './scriptsService';
 export { default as audioService } from './audioService';
 export { default as notesService } from './notesService';
+export { default as twilioAnalyticsService } from './twilioAnalyticsService';

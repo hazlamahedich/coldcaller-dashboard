@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Source Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .test-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .pass {
+            background: #28a745;
+            color: white;
+        }
+        .fail {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Chatbot SourceLink Investigation Tool</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <p>1. Make sure your React app is running on <code>http://localhost:3000</code></p>
+            <p>2. Make sure the backend API is running on <code>http://localhost:3002</code></p>
+            <p>3. Click the test buttons to investigate the SourceLink rendering issue</p>
+        </div>
+
+        <h2>Backend Tests</h2>
+        
+        <button class="test-button" onclick="testRAGAPI()">
+            Test RAG API Response 
+            <span id="rag-status" class="test-status"></span>
+        </button>
+        <div id="rag-result" class="result"></div>
+        
+        <button class="test-button" onclick="testSourceStructure()">
+            Test Source Data Structure
+            <span id="structure-status" class="test-status"></span>
+        </button>
+        <div id="structure-result" class="result"></div>
+
+        <h2>Frontend Tests</h2>
+        
+        <button class="test-button" onclick="testFrontendChat()">
+            Test Frontend Chat Integration
+            <span id="frontend-status" class="test-status"></span>
+        </button>
+        <div id="frontend-result" class="result"></div>
+        
+        <button class="test-button" onclick="inspectChatbot()">
+            Inspect Chatbot DOM
+            <span id="inspect-status" class="test-status"></span>
+        </button>
+        <div id="inspect-result" class="result"></div>
+
+        <h2>Diagnostic Results</h2>
+        <div id="diagnostic-summary" class="result"></div>
+    </div>
+
+    <script>
+        let diagnostics = {
+            ragAPI: null,
+            sourceStructure: null,
+            frontendChat: null,
+            domInspection: null
+        };
+
+        async function testRAGAPI() {
+            const statusEl = document.getElementById('rag-status');
+            const resultEl = document.getElementById('rag-result');
+            
+            statusEl.textContent = 'TESTING...';
+            statusEl.className = 'test-status';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/rag/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'What is cold calling?',
+                        conversationId: '550e8400-e29b-41d4-a716-446655440000',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.sources && data.sources.length > 0) {
+                    statusEl.textContent = 'PASS';
+                    statusEl.className = 'test-status pass';
+                    diagnostics.ragAPI = 'PASS';
+                    resultEl.innerHTML = `
+                        <strong>✅ RAG API Working</strong><br>
+                        Sources returned: ${data.sources.length}<br>
+                        Response: ${data.response.substring(0, 100)}...<br><br>
+                        <strong>Sample Source:</strong><br>
+                        <pre>${JSON.stringify(data.sources[0], null, 2)}</pre>
+                    `;
+                    resultEl.className = 'result success';
+                } else {
+                    throw new Error('No sources returned');
+                }
+            } catch (error) {
+                statusEl.textContent = 'FAIL';
+                statusEl.className = 'test-status fail';
+                diagnostics.ragAPI = 'FAIL';
+                resultEl.innerHTML = `<strong>❌ RAG API Error:</strong><br>${error.message}`;
+                resultEl.className = 'result error';
+            }
+            
+            updateDiagnosticSummary();
+        }
+
+        async function testSourceStructure() {
+            const statusEl = document.getElementById('structure-status');
+            const resultEl = document.getElementById('structure-result');
+            
+            statusEl.textContent = 'TESTING...';
+            statusEl.className = 'test-status';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/rag/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Help me understand lead management',
+                        conversationId: '550e8400-e29b-41d4-a716-446655440000',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.sources && data.sources.length > 0) {
+                    const source = data.sources[0];
+                    const hasRequiredFields = source.title && source.source;
+                    
+                    if (hasRequiredFields) {
+                        statusEl.textContent = 'PASS';
+                        statusEl.className = 'test-status pass';
+                        diagnostics.sourceStructure = 'PASS';
+                        resultEl.innerHTML = `
+                            <strong>✅ Source Structure Valid</strong><br>
+                            Required fields present: title, source<br><br>
+                            <strong>Source Analysis:</strong><br>
+                            <pre>${JSON.stringify(source, null, 2)}</pre>
+                        `;
+                        resultEl.className = 'result success';
+                    } else {
+                        throw new Error('Missing required source fields');
+                    }
+                } else {
+                    throw new Error('No sources returned');
+                }
+            } catch (error) {
+                statusEl.textContent = 'FAIL';
+                statusEl.className = 'test-status fail';
+                diagnostics.sourceStructure = 'FAIL';
+                resultEl.innerHTML = `<strong>❌ Source Structure Error:</strong><br>${error.message}`;
+                resultEl.className = 'result error';
+            }
+            
+            updateDiagnosticSummary();
+        }
+
+        async function testFrontendChat() {
+            const statusEl = document.getElementById('frontend-status');
+            const resultEl = document.getElementById('frontend-result');
+            
+            statusEl.textContent = 'TESTING...';
+            statusEl.className = 'test-status';
+            
+            try {
+                // Open the chatbot in a new window
+                const chatWindow = window.open('http://localhost:3000', 'chatbot', 'width=800,height=600');
+                
+                if (chatWindow) {
+                    statusEl.textContent = 'MANUAL';
+                    statusEl.className = 'test-status';
+                    diagnostics.frontendChat = 'MANUAL';
+                    resultEl.innerHTML = `
+                        <strong>📱 Chatbot Opened</strong><br>
+                        Please manually test the chatbot:<br>
+                        1. Click the chat icon to open the chatbot<br>
+                        2. Send a message like "What is cold calling?"<br>
+                        3. Check if sources appear below the response<br>
+                        4. Look for "📚 X sources" button<br>
+                        5. Click to expand sources and look for "View Document" links<br><br>
+                        <strong>What to look for:</strong><br>
+                        - Blue "📚 sources" button<br>
+                        - Expandable source sections<br>
+                        - "View Document" links with icons<br>
+                        - Source snippets and titles<br>
+                    `;
+                    resultEl.className = 'result';
+                } else {
+                    throw new Error('Failed to open chatbot window');
+                }
+            } catch (error) {
+                statusEl.textContent = 'FAIL';
+                statusEl.className = 'test-status fail';
+                diagnostics.frontendChat = 'FAIL';
+                resultEl.innerHTML = `<strong>❌ Frontend Test Error:</strong><br>${error.message}`;
+                resultEl.className = 'result error';
+            }
+            
+            updateDiagnosticSummary();
+        }
+
+        function inspectChatbot() {
+            const statusEl = document.getElementById('inspect-status');
+            const resultEl = document.getElementById('inspect-result');
+            
+            statusEl.textContent = 'INSPECTING...';
+            statusEl.className = 'test-status';
+            
+            // Instructions for manual DOM inspection
+            diagnostics.domInspection = 'MANUAL';
+            statusEl.textContent = 'MANUAL';
+            resultEl.innerHTML = `
+                <strong>🔍 DOM Inspection Instructions</strong><br>
+                Open the chatbot and inspect the DOM:<br><br>
+                <strong>Console Commands to Run:</strong><br>
+                <pre>// Check if SourceLink components are rendering
+document.querySelectorAll('[data-source-link]').length
+
+// Check for ChatMessage components
+document.querySelectorAll('.message-content').length
+
+// Check console logs for SourceLink rendering
+console.log('Look for: 🔗 SourceLink rendering with:')
+
+// Check sources button
+document.querySelectorAll('button[aria-controls^="sources-"]').length
+
+// Check for source sections
+document.querySelectorAll('[id^="sources-"]').length</pre><br>
+                
+                <strong>Visual Inspection:</strong><br>
+                1. Send a message and wait for response<br>
+                2. Look for blue "📚 X sources" button<br>
+                3. Click the sources button to expand<br>
+                4. Look for individual source cards<br>
+                5. Check if "View Document" links are present<br>
+                6. Check browser console for any errors<br>
+            `;
+            resultEl.className = 'result';
+            
+            updateDiagnosticSummary();
+        }
+
+        function updateDiagnosticSummary() {
+            const summaryEl = document.getElementById('diagnostic-summary');
+            
+            const results = Object.entries(diagnostics).map(([test, result]) => {
+                const emoji = result === 'PASS' ? '✅' : result === 'FAIL' ? '❌' : result === 'MANUAL' ? '🔍' : '⏳';
+                return `${emoji} ${test}: ${result || 'NOT TESTED'}`;
+            }).join('<br>');
+            
+            let analysis = '<br><strong>Analysis:</strong><br>';
+            
+            if (diagnostics.ragAPI === 'PASS' && diagnostics.sourceStructure === 'PASS') {
+                analysis += '✅ Backend is working correctly and returning sources<br>';
+            }
+            
+            if (diagnostics.ragAPI === 'FAIL') {
+                analysis += '❌ Backend API issue - sources not being returned<br>';
+            }
+            
+            if (diagnostics.sourceStructure === 'FAIL') {
+                analysis += '❌ Source data structure issue - missing required fields<br>';
+            }
+            
+            if (diagnostics.frontendChat === 'MANUAL' || diagnostics.domInspection === 'MANUAL') {
+                analysis += '🔍 Manual frontend testing required<br>';
+            }
+            
+            analysis += '<br><strong>Next Steps:</strong><br>';
+            analysis += '1. Test the chatbot manually<br>';
+            analysis += '2. Check browser console for SourceLink render logs<br>';
+            analysis += '3. Inspect DOM for [data-source-link] elements<br>';
+            analysis += '4. Verify ChatMessage component is using SourceLink<br>';
+            
+            summaryEl.innerHTML = results + analysis;
+        }
+    </script>
+</body>
+</html>

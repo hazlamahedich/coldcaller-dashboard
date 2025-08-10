@@ -18,6 +18,8 @@ router.get('/', asyncHandler(async (req, res) => {
       rag_chat: '/api/rag',
       chat: '/api/chat',
       documents: '/api/documents',
+      twilio: '/api/twilio',
+      twilio_analytics: '/api/twilio-analytics',
       leads: '/api/leads (coming soon)',
       calls: '/api/calls (coming soon)',
       scripts: '/api/scripts (coming soon)',
@@ -41,6 +43,8 @@ router.get('/status', asyncHandler(async (req, res) => {
       features: {
         chat_api: 'operational',
         rag_chatbot: 'operational',
+        twilio_voice: 'operational',
+        twilio_cost_monitoring: 'operational',
         leads_management: 'coming_soon',
         call_logging: 'coming_soon', 
         script_management: 'coming_soon',
@@ -54,11 +58,15 @@ router.get('/status', asyncHandler(async (req, res) => {
 // Route imports
 const chatRoutes = require('./ragChat');
 const documentRoutes = require('./documents');
+const twilioRoutes = require('./twilio');
+const twilioAnalyticsRoutes = require('./twilioAnalytics');
 
 // Route usage - Mount RAG routes at /rag path
 router.use('/rag', chatRoutes);
 router.use('/chat', chatRoutes); // Keep both for backward compatibility
 router.use('/documents', documentRoutes);
+router.use('/twilio', twilioRoutes);
+router.use('/twilio-analytics', twilioAnalyticsRoutes);
 
 // Future route imports will go here:
 // import leadsRoutes from './leads.js';

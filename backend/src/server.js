@@ -32,6 +32,7 @@ const analyticsRoutes = require('./routes/analytics');
 const callAnalyticsRoutes = require('./routes/callAnalytics');
 const twilioRoutes = require('./routes/twilio');
 const twilioTestRoutes = require('./routes/twilio-test');
+const twilioAnalyticsRoutes = require('./routes/twilioAnalytics');
 const ragChatRoutes = require('./routes/ragChat');
 const chatRoutes = require('./routes/chat_existing');
 const documentsRoutes = require('./routes/documents');
@@ -242,6 +243,7 @@ app.use('/api/audio', authenticate, secureFileUpload, enhancedAudioRoutes);
 app.use('/api/calls', authenticate, callsRoutes);
 app.use('/api/sip', authenticate, sipRoutes);
 app.use('/api/twilio', twilioRoutes); // Twilio webhooks need to be accessible without auth
+app.use('/api/twilio-analytics', twilioAnalyticsRoutes); // Twilio analytics - public for now
 app.use('/api/health', authenticate, healthRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/call-analytics', authenticate, callAnalyticsRoutes);

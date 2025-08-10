@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Sources</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Chatbot Sources Debug</h1>
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(type, title, content) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}</strong><br>${content}`;
+            resultsDiv.appendChild(div);
+        }
+
+        function addPreResult(type, title, content) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}</strong><pre>${content}</pre>`;
+            resultsDiv.appendChild(div);
+        }
+
+        // Test 1: Check if chatbot opens
+        addResult('info', 'Test 1: Opening Chatbot', 'Click the chatbot icon in the bottom right...');
+
+        // Test 2: Test RAG API directly
+        async function testRAGAPI() {
+            try {
+                const response = await fetch('/api/rag/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'What is Twilio?',
+                        conversationId: '550e8400-e29b-41d4-a716-446655440000',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult('success', 'Test 2: RAG API Response', `✅ API working! Sources: ${data.sources?.length || 0}`);
+                    addPreResult('info', 'Sources Data Structure', JSON.stringify(data.sources, null, 2));
+                } else {
+                    addResult('error', 'Test 2: RAG API Response', `❌ API failed: ${data.error}`);
+                }
+            } catch (error) {
+                addResult('error', 'Test 2: RAG API Response', `❌ Network error: ${error.message}`);
+            }
+        }
+
+        // Test 3: Check console for SourceLink logs
+        addResult('info', 'Test 3: Console Logging', 'Check browser console for "🔗 SourceLink rendering" logs when using chatbot');
+
+        // Test 4: Simulate message with sources
+        function simulateSourceRendering() {
+            const mockMessage = {
+                id: 'test-123',
+                content: 'Test response',
+                sender: 'assistant',
+                timestamp: new Date().toISOString(),
+                sources: [
+                    {
+                        title: 'Test Document',
+                        source: '../test.md',
+                        section: 'Test Section',
+                        similarity: 0.85,
+                        id: 'test-id-123'
+                    }
+                ]
+            };
+
+            addResult('info', 'Test 4: Mock Message Structure', 'Simulating message with sources...');
+            addPreResult('info', 'Mock Message Data', JSON.stringify(mockMessage, null, 2));
+        }
+
+        // Run tests
+        setTimeout(testRAGAPI, 1000);
+        setTimeout(simulateSourceRendering, 2000);
+
+        // Instructions
+        addResult('info', 'Instructions', `
+            1. This page will test the RAG API directly<br>
+            2. Open the chatbot and ask "What is Twilio?"<br>
+            3. Check browser console for SourceLink logs<br>
+            4. Look for blue "📖 View Document" buttons<br>
+            5. If buttons don't appear, there's a rendering issue
+        `);
+    </script>
+</body>
+</html>

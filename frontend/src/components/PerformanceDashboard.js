@@ -1,427 +1,320 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
+import { performanceCache, analyticsCache } from '../utils/performanceCache';
+import { useTheme } from '../contexts/ThemeContext';
+
 /**
- * Performance Dashboard - Real-time performance monitoring component
- * Displays comprehensive performance metrics and optimization recommendations
+ * Performance Dashboard - Real-time Performance Monitoring
+ * 
+ * Features:
+ * - Core Web Vitals tracking
+ * - Performance budgets monitoring
+ * - Cache statistics
+ * - Memory usage tracking
+ * - Network condition monitoring
+ * - Performance score calculation
+ * - Real-time alerts and recommendations
  */
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import performanceOptimizer from '../utils/performanceOptimizer';
-
-const PerformanceDashboard = () => {
-  const [metrics, setMetrics] = useState(null);
-  const [systemHealth, setSystemHealth] = useState(null);
-  const [isLive, setIsLive] = useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('1h');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+const PerformanceDashboard = React.memo(() => {
+  const { isDarkMode, themeClasses } = useTheme();
   const [refreshInterval, setRefreshInterval] = useState(5000);
-  
-  // Fetch performance data
-  const fetchPerformanceData = useCallback(async () => {
-    try {
-      // Get frontend metrics
-      const frontendMetrics = performanceOptimizer.getDashboardData();
+  const [alerts, setAlerts] = useState([]);
+  const [performanceHistory, setPerformanceHistory] = useState([]);
+
+  // Performance monitoring with custom handlers
+  const { 
+    getMetrics, 
+    getPerformanceScore, 
+    generateReport,
+    trackMemory,
+    trackNetwork
+  } = usePerformanceMonitor({
+    onMetric: (name, value, tags) => {
+      console.log(`📊 Performance Metric: ${name} = ${value}`, tags);
+    },
+    onBudgetViolation: (metric, value, budget, context) => {
+      const alert = {
+        id: Date.now(),
+        type: 'warning',
+        metric,
+        value,
+        budget,
+        context,
+        timestamp: new Date(),
+        severity: calculateSeverity(metric, value, budget)
+      };
       
-      // Get backend metrics
-      const backendResponse = await fetch(`/api/performance/metrics?timeRange=${selectedTimeRange}`);
-      const backendData = await backendResponse.json();
-      
-      // Get system health
-      const healthResponse = await fetch('/api/performance/health');
-      const healthData = await healthResponse.json();
-      
-      setMetrics({
-        frontend: frontendMetrics,
-        backend: backendData.success ? backendData.data : null,
-        timestamp: Date.now()
-      });
-      
-      setSystemHealth(healthData.success ? healthData.data : null);
-      
-    } catch (error) {
-      console.error('Failed to fetch performance data:', error);
+      setAlerts(prev => [alert, ...prev.slice(0, 9)]); // Keep last 10 alerts
+    },
+    budgets: {
+      fcp: 2000,
+      lcp: 2500,
+      fid: 100,
+      cls: 0.1,
+      ttfb: 600,
+      renderTime: 16
     }
-  }, [selectedTimeRange]);
-  
-  // Auto-refresh when live mode is enabled
-  useEffect(() => {
-    let interval;
+  });
+
+  // Current performance metrics
+  const currentMetrics = useMemo(() => {
+    const metrics = getMetrics();
+    const score = getPerformanceScore();
+    const memoryInfo = trackMemory();
+    const networkInfo = trackNetwork();
     
-    if (isLive) {
-      interval = setInterval(fetchPerformanceData, refreshInterval);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
+    return {
+      ...metrics,
+      score,
+      memory: memoryInfo,
+      network: networkInfo,
+      timestamp: Date.now()
     };
-  }, [isLive, refreshInterval, fetchPerformanceData]);
-  
-  // Initial data fetch
-  useEffect(() => {
-    fetchPerformanceData();
-  }, [fetchPerformanceData]);
-  
-  // Memoized status color helper
-  const getStatusColor = useMemo(() => (status) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600 bg-green-100';
-      case 'degraded': return 'text-yellow-600 bg-yellow-100';
-      case 'unhealthy': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
+  }, [getMetrics, getPerformanceScore, trackMemory, trackNetwork]);
+
+  // Cache statistics
+  const cacheStats = useMemo(() => {
+    return {
+      performance: performanceCache.getStats(),
+      analytics: analyticsCache.getStats()
+    };
   }, []);
-  
-  // Memoized metric card component
-  const MetricCard = React.memo(({ title, value, unit, status, trend, children }) => (
-    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-          <div className="flex items-baseline">
-            <p className="text-2xl font-semibold text-gray-900">
-              {typeof value === 'number' ? value.toFixed(2) : value || 'N/A'}
-            </p>
-            {unit && <span className="ml-2 text-sm text-gray-500">{unit}</span>}
-          </div>
-        </div>
-        {status && (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-            {status}
-          </span>
-        )}
-      </div>
-      {trend && (
-        <div className="mt-2">
-          <span className={`text-sm ${trend.direction === 'up' ? 'text-red-600' : 'text-green-600'}`}>
-            {trend.direction === 'up' ? '↑' : '↓'} {trend.value}%
-          </span>
-          <span className="text-xs text-gray-500 ml-2">vs last period</span>
-        </div>
-      )}
-      {children}
-    </div>
-  ));
-  
-  // Core Web Vitals component
-  const CoreWebVitals = React.memo(({ vitals }) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <MetricCard
-        title="First Contentful Paint (FCP)"
-        value={vitals?.fcp}
-        unit="ms"
-        status={vitals?.fcp < 2000 ? 'healthy' : vitals?.fcp < 4000 ? 'degraded' : 'unhealthy'}
-      >
-        <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full ${vitals?.fcp < 2000 ? 'bg-green-500' : vitals?.fcp < 4000 ? 'bg-yellow-500' : 'bg-red-500'}`}
-            style={{ width: `${Math.min((vitals?.fcp || 0) / 4000 * 100, 100)}%` }}
-          ></div>
-        </div>
-        <div className="text-xs text-gray-500 mt-1">Target: &lt;2000ms</div>
-      </MetricCard>
+
+  // Update performance history
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSnapshot = {
+        timestamp: Date.now(),
+        score: getPerformanceScore(),
+        vitals: getMetrics().vitals,
+        memory: trackMemory()
+      };
       
-      <MetricCard
-        title="Largest Contentful Paint (LCP)"
-        value={vitals?.lcp}
-        unit="ms"
-        status={vitals?.lcp < 2500 ? 'healthy' : vitals?.lcp < 4000 ? 'degraded' : 'unhealthy'}
-      >
-        <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full ${vitals?.lcp < 2500 ? 'bg-green-500' : vitals?.lcp < 4000 ? 'bg-yellow-500' : 'bg-red-500'}`}
-            style={{ width: `${Math.min((vitals?.lcp || 0) / 4000 * 100, 100)}%` }}
-          ></div>
-        </div>
-        <div className="text-xs text-gray-500 mt-1">Target: &lt;2500ms</div>
-      </MetricCard>
-      
-      <MetricCard
-        title="Cumulative Layout Shift (CLS)"
-        value={vitals?.cls}
-        status={vitals?.cls < 0.1 ? 'healthy' : vitals?.cls < 0.25 ? 'degraded' : 'unhealthy'}
-      >
-        <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full ${vitals?.cls < 0.1 ? 'bg-green-500' : vitals?.cls < 0.25 ? 'bg-yellow-500' : 'bg-red-500'}`}
-            style={{ width: `${Math.min((vitals?.cls || 0) / 0.5 * 100, 100)}%` }}
-          ></div>
-        </div>
-        <div className="text-xs text-gray-500 mt-1">Target: &lt;0.1</div>
-      </MetricCard>
-    </div>
-  ));
-  
-  // System overview component
-  const SystemOverview = React.memo(({ health }) => (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">System Health</h2>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(health?.status)}`}>
-          {health?.status || 'Unknown'}
-        </span>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">{health?.performance?.cpu || 0}%</div>
-          <div className="text-sm text-gray-500">CPU Usage</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-600">{health?.performance?.memory || 0}%</div>
-          <div className="text-sm text-gray-500">Memory Usage</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-purple-600">{health?.performance?.avgResponseTime || 0}ms</div>
-          <div className="text-sm text-gray-500">Avg Response</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-orange-600">{health?.performance?.activeCalls || 0}</div>
-          <div className="text-sm text-gray-500">Active Calls</div>
-        </div>
-      </div>
-      
-      {health?.issues && health.issues.length > 0 && (
-        <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-          <h4 className="text-sm font-medium text-yellow-800 mb-2">Active Issues ({health.issues.length})</h4>
-          <ul className="text-sm text-yellow-700 space-y-1">
-            {health.issues.slice(0, 3).map((issue, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-yellow-600 mr-2">•</span>
-                {issue.type}: {issue.value}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  ));
-  
-  // Performance recommendations component
-  const PerformanceRecommendations = React.memo(({ recommendations }) => (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Optimization Recommendations</h2>
-      
-      {recommendations && recommendations.length > 0 ? (
-        <div className="space-y-4">
-          {recommendations.map((rec, index) => (
-            <div key={index} className="border-l-4 border-blue-500 pl-4">
-              <div className="flex justify-between items-start">
-                <h4 className="font-medium text-gray-900">{rec.title}</h4>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  rec.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                  rec.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                  rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-blue-100 text-blue-800'
-                }`}>
-                  {rec.priority}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
-              {rec.actions && (
-                <div className="mt-2">
-                  <details className="text-sm">
-                    <summary className="cursor-pointer text-blue-600">View Actions</summary>
-                    <ul className="mt-2 space-y-1 pl-4">
-                      {rec.actions.map((action, actionIndex) => (
-                        <li key={actionIndex} className="text-gray-600">• {action}</li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500 text-center py-4">No recommendations available</p>
-      )}
-    </div>
-  ));
-  
-  // Resource usage chart (simplified)
-  const ResourceChart = React.memo(({ resources }) => (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Resource Usage</h2>
-      
-      {resources && (
-        <div className="space-y-4">
-          {Object.entries(resources.byType || {}).map(([type, data]) => (
-            <div key={type} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-blue-500 mr-3"></div>
-                <span className="font-medium capitalize">{type}</span>
-              </div>
-              <div className="flex items-center space-x-4 text-sm">
-                <span>{data.count} files</span>
-                <span>{(data.totalSize / 1024).toFixed(1)}KB</span>
-                <span>{data.avgDuration.toFixed(0)}ms avg</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  ));
-  
-  // Real-time metrics chart placeholder
-  const RealTimeChart = React.memo(() => (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Real-time Metrics</h2>
-      <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">📊</div>
-          <p>Real-time charts would display here</p>
-          <p className="text-sm">(CPU, Memory, Response Times)</p>
-        </div>
-      </div>
-    </div>
-  ));
-  
-  if (!metrics) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading performance data...</p>
-        </div>
-      </div>
-    );
-  }
-  
+      setPerformanceHistory(prev => 
+        [...prev, newSnapshot].slice(-60) // Keep last 60 snapshots (5 minutes at 5s intervals)
+      );
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval, getPerformanceScore, getMetrics, trackMemory]);
+
+  // Performance score color
+  const getScoreColor = (score) => {
+    if (score >= 90) return isDarkMode ? 'text-green-400' : 'text-green-600';
+    if (score >= 70) return isDarkMode ? 'text-yellow-400' : 'text-yellow-600';
+    if (score >= 50) return isDarkMode ? 'text-orange-400' : 'text-orange-600';
+    return isDarkMode ? 'text-red-400' : 'text-red-600';
+  };
+
+  // Alert severity color
+  const getAlertColor = (severity) => {
+    const colors = {
+      low: isDarkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-600 bg-blue-100',
+      medium: isDarkMode ? 'text-yellow-400 bg-yellow-900/20' : 'text-yellow-600 bg-yellow-100',
+      high: isDarkMode ? 'text-orange-400 bg-orange-900/20' : 'text-orange-600 bg-orange-100',
+      critical: isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-600 bg-red-100'
+    };
+    return colors[severity] || colors.medium;
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header Controls */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Performance Dashboard</h1>
-          <p className="text-gray-600">Real-time performance monitoring and optimization</p>
+          <h2 className={`text-2xl font-bold ${themeClasses.textPrimary}`}>
+            Performance Dashboard
+          </h2>
+          <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>
+            Real-time performance monitoring and optimization
+          </p>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <select 
-            value={selectedTimeRange}
-            onChange={(e) => setSelectedTimeRange(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-1 text-sm"
+        <div className="flex items-center gap-3">
+          <select
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            className={`px-3 py-2 text-sm ${themeClasses.input} rounded-lg ${themeClasses.focusRing} focus:ring-2`}
           >
-            <option value="1h">Last Hour</option>
-            <option value="6h">Last 6 Hours</option>
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
+            <option value={1000}>1s refresh</option>
+            <option value={5000}>5s refresh</option>
+            <option value={10000}>10s refresh</option>
+            <option value={30000}>30s refresh</option>
           </select>
-          
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-1 text-sm"
-          >
-            <option value="all">All Metrics</option>
-            <option value="frontend">Frontend Only</option>
-            <option value="backend">Backend Only</option>
-            <option value="system">System Only</option>
-          </select>
-          
-          <button
-            onClick={() => setIsLive(!isLive)}
-            className={`px-4 py-2 rounded text-sm font-medium ${
-              isLive 
-                ? 'bg-green-600 text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {isLive ? '● Live' : 'Start Live'}
-          </button>
-          
-          <button
-            onClick={fetchPerformanceData}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
-          >
-            Refresh
-          </button>
         </div>
       </div>
-      
-      {/* System Health Overview */}
-      <SystemOverview health={systemHealth} />
-      
-      {/* Core Web Vitals */}
-      {(selectedCategory === 'all' || selectedCategory === 'frontend') && metrics.frontend && (
-        <>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Core Web Vitals</h2>
-          <CoreWebVitals vitals={metrics.frontend.vitals} />
-        </>
-      )}
-      
-      {/* Performance Recommendations */}
-      <PerformanceRecommendations 
-        recommendations={metrics.frontend?.recommendations || []} 
-      />
-      
-      {/* Resource Usage */}
-      {(selectedCategory === 'all' || selectedCategory === 'frontend') && (
-        <ResourceChart resources={metrics.frontend?.resources} />
-      )}
-      
-      {/* Real-time Charts */}
-      {isLive && <RealTimeChart />}
-      
-      {/* Backend Metrics Grid */}
-      {(selectedCategory === 'all' || selectedCategory === 'backend') && metrics.backend && (
-        <>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Backend Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <MetricCard
-              title="API Requests"
-              value={metrics.backend.api?.requests?.total}
-              unit="total"
-            />
-            <MetricCard
-              title="Avg Response Time"
-              value={metrics.backend.api?.requests?.avgResponseTime}
-              unit="ms"
-              status={metrics.backend.api?.requests?.avgResponseTime < 500 ? 'healthy' : 'degraded'}
-            />
-            <MetricCard
-              title="Database Queries"
-              value={metrics.backend.database?.queries?.total}
-              unit="total"
-            />
-            <MetricCard
-              title="Active Connections"
-              value={metrics.backend.database?.connections?.active}
-              unit="conn"
-            />
-            <MetricCard
-              title="Audio Uploads"
-              value={metrics.backend.audio?.uploads?.total}
-              unit="files"
-            />
-            <MetricCard
-              title="Processing Queue"
-              value={metrics.backend.audio?.processing?.queue}
-              unit="items"
-              status={metrics.backend.audio?.processing?.queue > 5 ? 'degraded' : 'healthy'}
-            />
-            <MetricCard
-              title="Active Calls"
-              value={metrics.backend.voip?.calls?.active}
-              unit="calls"
-            />
-            <MetricCard
-              title="Call Quality"
-              value={metrics.backend.voip?.calls?.quality?.length ? 
-                metrics.backend.voip.calls.quality[metrics.backend.voip.calls.quality.length - 1]?.quality 
-                : 'N/A'}
-              unit="/5"
-            />
+
+      {/* Performance Score & Core Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Performance Score */}
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Performance Score</p>
+              <p className={`text-3xl font-bold ${getScoreColor(currentMetrics.score)}`}>
+                {currentMetrics.score}/100
+              </p>
+            </div>
+            <div className={`p-3 ${isDarkMode ? 'bg-purple-900/50' : 'bg-purple-100'} rounded-full`}>
+              <span className="text-2xl">⚡</span>
+            </div>
           </div>
-        </>
-      )}
-      
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Last updated: {metrics.timestamp ? new Date(metrics.timestamp).toLocaleString() : 'Unknown'}</p>
-        <p>Performance monitoring powered by ColdCaller Performance Engine</p>
+          <div className="mt-4">
+            <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  currentMetrics.score >= 90 ? 'bg-green-500' :
+                  currentMetrics.score >= 70 ? 'bg-yellow-500' :
+                  currentMetrics.score >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${currentMetrics.score}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Largest Contentful Paint */}
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>LCP</p>
+              <p className={`text-2xl font-bold ${
+                (currentMetrics.vitals?.lcp || 0) <= 2500 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {currentMetrics.vitals?.lcp ? `${currentMetrics.vitals.lcp.toFixed(0)}ms` : 'N/A'}
+              </p>
+            </div>
+            <div className={`p-3 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'} rounded-full`}>
+              <span className="text-xl">🎯</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className={`text-xs ${themeClasses.textMuted}`}>
+              Target: &lt;2500ms
+            </span>
+          </div>
+        </div>
+
+        {/* First Input Delay */}
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>FID</p>
+              <p className={`text-2xl font-bold ${
+                (currentMetrics.vitals?.fid || 0) <= 100 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {currentMetrics.vitals?.fid ? `${currentMetrics.vitals.fid.toFixed(0)}ms` : 'N/A'}
+              </p>
+            </div>
+            <div className={`p-3 ${isDarkMode ? 'bg-green-900/50' : 'bg-green-100'} rounded-full`}>
+              <span className="text-xl">⚡</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className={`text-xs ${themeClasses.textMuted}`}>
+              Target: &lt;100ms
+            </span>
+          </div>
+        </div>
+
+        {/* Cumulative Layout Shift */}
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>CLS</p>
+              <p className={`text-2xl font-bold ${
+                (currentMetrics.vitals?.cls || 0) <= 0.1 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {currentMetrics.vitals?.cls ? currentMetrics.vitals.cls.toFixed(3) : '0.000'}
+              </p>
+            </div>
+            <div className={`p-3 ${isDarkMode ? 'bg-orange-900/50' : 'bg-orange-100'} rounded-full`}>
+              <span className="text-xl">📐</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className={`text-xs ${themeClasses.textMuted}`}>
+              Target: &lt;0.1
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Performance Summary */}
+      <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+        <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Performance Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <h4 className={`font-medium ${themeClasses.textSecondary} mb-2`}>Cache Performance</h4>
+            <p className={`text-2xl font-bold ${
+              cacheStats.performance.hitRate > 80 ? 'text-green-600' : 'text-orange-600'
+            }`}>
+              {cacheStats.performance.hitRate.toFixed(1)}%
+            </p>
+            <p className={`text-sm ${themeClasses.textMuted}`}>Hit Rate</p>
+          </div>
+          
+          <div>
+            <h4 className={`font-medium ${themeClasses.textSecondary} mb-2`}>Memory Usage</h4>
+            <p className={`text-2xl font-bold ${
+              currentMetrics.memory && currentMetrics.memory.percentage < 75 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {currentMetrics.memory ? `${currentMetrics.memory.percentage.toFixed(1)}%` : 'N/A'}
+            </p>
+            <p className={`text-sm ${themeClasses.textMuted}`}>Heap Usage</p>
+          </div>
+          
+          <div>
+            <h4 className={`font-medium ${themeClasses.textSecondary} mb-2`}>Alerts</h4>
+            <p className={`text-2xl font-bold ${alerts.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              {alerts.length}
+            </p>
+            <p className={`text-sm ${themeClasses.textMuted}`}>Active Alerts</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Alerts */}
+      {alerts.length > 0 && (
+        <div className={`${themeClasses.cardBg} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+          <h3 className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}>Recent Performance Alerts</h3>
+          <div className="space-y-2">
+            {alerts.slice(0, 5).map((alert) => (
+              <div
+                key={alert.id}
+                className={`p-3 rounded-lg ${getAlertColor(alert.severity)}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">
+                    {alert.metric.toUpperCase()} Budget Violation
+                  </span>
+                  <span className="text-xs opacity-75">
+                    {alert.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-xs mt-1 opacity-90">
+                  Current: {typeof alert.value === 'number' ? alert.value.toFixed(2) : alert.value}
+                  {' '}• Budget: {alert.budget}
+                  {alert.context && ` • ${alert.context}`}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+});
+
+// Helper function to calculate alert severity
+const calculateSeverity = (metric, value, budget) => {
+  const ratio = value / budget;
+  
+  if (ratio >= 2) return 'critical';
+  if (ratio >= 1.5) return 'high';
+  if (ratio >= 1.2) return 'medium';
+  return 'low';
 };
 
-export default React.memo(PerformanceDashboard);
+PerformanceDashboard.displayName = 'PerformanceDashboard';
+
+export default PerformanceDashboard;

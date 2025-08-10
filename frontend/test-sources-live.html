@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Sources Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
+        button { padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .status { font-weight: bold; }
+        .highlight { background-color: yellow; padding: 2px 4px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Live Chatbot Sources Debug</h1>
+    <p>This page will test the actual chatbot sources rendering in real-time.</p>
+
+    <div class="test-section info">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Open the main coldcaller app in another tab: <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+            <li>Click the chatbot icon (bottom right)</li>
+            <li>Ask: <span class="highlight">"What is Twilio?"</span></li>
+            <li>Come back to this tab and click "Test Live Response" below</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Live Tests</h2>
+        <button onclick="testAPI()">1. Test RAG API</button>
+        <button onclick="testChatbotExists()">2. Check Chatbot Exists</button>
+        <button onclick="testLiveResponse()">3. Test Live Response</button>
+        <button onclick="testSourceElements()">4. Find Source Elements</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(type, title, content, isHtml = false) {
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            const titleElement = document.createElement('h3');
+            titleElement.textContent = title;
+            div.appendChild(titleElement);
+            
+            if (isHtml) {
+                div.innerHTML += content;
+            } else {
+                const pre = document.createElement('pre');
+                pre.textContent = content;
+                div.appendChild(pre);
+            }
+            
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        // Test 1: RAG API
+        async function testAPI() {
+            try {
+                addResult('info', '🔄 Testing RAG API...', 'Making API call...');
+                
+                const response = await fetch('/api/rag/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'What is Twilio?',
+                        conversationId: '550e8400-e29b-41d4-a716-446655440123',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.sources) {
+                    addResult('success', '✅ RAG API Working', 
+                        `Sources returned: ${data.sources.length}\n\n` +
+                        `Sample source:\n${JSON.stringify(data.sources[0], null, 2)}`
+                    );
+                } else {
+                    addResult('error', '❌ RAG API Failed', JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                addResult('error', '❌ API Network Error', error.message);
+            }
+        }
+
+        // Test 2: Check if chatbot exists
+        function testChatbotExists() {
+            // Try to find chatbot in main window or popup
+            let chatbotFound = false;
+            let chatbotWindow = null;
+            
+            // Check current window
+            const localChatbot = document.querySelector('.chatbot-container');
+            if (localChatbot) {
+                chatbotFound = true;
+                addResult('info', '🤖 Chatbot Found Locally', 'Chatbot container found in current page');
+            }
+
+            // Instructions for other window
+            addResult('warning', '📝 Chatbot Check', 
+                `Local chatbot: ${localChatbot ? 'Found' : 'Not found'}\n\n` +
+                `Next: Open http://localhost:3000 in another tab and use the chatbot there.\n` +
+                `Then come back and run "Test Live Response"`
+            );
+        }
+
+        // Test 3: Test live response (check what happens after user interaction)
+        async function testLiveResponse() {
+            addResult('info', '🔍 Checking for Recent API Calls', 'Monitoring network activity...');
+            
+            // Get recent network activity by checking if we can see it in the browser
+            const recentApiCalls = performance.getEntriesByType('resource')
+                .filter(entry => entry.name.includes('/api/rag/query'))
+                .slice(-5); // Last 5 calls
+            
+            if (recentApiCalls.length > 0) {
+                addResult('success', '📈 Recent API Activity Detected', 
+                    `Found ${recentApiCalls.length} recent RAG API calls\n\n` +
+                    `Most recent call duration: ${recentApiCalls[recentApiCalls.length - 1].duration}ms`
+                );
+                
+                // Now try to verify what the main app received
+                testSourceRendering();
+            } else {
+                addResult('warning', '⚠️ No Recent API Calls', 
+                    'No recent RAG API calls detected.\n\n' +
+                    'Make sure you:\n' +
+                    '1. Opened the main app (http://localhost:3000)\n' +
+                    '2. Clicked the chatbot icon\n' +
+                    '3. Asked "What is Twilio?"\n' +
+                    '4. Waited for response\n' +
+                    'Then try this test again.'
+                );
+            }
+        }
+
+        // Test 4: Look for source elements across all windows
+        function testSourceElements() {
+            addResult('info', '🔍 Searching for Source Elements...', 'Checking DOM for source-related elements...');
+            
+            // Check current window
+            const sourceButtons = document.querySelectorAll('[data-source-link="true"]');
+            const viewDocButtons = Array.from(document.querySelectorAll('a')).filter(a => 
+                a.textContent && a.textContent.includes('View Document')
+            );
+            const sourceSections = document.querySelectorAll('[id*="sources-"]');
+            const sourceToggles = Array.from(document.querySelectorAll('button')).filter(btn =>
+                btn.textContent && btn.textContent.includes('source')
+            );
+            
+            const results = `Current Window Results:
+            • Source links: ${sourceButtons.length}
+            • View Document buttons: ${viewDocButtons.length}
+            • Source sections: ${sourceSections.length}
+            • Source toggle buttons: ${sourceToggles.length}
+            
+            ${sourceButtons.length > 0 ? '✅ Found source elements!' : '❌ No source elements found'}`;
+            
+            addResult(sourceButtons.length > 0 ? 'success' : 'warning', 
+                '🎯 Source Elements Search', results);
+                
+            // Additional check for chatbot containers
+            const chatContainers = document.querySelectorAll('.chatbot-container, [class*="chat"], [class*="message"]');
+            addResult('info', '💬 Chat Elements Found', 
+                `Found ${chatContainers.length} chat-related elements\n\n` +
+                `Element classes: ${Array.from(chatContainers).map(el => el.className).join(', ')}`
+            );
+        }
+
+        function testSourceRendering() {
+            addResult('info', '🎨 Testing Source Rendering Logic', 
+                'Simulating ChatMessage component logic...\n\n' +
+                'Key checks:\n' +
+                '1. message.sender === "assistant" ✓\n' +
+                '2. message.sources exists ✓\n' +
+                '3. message.sources.length > 0 ✓\n' +
+                '4. showSources = true (default) ✓\n\n' +
+                'If sources still not visible, check:\n' +
+                '• CSS z-index conflicts\n' +
+                '• Component re-rendering issues\n' +
+                '• React dev tools component state'
+            );
+        }
+
+        // Auto-run API test on load
+        setTimeout(testAPI, 1000);
+        
+        addResult('info', '🚀 Debug Session Started', 
+            'Page loaded and ready for testing.\n\n' +
+            'The RAG API test will run automatically in 1 second.\n' +
+            'Follow the instructions above to test the live chatbot.'
+        );
+    </script>
+</body>
+</html>
