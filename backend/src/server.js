@@ -40,6 +40,9 @@ const integrationsRoutes = require('./routes/integrations');
 const calendarRoutes = require('./routes/calendar');
 const emailRoutes = require('./routes/email');
 const webhooksRoutes = require('./routes/webhooks');
+const leadScoringRoutes = require('./routes/leadScoring');
+const batchRoutes = require('./routes/batch');
+const apiRoutes = require('./routes/index');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
@@ -257,6 +260,13 @@ app.use('/api/integrations', integrationsRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/webhooks', webhooksRoutes); // Webhooks don't require auth
+
+// Lead scoring and batch processing routes
+app.use('/api/lead-scoring', leadScoringRoutes);
+app.use('/api/batch', batchRoutes);
+
+// Main API routes (includes status and endpoint list)
+app.use('/api', apiRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

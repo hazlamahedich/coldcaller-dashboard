@@ -1,0 +1,45 @@
+[
+  {
+    "name": "John Smith",
+    "company": "TechCorp Solutions",
+    "email": "john.smith@techcorp.com",
+    "phone": "+1-555-0123",
+    "title": "CTO",
+    "industry": "Software",
+    "companySize": "50-200",
+    "website": "https://techcorp.com",
+    "leadSource": "Website Contact",
+    "notes": "Interested in AI solutions for development team. Budget approved for Q1.",
+    "tags": ["hot-lead", "enterprise", "ai-interested"],
+    "priority": "high"
+  },
+  {
+    "name": "Sarah Johnson", 
+    "company": "FinanceFlow Inc",
+    "email": "sarah.j@financeflow.com",
+    "phone": "+1-555-0456",
+    "title": "CFO",
+    "industry": "Finance",
+    "companySize": "200-500",
+    "website": "https://financeflow.com",
+    "leadSource": "LinkedIn",
+    "notes": "Looking to automate financial reporting processes. Has existing tech stack.",
+    "tags": ["enterprise", "automation"],
+    "priority": "medium"
+  },
+  {
+    "name": "Mike Chen",
+    "company": "StartupX", 
+    "email": "mike@startupx.io",
+    "phone": "+1-555-0789",
+    "title": "CEO",
+    "industry": "Technology",
+    "companySize": "10-50",
+    "website": "https://startupx.io", 
+    "leadSource": "Referral",
+    "notes": "Early-stage startup seeking scalable solutions. Limited budget but high growth potential.",
+    "tags": ["startup", "growth", "referral"],
+    "priority": "medium"
+  }
+]
+EOF < /dev/null

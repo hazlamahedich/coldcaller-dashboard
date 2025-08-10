@@ -1,0 +1,47 @@
+Contact Information:
+
+John Smith - Chief Technology Officer at TechCorp Solutions
+Email: john.smith@techcorp.com
+Phone: +1-555-0123
+Company Website: https://techcorp.com
+Notes: Interested in AI solutions for development team. Budget approved for Q1.
+Tags: hot-lead, enterprise, ai-interested
+
+Sarah Johnson, CFO at FinanceFlow Inc
+Contact: sarah.j@financeflow.com | +1-555-0456
+Company Size: 200-500 employees
+Industry: Finance
+Source: LinkedIn connection
+Looking to automate financial reporting processes. Has existing tech stack.
+
+Mike Chen
+Position: CEO
+Company: StartupX (https://startupx.io)
+Email: mike@startupx.io
+Phone: +1-555-0789
+Company Size: 10-50 employees  
+Industry: Technology
+Lead Source: Referral
+Notes: Early-stage startup seeking scalable solutions. Limited budget but high growth potential.
+Priority: Medium
+
+Lisa Brown - VP Operations
+Company: RetailCorp
+Contact Info: l.brown@retailcorp.com, +1-555-0321
+Industry: Retail (500-1000 employees)
+Website: https://retailcorp.com
+Met at: Trade Show
+Interest: Supply chain optimization
+Status: Currently evaluating multiple vendors
+Priority: HIGH
+
+David Wilson, CTO
+HealthTech Labs
+david.wilson@healthtech.com
++1-555-0654
+Healthcare industry, 100-500 employees
+https://healthtech.com
+Source: Cold Email
+Developing patient management system. Needs compliance-focused solutions.
+Tags: healthcare, compliance
+EOF < /dev/null

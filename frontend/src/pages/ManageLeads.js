@@ -4,12 +4,13 @@ import { useLead } from '../contexts/LeadContext';
 import LeadList from '../components/LeadList';
 import LeadKanban from '../components/LeadKanban';
 import LeadAnalyticsDashboard from '../components/LeadAnalyticsDashboard';
+import BatchLeadUpload from '../components/BatchLeadUpload';
 
 // Inner component that uses the Lead context
 const ManageLeadsContent = () => {
   const { isDarkMode, themeClasses } = useTheme();
   const { selectLead, selectedLead, refreshLeads } = useLead();
-  const [viewMode, setViewMode] = useState('list'); // 'list', 'kanban', 'analytics'
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'kanban', 'analytics', 'batch'
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Handler for lead selection from LeadList component
@@ -74,6 +75,18 @@ const ManageLeadsContent = () => {
               >
                 📊 Analytics
               </button>
+              <button
+                onClick={() => setViewMode('batch')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'batch'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : isDarkMode
+                      ? 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📤 Batch Upload
+              </button>
             </div>
           </div>
         </div>
@@ -97,6 +110,12 @@ const ManageLeadsContent = () => {
 
           {viewMode === 'analytics' && (
             <LeadAnalyticsDashboard />
+          )}
+
+          {viewMode === 'batch' && (
+            <div className="p-0">
+              <BatchLeadUpload />
+            </div>
           )}
         </div>
 
