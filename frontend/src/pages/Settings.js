@@ -6,6 +6,8 @@ import ThemeToggle from '../components/ThemeToggle';
 import CalendarIntegration from '../components/CalendarIntegration';
 import EmailIntegration from '../components/EmailIntegration';
 import SIPConfigurationTabs from '../components/SIPConfigurationTabs';
+import LlmConfiguration from '../components/LlmConfiguration';
+import LlmCostMonitoring from '../components/LlmCostMonitoring';
 
 function Settings() {
   const { isDarkMode, themeClasses } = useTheme();
@@ -16,7 +18,7 @@ function Settings() {
   // Handle URL tab parameters
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && ['general', 'calling', 'sip', 'notifications', 'integrations', 'calendar', 'email'].includes(tab)) {
+    if (tab && ['general', 'calling', 'sip', 'notifications', 'integrations', 'calendar', 'email', 'ai-config', 'ai-costs'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -42,7 +44,9 @@ function Settings() {
     { id: 'notifications', name: 'Notifications', icon: '🔔' },
     { id: 'integrations', name: 'Integrations', icon: '🔗' },
     { id: 'calendar', name: 'Calendar', icon: '📅' },
-    { id: 'email', name: 'Email', icon: '✉️' }
+    { id: 'email', name: 'Email', icon: '✉️' },
+    { id: 'ai-config', name: 'AI Configuration', icon: '🤖' },
+    { id: 'ai-costs', name: 'AI Cost Monitoring', icon: '💰' }
   ];
 
   const InputField = ({ label, type = 'text', value, onChange, placeholder, disabled = false }) => (
@@ -395,6 +399,12 @@ function Settings() {
             />
           </div>
         );
+
+      case 'ai-config':
+        return <LlmConfiguration />;
+
+      case 'ai-costs':
+        return <LlmCostMonitoring />;
 
       default:
         return null;

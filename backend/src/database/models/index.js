@@ -9,6 +9,9 @@ const { defineCallLogModel } = require('./CallLog');
 const { defineIntegrationSettingsModel } = require('./IntegrationSettings');
 const { defineCalendarEventModel } = require('./CalendarEvent');
 const { defineEmailSyncModel } = require('./EmailSync');
+const { defineLlmConfigurationModel } = require('./LlmConfiguration');
+const { defineLlmUsageModel } = require('./LlmUsage');
+const { defineLlmBudgetModel } = require('./LlmBudget');
 
 // Initialize all models
 const models = {
@@ -17,7 +20,10 @@ const models = {
   CallLog: defineCallLogModel(sequelize),
   IntegrationSettings: defineIntegrationSettingsModel(sequelize),
   CalendarEvent: defineCalendarEventModel(sequelize),
-  EmailSync: defineEmailSyncModel(sequelize)
+  EmailSync: defineEmailSyncModel(sequelize),
+  LlmConfiguration: defineLlmConfigurationModel(sequelize),
+  LlmUsage: defineLlmUsageModel(sequelize),
+  LlmBudget: defineLlmBudgetModel(sequelize)
 };
 
 // Define associations
@@ -105,7 +111,10 @@ const checkDatabaseHealth = async () => {
       models.CallLog.count(),
       models.IntegrationSettings.count(),
       models.CalendarEvent.count(),
-      models.EmailSync.count()
+      models.EmailSync.count(),
+      models.LlmConfiguration.count(),
+      models.LlmUsage.count(),
+      models.LlmBudget.count()
     ]);
     
     return {
@@ -117,7 +126,10 @@ const checkDatabaseHealth = async () => {
         callLogs: tableChecks[2],
         integrationSettings: tableChecks[3],
         calendarEvents: tableChecks[4],
-        emailSyncs: tableChecks[5]
+        emailSyncs: tableChecks[5],
+        llmConfigurations: tableChecks[6],
+        llmUsage: tableChecks[7],
+        llmBudgets: tableChecks[8]
       },
       totalRecords: tableChecks.reduce((sum, count) => sum + count, 0)
     };

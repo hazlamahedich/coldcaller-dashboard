@@ -1,10 +1,9 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const llmService = require('./llmService');
 
 class LLMDataParser {
     constructor() {
-        // Initialize Google Gemini client with API key from environment
-        this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Use the centralized LLM service
+        this.llmService = llmService;
     }
 
     /**
@@ -15,22 +14,15 @@ class LLMDataParser {
      */
     async parseData(rawData, format = 'unknown') {
         try {
-            const prompt = this.buildParsingPrompt(rawData, format);
-            
-            const result = await this.model.generateContent({
-                contents: [{
-                    role: 'user',
-                    parts: [{ text: prompt }]
-                }],
-                generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 4000,
-                    responseMimeType: 'text/plain'
-                }
+            const result = await this.llmService.parseData(rawData, format, {
+                temperature: 0.1,
+                maxTokens: 4000,
+                logPrompt: false,
+                logResponse: false,
+                useCase: 'data_parsing'
             });
 
-            const parsedContent = result.response.text();
-            return this.extractAndValidateLeads(parsedContent);
+            return this.extractAndValidateLeads(result.response);
 
         } catch (error) {
             console.error('LLM parsing error:', error);
@@ -207,19 +199,14 @@ ${sample.substring(0, 1000)}
 
 Return a JSON object with your analysis.`;
 
-            const result = await this.model.generateContent({
-                contents: [{
-                    role: 'user',
-                    parts: [{ text: prompt }]
-                }],
-                generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 500,
-                    responseMimeType: 'text/plain'
-                }
+            const result = await this.llmService.generateContent('analysis', prompt, {
+                temperature: 0.1,
+                maxTokens: 500,
+                logPrompt: false,
+                logResponse: false
             });
 
-            const responseText = result.response.text();
+            const responseText = result.response;
             // Try to extract JSON from the response
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {

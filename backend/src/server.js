@@ -42,6 +42,7 @@ const emailRoutes = require('./routes/email');
 const webhooksRoutes = require('./routes/webhooks');
 const leadScoringRoutes = require('./routes/leadScoring');
 const batchRoutes = require('./routes/batch');
+const llmRoutes = require('./routes/llm');
 const apiRoutes = require('./routes/index');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
@@ -264,6 +265,9 @@ app.use('/api/webhooks', webhooksRoutes); // Webhooks don't require auth
 // Lead scoring and batch processing routes
 app.use('/api/lead-scoring', leadScoringRoutes);
 app.use('/api/batch', batchRoutes);
+
+// LLM configuration and monitoring routes
+app.use('/api/llm', authenticate, llmRoutes);
 
 // Main API routes (includes status and endpoint list)
 app.use('/api', apiRoutes);
