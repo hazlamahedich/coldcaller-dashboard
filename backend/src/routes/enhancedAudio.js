@@ -14,7 +14,7 @@ const uploadValidation = [
   body('category')
     .optional()
     .trim()
-    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx'])
+    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx', 'custom'])
     .withMessage('Category must be one of: greetings, objections, closing, general, training, music, sfx'),
   body('description')
     .optional()
@@ -44,7 +44,7 @@ const updateMetadataValidation = [
   body('category')
     .optional()
     .trim()
-    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx'])
+    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx', 'custom'])
     .withMessage('Category must be one of: greetings, objections, closing, general, training, music, sfx'),
   body('description')
     .optional()
@@ -101,7 +101,7 @@ const searchValidation = [
   query('category')
     .optional()
     .trim()
-    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx'])
+    .isIn(['greetings', 'objections', 'closing', 'general', 'training', 'music', 'sfx', 'custom'])
     .withMessage('Category must be one of: greetings, objections, closing, general, training, music, sfx'),
   query('minDuration')
     .optional()

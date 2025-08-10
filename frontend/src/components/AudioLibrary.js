@@ -13,6 +13,7 @@ import WaveformVisualizer from './WaveformVisualizer';
 
 const AudioLibrary = ({ 
   onAudioSelect = () => {},
+  onAudioUpdated = null,
   embedded = false,
   showUpload = true,
   showVisualizer = true,
@@ -782,6 +783,120 @@ const AudioLibrary = ({
                 onUploadError={handleUploadError}
                 maxFileSize={50 * 1024 * 1024} // 50MB
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingClip && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-lg max-w-md w-full ${
+            isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+          }`}>
+            <div className={`flex items-center justify-between p-4 border-b ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <h3 className="text-lg font-semibold">✏️ Edit Audio Clip</h3>
+              <button
+                onClick={() => setEditingClip(null)}
+                className={`p-1 rounded-full transition-colors ${
+                  isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                }`}
+              >
+                ✖️
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Name</label>
+                <input
+                  type="text"
+                  value={editingClip.name}
+                  onChange={(e) => setEditingClip(prev => ({...prev, name: e.target.value}))}
+                  className={`w-full p-2 border rounded-lg ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Category</label>
+                <select
+                  value={editingClip.category || 'custom'}
+                  onChange={(e) => setEditingClip(prev => ({...prev, category: e.target.value}))}
+                  className={`w-full p-2 border rounded-lg ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="greetings">Greetings</option>
+                  <option value="objections">Objections</option>
+                  <option value="closing">Closing</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={editingClip.description || ''}
+                  onChange={(e) => setEditingClip(prev => ({...prev, description: e.target.value}))}
+                  rows={3}
+                  className={`w-full p-2 border rounded-lg resize-none ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="Add a description for this clip..."
+                />
+              </div>
+              <div className="flex space-x-3 pt-2">
+                <button
+                  onClick={() => {
+                    // Save changes to localStorage if it's a local recording
+                    const isLocalStorageRecording = typeof editingClip.id === 'number' || editingClip.id?.toString().startsWith('test-');
+                    
+                    if (isLocalStorageRecording) {
+                      const existingRecordings = JSON.parse(localStorage.getItem('userRecordings') || '[]');
+                      const updatedRecordings = existingRecordings.map(recording => 
+                        recording.id === editingClip.id ? editingClip : recording
+                      );
+                      localStorage.setItem('userRecordings', JSON.stringify(updatedRecordings));
+                      
+                      // Refresh the library
+                      loadAudioLibrary();
+                      
+                      // Notify parent component if callback provided
+                      if (onAudioUpdated) {
+                        console.log('🔔 Notifying parent component of audio update...');
+                        onAudioUpdated();
+                      }
+                      
+                      console.log('💾 Updated recording in localStorage:', editingClip);
+                    } else {
+                      // For API clips, you could implement server update here
+                      console.log('🌐 Would update server recording:', editingClip);
+                    }
+                    
+                    setEditingClip(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  💾 Save Changes
+                </button>
+                <button
+                  onClick={() => setEditingClip(null)}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  ❌ Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

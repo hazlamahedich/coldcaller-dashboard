@@ -83,9 +83,17 @@ const validateAudioUpload = (req, res, next) => {
       });
     }
 
-    // Validate mime type again
+    // Validate file extension and mime type
+    const fileExtension = path.extname(file.originalname).toLowerCase();
     const detectedMime = mime.lookup(file.originalname);
-    if (!detectedMime || !detectedMime.startsWith('audio/')) {
+    const allowedExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma', '.webm'];
+    
+    // Allow if extension is valid (handles webm audio files)
+    // Or if detected MIME type is audio
+    const isValidExtension = allowedExtensions.includes(fileExtension);
+    const isValidMime = detectedMime && detectedMime.startsWith('audio/');
+    
+    if (!isValidExtension && !isValidMime) {
       return res.status(400).json({
         success: false,
         message: `File ${file.originalname} is not a valid audio file.`

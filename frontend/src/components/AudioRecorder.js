@@ -300,7 +300,7 @@ const AudioRecorder = ({ onRecordingComplete, defaultCategory = 'custom' }) => {
       
       const formData = new FormData();
       const filename = `${recordingName}.${format}`;
-      formData.append('audio', audioBlob, filename);
+      formData.append('audioFiles', audioBlob, filename);
       formData.append('name', recordingName);
       formData.append('category', recordingCategory);
       formData.append('description', recordingDescription);

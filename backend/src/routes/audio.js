@@ -22,7 +22,7 @@ const createAudioClipValidation = [
     .withMessage('Name is required and must be between 1-100 characters'),
   body('category')
     .trim()
-    .isIn(['greetings', 'objections', 'closing', 'general'])
+    .isIn(['greetings', 'objections', 'closing', 'general', 'custom'])
     .withMessage('Category must be one of: greetings, objections, closing, general'),
   body('duration')
     .optional()
@@ -44,7 +44,7 @@ const updateAudioClipValidation = [
   body('category')
     .optional()
     .trim()
-    .isIn(['greetings', 'objections', 'closing', 'general'])
+    .isIn(['greetings', 'objections', 'closing', 'general', 'custom'])
     .withMessage('Category must be one of: greetings, objections, closing, general'),
   body('duration')
     .optional()
