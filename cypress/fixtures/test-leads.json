@@ -1,0 +1,72 @@
+[
+  {
+    "id": "lead-001",
+    "name": "John Smith",
+    "email": "john.smith@acmecorp.com",
+    "company": "ACME Corporation",
+    "phone": "+1-555-0123",
+    "title": "VP of Sales",
+    "industry": "Technology",
+    "status": "new",
+    "source": "website",
+    "created_at": "2024-01-10T10:00:00Z",
+    "last_contact": null,
+    "notes": "Interested in enterprise solutions"
+  },
+  {
+    "id": "lead-002",
+    "name": "Sarah Johnson",
+    "email": "sarah.j@techstartup.io",
+    "company": "TechStartup Inc",
+    "phone": "+1-555-0234",
+    "title": "CTO",
+    "industry": "SaaS",
+    "status": "contacted",
+    "source": "referral",
+    "created_at": "2024-01-08T14:30:00Z",
+    "last_contact": "2024-01-09T16:00:00Z",
+    "notes": "Evaluating multiple vendors"
+  },
+  {
+    "id": "lead-003",
+    "name": "Michael Brown",
+    "email": "m.brown@retailplus.com",
+    "company": "Retail Plus",
+    "phone": "+1-555-0345",
+    "title": "Operations Manager",
+    "industry": "Retail",
+    "status": "qualified",
+    "source": "cold_call",
+    "created_at": "2024-01-05T09:15:00Z",
+    "last_contact": "2024-01-08T11:30:00Z",
+    "notes": "Ready for demo scheduling"
+  },
+  {
+    "id": "lead-004",
+    "name": "Emily Davis",
+    "email": "emily.davis@healthsys.org",
+    "company": "HealthSystem Partners",
+    "phone": "+1-555-0456",
+    "title": "Director of IT",
+    "industry": "Healthcare",
+    "status": "meeting_scheduled",
+    "source": "linkedin",
+    "created_at": "2024-01-03T13:45:00Z",
+    "last_contact": "2024-01-07T10:15:00Z",
+    "notes": "Demo scheduled for next week"
+  },
+  {
+    "id": "lead-005",
+    "name": "Robert Wilson",
+    "email": "rwilson@manufacturing.com",
+    "company": "Wilson Manufacturing",
+    "phone": "+1-555-0567",
+    "title": "Plant Manager",
+    "industry": "Manufacturing",
+    "status": "proposal_sent",
+    "source": "trade_show",
+    "created_at": "2023-12-28T08:00:00Z",
+    "last_contact": "2024-01-06T15:20:00Z",
+    "notes": "Proposal sent, awaiting decision"
+  }
+]

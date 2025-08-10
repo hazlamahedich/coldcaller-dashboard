@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "provider": "outlook",
+  "authUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=test_microsoft_client_id&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Fmicrosoft%2Fcallback&response_mode=query&scope=https%3A%2F%2Fgraph.microsoft.com%2Fcalendars.readwrite&state=test-state-456",
+  "state": "test-state-456",
+  "scopes": [
+    "https://graph.microsoft.com/calendars.readwrite"
+  ]
+}

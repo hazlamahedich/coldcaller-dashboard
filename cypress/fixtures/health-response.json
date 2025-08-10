@@ -1,0 +1,53 @@
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "version": "1.0.0",
+  "services": {
+    "database": {
+      "status": "healthy",
+      "response_time": "12ms",
+      "connections": {
+        "active": 5,
+        "idle": 10,
+        "max": 50
+      }
+    },
+    "calendar_service": {
+      "status": "healthy",
+      "providers": {
+        "google": {
+          "status": "operational",
+          "last_check": "2024-01-15T14:29:45Z",
+          "response_time": "145ms"
+        },
+        "outlook": {
+          "status": "operational", 
+          "last_check": "2024-01-15T14:29:50Z",
+          "response_time": "123ms"
+        }
+      }
+    },
+    "email_service": {
+      "status": "healthy",
+      "templates": 4,
+      "last_send": "2024-01-15T14:25:00Z"
+    },
+    "webhook_service": {
+      "status": "healthy",
+      "endpoints_active": 3,
+      "events_processed": 1247,
+      "last_event": "2024-01-15T14:28:30Z"
+    },
+    "cache": {
+      "status": "healthy",
+      "memory_usage": "45%",
+      "hit_rate": "87%"
+    }
+  },
+  "performance": {
+    "uptime": "99.9%",
+    "avg_response_time": "89ms",
+    "requests_per_minute": 156,
+    "error_rate": "0.02%"
+  }
+}

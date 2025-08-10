@@ -1,0 +1,31 @@
+{
+  "google": {
+    "access_token": "ya29.a0AfH6SMBxyz...test_google_access_token",
+    "refresh_token": "1//04xyz...test_google_refresh_token",
+    "scope": "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+    "token_type": "Bearer",
+    "expires_in": 3599,
+    "expiry_date": 1705920000000
+  },
+  "outlook": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJub...test_outlook_access_token",
+    "refresh_token": "M.R3_BAY.-CXyz...test_outlook_refresh_token",
+    "scope": "https://graph.microsoft.com/calendars.readwrite https://graph.microsoft.com/user.read",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "ext_expires_in": 0
+  },
+  "expired_google": {
+    "access_token": "ya29.expired_token",
+    "refresh_token": "1//04xyz...expired_refresh",
+    "scope": "https://www.googleapis.com/auth/calendar",
+    "token_type": "Bearer",
+    "expires_in": -1,
+    "expiry_date": 1705834000000
+  },
+  "invalid_tokens": {
+    "access_token": null,
+    "refresh_token": "invalid_refresh_token",
+    "token_type": "Bearer"
+  }
+}

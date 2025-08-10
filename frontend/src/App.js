@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Import page components
 import { MakeCalls, ManageLeads, Analytics, Settings } from './pages';
+import OAuthCallback from './components/OAuthCallback';
 
 // Import Layout and ErrorBoundary
 import Layout from './components/Layout';
@@ -62,6 +63,11 @@ function App() {
                         <Layout>
                           <Settings />
                         </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/settings/integrations/callback" element={
+                      <ProtectedRoute>
+                        <OAuthCallback />
                       </ProtectedRoute>
                     } />
                   </Routes>

@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import ThemeToggle from '../components/ThemeToggle';
+import CalendarIntegration from '../components/CalendarIntegration';
+import EmailIntegration from '../components/EmailIntegration';
 
 function Settings() {
   const { isDarkMode, themeClasses } = useTheme();
   const { settings, updateSetting, updateSettings } = useSettings();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('general');
+
+  // Handle URL tab parameters
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['general', 'calling', 'notifications', 'integrations', 'calendar', 'email'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const handleSettingChange = (category, key, value) => {
     updateSetting(category, key, value);
@@ -21,7 +38,9 @@ function Settings() {
     { id: 'general', name: 'General', icon: '🏠' },
     { id: 'calling', name: 'Calling', icon: '📞' },
     { id: 'notifications', name: 'Notifications', icon: '🔔' },
-    { id: 'integrations', name: 'Integrations', icon: '🔗' }
+    { id: 'integrations', name: 'Integrations', icon: '🔗' },
+    { id: 'calendar', name: 'Calendar', icon: '📅' },
+    { id: 'email', name: 'Email', icon: '✉️' }
   ];
 
   const InputField = ({ label, type = 'text', value, onChange, placeholder, disabled = false }) => (
@@ -296,8 +315,53 @@ function Settings() {
                 Receive real-time updates about calls and lead activities
               </p>
             </div>
+
+            {/* Quick Access to Calendar and Email */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`${themeClasses.cardBg} border ${themeClasses.border} rounded-lg p-4`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm">
+                    📅
+                  </div>
+                  <div>
+                    <h4 className={`font-medium ${themeClasses.textPrimary}`}>Calendar Integration</h4>
+                    <p className={`text-xs ${themeClasses.textSecondary}`}>Connect Google, Outlook, or Apple Calendar</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleTabChange('calendar')}
+                  className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Configure Calendar
+                </button>
+              </div>
+
+              <div className={`${themeClasses.cardBg} border ${themeClasses.border} rounded-lg p-4`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white text-sm">
+                    ✉️
+                  </div>
+                  <div>
+                    <h4 className={`font-medium ${themeClasses.textPrimary}`}>Email Integration</h4>
+                    <p className={`text-xs ${themeClasses.textSecondary}`}>Connect Gmail, Outlook, or SMTP</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleTabChange('email')}
+                  className="w-full px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Configure Email
+                </button>
+              </div>
+            </div>
           </div>
         );
+
+      case 'calendar':
+        return <CalendarIntegration />;
+
+      case 'email':
+        return <EmailIntegration />;
 
       default:
         return null;
@@ -321,7 +385,7 @@ function Settings() {
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => handleTabChange(tab.id)}
                     className={`w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === tab.id
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'

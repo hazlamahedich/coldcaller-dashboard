@@ -36,6 +36,10 @@ const twilioAnalyticsRoutes = require('./routes/twilioAnalytics');
 const ragChatRoutes = require('./routes/ragChat');
 const chatRoutes = require('./routes/chat_existing');
 const documentsRoutes = require('./routes/documents');
+const integrationsRoutes = require('./routes/integrations');
+const calendarRoutes = require('./routes/calendar');
+const emailRoutes = require('./routes/email');
+const webhooksRoutes = require('./routes/webhooks');
 const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
@@ -247,6 +251,12 @@ app.use('/api/twilio-analytics', twilioAnalyticsRoutes); // Twilio analytics - p
 app.use('/api/health', authenticate, healthRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/call-analytics', authenticate, callAnalyticsRoutes);
+
+// Integration routes
+app.use('/api/integrations', integrationsRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/webhooks', webhooksRoutes); // Webhooks don't require auth
 
 // 404 handler
 app.use(notFoundHandler);

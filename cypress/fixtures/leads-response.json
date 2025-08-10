@@ -1,0 +1,89 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "lead-001",
+      "name": "John Smith",
+      "email": "john.smith@acmecorp.com",
+      "company": "ACME Corporation",
+      "phone": "+1-555-0123",
+      "title": "VP of Sales",
+      "industry": "Technology",
+      "status": "new",
+      "source": "website",
+      "score": 85,
+      "priority": "high",
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2024-01-10T10:00:00Z",
+      "last_contact": null,
+      "next_follow_up": "2024-01-15T14:00:00Z",
+      "notes": "Interested in enterprise solutions",
+      "tags": ["enterprise", "technology", "high-value"],
+      "custom_fields": {
+        "company_size": "500-1000",
+        "budget": "$50,000-$100,000",
+        "timeline": "Q1 2024"
+      }
+    },
+    {
+      "id": "lead-002",
+      "name": "Sarah Johnson",
+      "email": "sarah.j@techstartup.io",
+      "company": "TechStartup Inc",
+      "phone": "+1-555-0234",
+      "title": "CTO",
+      "industry": "SaaS",
+      "status": "contacted",
+      "source": "referral",
+      "score": 92,
+      "priority": "high",
+      "created_at": "2024-01-08T14:30:00Z",
+      "updated_at": "2024-01-09T16:00:00Z",
+      "last_contact": "2024-01-09T16:00:00Z",
+      "next_follow_up": "2024-01-12T10:00:00Z",
+      "notes": "Evaluating multiple vendors",
+      "tags": ["saas", "startup", "technical"],
+      "custom_fields": {
+        "company_size": "50-100",
+        "budget": "$25,000-$50,000",
+        "timeline": "Q2 2024"
+      }
+    },
+    {
+      "id": "lead-003",
+      "name": "Michael Brown",
+      "email": "m.brown@retailplus.com",
+      "company": "Retail Plus",
+      "phone": "+1-555-0345",
+      "title": "Operations Manager",
+      "industry": "Retail",
+      "status": "qualified",
+      "source": "cold_call",
+      "score": 78,
+      "priority": "medium",
+      "created_at": "2024-01-05T09:15:00Z",
+      "updated_at": "2024-01-08T11:30:00Z",
+      "last_contact": "2024-01-08T11:30:00Z",
+      "next_follow_up": "2024-01-11T15:00:00Z",
+      "notes": "Ready for demo scheduling",
+      "tags": ["retail", "operations", "qualified"],
+      "custom_fields": {
+        "company_size": "100-500",
+        "budget": "$10,000-$25,000",
+        "timeline": "Q1 2024"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 20,
+    "total": 3,
+    "total_pages": 1
+  },
+  "filters": {
+    "status": "all",
+    "priority": "all",
+    "industry": "all",
+    "source": "all"
+  }
+}

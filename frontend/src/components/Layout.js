@@ -8,6 +8,7 @@ import UserMenu from './UserMenu';
 import FloatingCallBar from './FloatingCallBar';
 import DTMFKeypad from './DTMFKeypad';
 import CallControlsDemo from './CallControlsDemo';
+import ConnectionStatus from './ConnectionStatus';
 
 function Layout({ children }) {
   const { isDarkMode, themeClasses } = useTheme();
@@ -299,6 +300,9 @@ function Layout({ children }) {
           <CallControlsDemo />
         </div>
       )}
+
+      {/* Connection Status */}
+      <ConnectionStatus />
 
       {/* Footer */}
       <footer className={`border-t ${themeClasses.border} mt-12 transition-colors duration-200`}>

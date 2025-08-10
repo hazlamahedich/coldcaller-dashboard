@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "provider": "google",
+  "authUrl": "https://accounts.google.com/oauth2/authorize?client_id=test_client_id&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Fgoogle%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events&access_type=offline&response_type=code&state=test-state-123",
+  "state": "test-state-123",
+  "scopes": [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events"
+  ]
+}
