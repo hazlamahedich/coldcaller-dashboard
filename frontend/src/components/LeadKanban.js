@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCall } from '../contexts/CallContext';
 import { useLead } from '../contexts/LeadContext';
-import EmailComposer from './EmailComposer';
+import EmailComposerModal from './EmailComposerModal';
+import MeetingScheduleModal from './MeetingScheduleModal';
 import NotesEditor from './NotesEditor';
 
 /**
@@ -41,8 +42,9 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const [moveStatus, setMoveStatus] = useState(null); // 'success', 'error', null
   
-  // Modal states for email and notes
-  const [emailModalVisible, setEmailModalVisible] = useState(false);
+  // Modal states for email, meeting, and notes
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [selectedLeadForAction, setSelectedLeadForAction] = useState(null);
 
@@ -293,7 +295,7 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     }
   };
 
-  // Handle email lead action with enhanced modal
+  // Handle email lead action - opens email composer modal
   const handleEmailLead = (lead) => {
     if (!lead.email) {
       alert('No email address available for this lead');
@@ -302,29 +304,94 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
     
     console.log(`📧 Opening email composer for ${lead.name} at ${lead.email}`);
     setSelectedLeadForAction(lead);
-    setEmailModalVisible(true);
+    setShowEmailModal(true);
   };
   
-  // Handle email send
-  const handleEmailSend = async (emailData) => {
+  // Handle email sent completion
+  const handleEmailSent = async (emailData) => {
     try {
-      console.log('📧 Email sent:', emailData);
+      // Close the modal
+      setShowEmailModal(false);
+      setSelectedLeadForAction(null);
+      
+      console.log('✅ Email sent successfully:', emailData);
+      
+      // Create timeline entry for email activity
+      if (selectedLeadForAction?.id && apiConnected) {
+        try {
+          const response = await fetch('/api/leads/' + selectedLeadForAction.id + '/timeline', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              activityType: 'email_sent',
+              description: `Email sent: ${emailData.subject}`,
+              metadata: {
+                to: emailData.to,
+                cc: emailData.cc,
+                bcc: emailData.bcc,
+                subject: emailData.subject,
+                messageId: emailData.messageId,
+                provider: emailData.provider,
+                wordCount: emailData.body ? emailData.body.split(' ').length : 0,
+                priority: emailData.priority,
+                trackOpens: emailData.trackOpens,
+                trackClicks: emailData.trackClicks
+              }
+            })
+          });
+
+          if (!response.ok) {
+            console.warn('Failed to create email timeline entry');
+          }
+        } catch (timelineError) {
+          console.warn('Error creating email timeline entry:', timelineError);
+        }
+      }
       
       // Update lead's last contact time using shared context
-      const targetLead = leads.find(l => l.id === emailData.leadId);
-      if (targetLead) {
-        const updatedLead = { 
-          ...targetLead, 
-          last_contact: new Date().toISOString() 
+      if (selectedLeadForAction) {
+        const updatedLead = {
+          ...selectedLeadForAction,
+          last_contact: new Date().toISOString()
         };
         updateLead(updatedLead);
       }
       
-      // Here you could also save the email to your backend if needed
-      // await leadsService.logEmail(emailData);
-      
+      // Refresh leads to get updated data
+      refreshLeads();
     } catch (error) {
-      console.error('❌ Error logging email:', error);
+      console.error('❌ Error after email sending:', error);
+    }
+  };
+
+  // Handle meeting scheduling action - opens meeting scheduler modal
+  const handleScheduleMeeting = (lead) => {
+    console.log(`📅 Opening meeting scheduler for ${lead.name}`);
+    setSelectedLeadForAction(lead);
+    setShowMeetingModal(true);
+  };
+
+  // Handle meeting scheduling completion
+  const handleMeetingScheduled = async (meetingData) => {
+    try {
+      // Update lead status to Follow-up after scheduling meeting
+      if (selectedLeadForAction?.id && apiConnected) {
+        await updateLeadStatus(selectedLeadForAction.id, 'Follow-up');
+      }
+      
+      // Close the modal
+      setShowMeetingModal(false);
+      setSelectedLeadForAction(null);
+      
+      console.log('✅ Meeting scheduled successfully:', meetingData);
+      
+      // Refresh leads to get updated timeline and status
+      refreshLeads();
+    } catch (error) {
+      console.error('❌ Error after meeting scheduling:', error);
     }
   };
 
@@ -722,6 +789,23 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleScheduleMeeting(lead);
+                              }}
+                              className={`p-1 rounded transition-all duration-200 ${
+                                !apiConnected 
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : isDarkMode 
+                                    ? 'text-orange-400 hover:bg-orange-900/30 hover:text-orange-300' 
+                                    : 'text-orange-600 hover:bg-orange-100 hover:text-orange-700'
+                              }`}
+                              title={apiConnected ? `Schedule follow-up meeting with ${lead.name}` : 'Offline - cannot schedule meetings'}
+                              disabled={!apiConnected}
+                            >
+                              📅
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleAddNote(lead);
                               }}
                               className={`p-1 rounded transition-all duration-200 ${
@@ -797,14 +881,25 @@ const LeadKanban = ({ onLeadSelect, refreshTrigger }) => {
       </div>
       
       {/* Email Composer Modal */}
-      <EmailComposer
-        isVisible={emailModalVisible}
-        leadData={selectedLeadForAction}
+      <EmailComposerModal
+        lead={selectedLeadForAction}
+        isOpen={showEmailModal}
         onClose={() => {
-          setEmailModalVisible(false);
+          setShowEmailModal(false);
           setSelectedLeadForAction(null);
         }}
-        onSend={handleEmailSend}
+        onEmailSent={handleEmailSent}
+      />
+
+      {/* Meeting Schedule Modal */}
+      <MeetingScheduleModal
+        lead={selectedLeadForAction}
+        isOpen={showMeetingModal}
+        onClose={() => {
+          setShowMeetingModal(false);
+          setSelectedLeadForAction(null);
+        }}
+        onMeetingScheduled={handleMeetingScheduled}
       />
       
       {/* Notes Editor Modal */}

@@ -25,7 +25,9 @@ router.get('/', async (req, res) => {
         integration_testing: '/api/integrations/test',
         batch_processing: '/api/batch',
         lead_scoring: '/api/lead-scoring',
-        leads: '/api/leads (coming soon)',
+        meetings: '/api/meetings',
+        leads: '/api/leads',
+        email: '/api/email',
         calls: '/api/calls (coming soon)',
         scripts: '/api/scripts (coming soon)',
         analytics: '/api/analytics (coming soon)',
@@ -56,7 +58,9 @@ router.get('/status', async (req, res) => {
           twilio_cost_monitoring: 'operational',
           batch_lead_processing: 'operational',
           ai_lead_scoring: 'operational',
-          leads_management: 'coming_soon',
+          meeting_scheduling: 'operational',
+          leads_management: 'operational',
+          email_management: 'operational',
           call_logging: 'coming_soon', 
           script_management: 'coming_soon',
           analytics_dashboard: 'coming_soon',
@@ -79,6 +83,9 @@ const oauthAdminRoutes = require('./oauthAdmin');
 const integrationTestingRoutes = require('./integrationTesting');
 const batchRoutes = require('./batch');
 const leadScoringRoutes = require('./leadScoring');
+const meetingsRoutes = require('./meetings');
+const leadsRoutes = require('./leads');
+const emailRoutes = require('./email');
 
 // Route usage - Mount RAG routes at /rag path
 router.use('/rag', chatRoutes);
@@ -91,15 +98,16 @@ router.use('/oauth/admin', oauthAdminRoutes);
 router.use('/integrations/test', integrationTestingRoutes);
 router.use('/batch', batchRoutes);
 router.use('/lead-scoring', leadScoringRoutes);
+router.use('/meetings', meetingsRoutes);
+router.use('/leads', leadsRoutes);
+router.use('/email', emailRoutes);
 
 // Future route imports will go here:
-// import leadsRoutes from './leads.js';
 // import callsRoutes from './calls.js';
 // import scriptsRoutes from './scripts.js';
 // import analyticsRoutes from './analytics.js';
 
 // Future route usage:
-// router.use('/leads', leadsRoutes);
 // router.use('/calls', callsRoutes);
 // router.use('/scripts', scriptsRoutes);
 // router.use('/analytics', analyticsRoutes);

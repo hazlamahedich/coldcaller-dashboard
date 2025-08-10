@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLead } from '../contexts/LeadContext';
+import MeetingScheduleModal from './MeetingScheduleModal';
+import EmailComposerModal from './EmailComposerModal';
 
 // LeadPanel Component - Displays information about the person you're calling
 // Shows their name, company, phone number, and notes
@@ -29,6 +31,12 @@ const LeadPanel = () => {
   const [tempNotes, setTempNotes] = useState('');
   const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  
+  // Meeting scheduling state
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  
+  // Email composer state
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   // Get the current lead
   const currentLead = getCurrentLead();
@@ -101,21 +109,14 @@ const LeadPanel = () => {
     setTempNotes('');
   };
 
-  // Function to handle sending email
+  // Function to handle sending email - now opens email composer modal
   const handleSendEmail = () => {
     if (!currentLead?.email) {
       alert('No email address available for this lead');
       return;
     }
     
-    const subject = `Follow-up from ${currentLead.company || 'Our Company'}`;
-    const body = `Hi ${currentLead.name},\n\nI wanted to follow up on our recent conversation...\n\nBest regards`;
-    
-    // Create mailto link
-    const mailtoLink = `mailto:${currentLead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open email client
-    window.open(mailtoLink, '_blank');
+    setShowEmailModal(true);
   };
 
   // Function to show call log (mock functionality for now)
@@ -127,6 +128,78 @@ const LeadPanel = () => {
     
     // In a real app, this would open a call log modal or navigate to call history
     alert(`Call log for ${currentLead.name} would be displayed here.\n\nFeatures:\n- View call history\n- See call duration\n- Review call notes\n- Schedule callbacks`);
+  };
+
+  // Function to handle meeting scheduling completion
+  const handleMeetingScheduled = async (meetingData) => {
+    try {
+      // Update lead status to Follow-up after scheduling meeting
+      if (currentLead?.id && apiConnected) {
+        await updateLeadStatus(currentLead.id, 'Follow-up');
+      }
+      
+      // Close the modal
+      setShowMeetingModal(false);
+      
+      // Show success message
+      console.log('✅ Meeting scheduled successfully:', meetingData);
+      
+      // Refresh leads to get updated timeline
+      refreshLeads();
+    } catch (error) {
+      console.error('❌ Error after meeting scheduling:', error);
+    }
+  };
+
+  // Function to handle email sent completion
+  const handleEmailSent = async (emailData) => {
+    try {
+      // Close the modal
+      setShowEmailModal(false);
+      
+      // Show success message
+      console.log('✅ Email sent successfully:', emailData);
+      
+      // Create timeline entry for email activity
+      if (currentLead?.id && apiConnected) {
+        try {
+          const response = await fetch('/api/leads/' + currentLead.id + '/timeline', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}` // TODO: Get token from context
+            },
+            body: JSON.stringify({
+              activityType: 'email_sent',
+              description: `Email sent: ${emailData.subject}`,
+              metadata: {
+                to: emailData.to,
+                cc: emailData.cc,
+                bcc: emailData.bcc,
+                subject: emailData.subject,
+                messageId: emailData.messageId,
+                provider: emailData.provider,
+                wordCount: emailData.body ? emailData.body.split(' ').length : 0,
+                priority: emailData.priority,
+                trackOpens: emailData.trackOpens,
+                trackClicks: emailData.trackClicks
+              }
+            })
+          });
+
+          if (!response.ok) {
+            console.warn('Failed to create email timeline entry');
+          }
+        } catch (timelineError) {
+          console.warn('Error creating email timeline entry:', timelineError);
+        }
+      }
+      
+      // Refresh leads to get updated timeline
+      refreshLeads();
+    } catch (error) {
+      console.error('❌ Error after email sending:', error);
+    }
   };
 
   // Get status badge classes based on status
@@ -294,11 +367,12 @@ const LeadPanel = () => {
         {/* Status Update Buttons */}
         <div className="flex flex-wrap gap-2">
           <button 
-            onClick={() => handleUpdateStatus('Follow-up')}
-            disabled={isUpdatingStatus || !apiConnected}
+            onClick={() => setShowMeetingModal(true)}
+            disabled={!apiConnected || !currentLead?.id}
             className="flex-1 min-w-[100px] p-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md text-xs font-medium transition-colors"
+            title="Schedule a follow-up meeting"
           >
-            📅 Follow-up
+            📅 Schedule Follow-up
           </button>
           <button 
             onClick={() => handleUpdateStatus('Qualified')}
@@ -363,6 +437,22 @@ className={`flex-1 min-w-[120px] p-3 rounded-md text-sm font-medium transition-a
           </span>
         </div>
       </div>
+
+      {/* Meeting Schedule Modal */}
+      <MeetingScheduleModal
+        lead={currentLead}
+        isOpen={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        onMeetingScheduled={handleMeetingScheduled}
+      />
+
+      {/* Email Composer Modal */}
+      <EmailComposerModal
+        lead={currentLead}
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        onEmailSent={handleEmailSent}
+      />
     </div>
   );
 };
