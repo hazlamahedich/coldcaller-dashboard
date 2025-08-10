@@ -194,7 +194,9 @@ const personalizeScript = (req, res) => {
     
     // Apply replacements
     Object.entries(replacements).forEach(([placeholder, replacement]) => {
-      personalizedText = personalizedText.replace(new RegExp(placeholder, 'gi'), replacement);
+      // Escape special regex characters in placeholder
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      personalizedText = personalizedText.replace(new RegExp(escapedPlaceholder, 'gi'), replacement);
     });
     
     const personalizedScript = {

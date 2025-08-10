@@ -3,6 +3,8 @@ import { scriptsService } from '../services';
 import { dummyScripts } from '../data/dummyData';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLead } from '../contexts/LeadContext';
+import { useSettings } from '../contexts/SettingsContext';
+import ScriptManagement from './ScriptManagement';
 
 // ScriptDisplay Component - Shows color-coded call scripts
 // Helps you know what to say during different parts of the call
@@ -11,6 +13,7 @@ import { useLead } from '../contexts/LeadContext';
 const ScriptDisplay = () => {
   const { isDarkMode, themeClasses } = useTheme();
   const { getCurrentLead } = useLead();
+  const { settings } = useSettings();
   
   // API Integration State
   const [scripts, setScripts] = useState({});
@@ -28,6 +31,9 @@ const ScriptDisplay = () => {
   const [personalizedScripts, setPersonalizedScripts] = useState({});
   const [isPersonalizing, setIsPersonalizing] = useState(false);
   const [showPersonalized, setShowPersonalized] = useState(false);
+  
+  // Script Management State
+  const [showScriptManagement, setShowScriptManagement] = useState(false);
 
   // Load scripts from API on component mount
   useEffect(() => {
@@ -174,8 +180,8 @@ const ScriptDisplay = () => {
       };
       
       const agentData = {
-        name: 'Your Name', // This could be from user settings in the future
-        company: 'Your Company' // This could be from user settings in the future
+        name: settings.general.userName || 'Your Name',
+        company: settings.general.company || 'Your Company'
       };
       
       const response = await scriptsService.personalizeScript(selectedScript, leadData, agentData);
@@ -530,13 +536,14 @@ const ScriptDisplay = () => {
           {loading ? '🔄 Loading...' : '🔄 Refresh Scripts'}
         </button>
         <button 
-          onClick={() => console.log('📥 Script management coming soon!')}
+          onClick={() => setShowScriptManagement(true)}
           disabled={!apiConnected}
           className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
             isDarkMode 
               ? 'bg-green-900/30 hover:bg-green-900/50 text-green-300 border border-green-800'
               : 'bg-green-100 hover:bg-green-200 text-green-700'
           }`}
+          title={!apiConnected ? 'Requires API connection' : 'Create, edit, and manage scripts'}
         >
           ⚙️ Manage Scripts
         </button>
@@ -558,6 +565,13 @@ const ScriptDisplay = () => {
           )}
         </div>
       </div>
+
+      {/* Script Management Modal */}
+      <ScriptManagement
+        isOpen={showScriptManagement}
+        onClose={() => setShowScriptManagement(false)}
+        onScriptChange={loadScripts}
+      />
     </div>
   );
 };

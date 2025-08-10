@@ -88,15 +88,24 @@ const sqlInjectionProtection = (req, res, next) => {
 
   const isPhoneField = (path) => {
     const fieldName = path.split('.').pop();
-    return phoneNumberFields.includes(fieldName);
+    return phoneNumberFields.includes(fieldName) || 
+           path.includes('phone') || // Match any path containing 'phone'
+           path.includes('phoneNumber'); // Match any path containing 'phoneNumber'
   };
 
   const isValidPhoneNumber = (value) => {
-    // Clean the phone number by removing spaces, dashes, parentheses
+    // Clean the phone number by removing spaces, dashes, parentheses, dots
     const cleaned = value.replace(/[\s\-\(\)\.]/g, '');
     
-    // E.164 format: +1234567890 to +123456789012345 (after cleaning)
-    return /^\+[1-9]\d{1,14}$/.test(cleaned);
+    // Support multiple phone number formats:
+    // 1. E.164 format: +1234567890 to +123456789012345
+    // 2. US format: 10 digits (5551234567)
+    // 3. US with country code: 11 digits starting with 1 (15551234567)
+    const e164Format = /^\+[1-9]\d{1,14}$/.test(cleaned);
+    const usFormat = /^\d{10}$/.test(cleaned); // 10 digits exactly
+    const usWithCountryCode = /^1\d{10}$/.test(cleaned); // 1 + 10 digits
+    
+    return e164Format || usFormat || usWithCountryCode;
   };
 
   const checkForSqlInjection = (obj, path = '') => {
@@ -104,13 +113,13 @@ const sqlInjectionProtection = (req, res, next) => {
       for (let i = 0; i < sqlPatterns.length; i++) {
         const pattern = sqlPatterns[i];
         
-        
         // Special handling for phone number fields and the special character pattern
         if (i === 3 && isPhoneField(path)) { // Pattern 4: special characters
-          // If this is a phone field and contains a valid phone number, skip the + check
+          // If this is a phone field, check if it's a valid phone number first
           if (isValidPhoneNumber(obj)) {
             continue; // Skip this pattern for valid phone numbers
           }
+          // If it's a phone field but not a valid phone number, continue with the pattern check
         }
         
         if (pattern.test(obj)) {
