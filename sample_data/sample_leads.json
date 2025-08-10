@@ -1,0 +1,97 @@
+[
+  {
+    "contact_info": {
+      "full_name": "Alex Thompson",
+      "business": "NextGen AI",
+      "phone_number": "555-234-5678",
+      "email_address": "alex@nextgenai.com",
+      "job_title": "Head of Product"
+    },
+    "company_details": {
+      "industry": "Artificial Intelligence",
+      "size": "50-100 employees",
+      "location": "San Jose, CA"
+    },
+    "additional_info": {
+      "source": "LinkedIn outreach",
+      "priority_level": "high",
+      "notes": "Interested in AI-powered automation solutions"
+    }
+  },
+  {
+    "contact_info": {
+      "full_name": "Rachel Kim",
+      "business": "Urban Logistics",
+      "phone_number": "(555) 345-6789",
+      "email_address": "rachel.kim@urbanlogistics.com",
+      "job_title": "Supply Chain Director"
+    },
+    "company_details": {
+      "industry": "Logistics & Transportation",
+      "size": "200-500 employees",
+      "location": "Los Angeles, CA"
+    },
+    "additional_info": {
+      "source": "Trade show contact",
+      "priority_level": "medium",
+      "notes": "Looking for last-mile delivery optimization"
+    }
+  },
+  {
+    "contact_info": {
+      "full_name": "Dr. James Martinez",
+      "business": "MedResearch Institute",
+      "phone_number": "555-456-7890",
+      "email_address": "j.martinez@medresearch.org",
+      "job_title": "Research Director"
+    },
+    "company_details": {
+      "industry": "Medical Research",
+      "size": "100-200 employees",
+      "location": "Baltimore, MD"
+    },
+    "additional_info": {
+      "source": "Conference networking",
+      "priority_level": "high",
+      "notes": "Grant funding available for new technology adoption"
+    }
+  },
+  {
+    "contact_info": {
+      "full_name": "Kevin Zhang",
+      "business": "Quantum Computing Labs",
+      "phone_number": "+1-555-567-8901",
+      "email_address": "kevin@quantumcomp.tech",
+      "job_title": "Chief Technology Officer"
+    },
+    "company_details": {
+      "industry": "Quantum Computing",
+      "size": "20-50 employees",
+      "location": "Cambridge, MA"
+    },
+    "additional_info": {
+      "source": "Research paper citation",
+      "priority_level": "high",
+      "notes": "Early adopter of cutting-edge technologies"
+    }
+  },
+  {
+    "contact_info": {
+      "full_name": "Stephanie Taylor",
+      "business": "EcoFarm Solutions",
+      "phone_number": "555-678-9012",
+      "email_address": "stephanie@ecofarm.co",
+      "job_title": "Sustainability Manager"
+    },
+    "company_details": {
+      "industry": "Agriculture Technology",
+      "size": "30-75 employees",
+      "location": "Denver, CO"
+    },
+    "additional_info": {
+      "source": "Industry publication",
+      "priority_level": "medium",
+      "notes": "Focus on sustainable farming practices"
+    }
+  }
+]

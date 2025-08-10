@@ -2,7 +2,7 @@
  * Advanced Lead Management Controllers (Simplified)
  */
 
-const { ResponseFormatter } = require('../utils/responseFormatter');
+const ResponseFormatter = require('../utils/responseFormatter');
 
 /**
  * Bulk update leads

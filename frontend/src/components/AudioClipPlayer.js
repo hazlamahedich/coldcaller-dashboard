@@ -665,7 +665,7 @@ const AudioClipPlayer = () => {
         console.log('🎯 Component Load Time:', Math.round(nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart), 'ms');
       }
       
-      const memoryInfo = (performance as any).memory;
+      const memoryInfo = performance.memory;
       if (memoryInfo) {
         console.log('💾 Memory Usage:', {
           used: Math.round(memoryInfo.usedJSHeapSize / 1024 / 1024) + ' MB',

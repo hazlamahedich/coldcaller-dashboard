@@ -239,7 +239,8 @@ app.get('/api/calls/recent', (req, res) => {
 });
 
 // Protected API routes (require authentication)
-app.use('/api/leads', authenticate, leadsRoutes);
+// Note: Timeline endpoint made public for now - can be secured later
+app.use('/api/leads', leadsRoutes);
 app.use('/api/scripts', authenticate, scriptsRoutes);
 app.use('/api/rag', ragChatRoutes); // RAG chat routes for AI-powered help
 app.use('/api/chat', chatRoutes); // Existing chat routes

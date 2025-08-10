@@ -1,1 +1,168 @@
-[]
+[
+  {
+    "id": "activity_1704067200_abc123",
+    "lead_id": "lead_001",
+    "activity_type": "lead_created",
+    "timestamp": "2024-01-01T10:00:00.000Z",
+    "user_id": "system",
+    "data": {
+      "source": "website form",
+      "description": "Lead created from contact form submission"
+    },
+    "ip_address": null,
+    "user_agent": null
+  },
+  {
+    "id": "activity_1704153600_def456",
+    "lead_id": "lead_001",
+    "activity_type": "call_made",
+    "timestamp": "2024-01-02T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "duration": "3 minutes",
+      "outcome": "Left voicemail",
+      "description": "Initial cold call attempt - reached voicemail, left professional message"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704240000_ghi789",
+    "lead_id": "lead_001",
+    "activity_type": "email_sent",
+    "timestamp": "2024-01-03T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "subject": "Follow-up: Tech Solutions Optimization",
+      "description": "Sent follow-up email after voicemail"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704326400_jkl012",
+    "lead_id": "lead_001",
+    "activity_type": "call_made",
+    "timestamp": "2024-01-04T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "duration": "8 minutes",
+      "outcome": "Connected - Interested",
+      "description": "Successful connection! Discussed IT infrastructure needs, showed strong interest in our solutions"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704412800_mno345",
+    "lead_id": "lead_001",
+    "activity_type": "status_changed",
+    "timestamp": "2024-01-05T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "previous_status": "New",
+      "new_status": "Qualified",
+      "description": "Updated status after positive call response"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704499200_pqr678",
+    "lead_id": "lead_001",
+    "activity_type": "meeting_scheduled",
+    "timestamp": "2024-01-06T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "meeting_date": "2024-01-10T14:00:00.000Z",
+      "duration": "60",
+      "meetingType": "video",
+      "attendees": 2,
+      "description": "Scheduled demo call to showcase our IT solutions platform"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704844800_stu901",
+    "lead_id": "lead_001",
+    "activity_type": "meeting_completed",
+    "timestamp": "2024-01-10T15:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "duration": "65",
+      "meetingType": "video",
+      "attendees": 2,
+      "outcome": "Very positive - requesting proposal",
+      "description": "Excellent demo session! John was impressed with our automation features and wants a formal proposal"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1704931200_vwx234",
+    "lead_id": "lead_001",
+    "activity_type": "note_added",
+    "timestamp": "2024-01-11T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "note": "Follow-up notes: John mentioned they're currently using outdated systems and are planning a major upgrade in Q2. Budget approved for up to $50K. Key decision makers include John (IT Director) and Sarah Chen (CFO). They're evaluating 3 vendors - we're in the final round. Next step: send detailed proposal by Jan 15th.",
+      "description": "Added detailed follow-up notes from demo meeting"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1705017600_yza567",
+    "lead_id": "lead_002",
+    "activity_type": "lead_created",
+    "timestamp": "2024-01-12T10:00:00.000Z",
+    "user_id": "system",
+    "data": {
+      "source": "referral",
+      "description": "Lead created from referral by John Smith"
+    },
+    "ip_address": null,
+    "user_agent": null
+  },
+  {
+    "id": "activity_1705104000_bcd890",
+    "lead_id": "lead_002",
+    "activity_type": "call_made",
+    "timestamp": "2024-01-13T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "duration": "2 minutes",
+      "outcome": "No answer",
+      "description": "First contact attempt - no answer, will try again later"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  },
+  {
+    "id": "activity_1705190400_efg123",
+    "lead_id": "lead_003",
+    "activity_type": "lead_created",
+    "timestamp": "2024-01-14T10:00:00.000Z",
+    "user_id": "system",
+    "data": {
+      "source": "trade show",
+      "description": "Lead captured at Tech Expo 2024"
+    },
+    "ip_address": null,
+    "user_agent": null
+  },
+  {
+    "id": "activity_1705276800_hij456",
+    "lead_id": "lead_003",
+    "activity_type": "email_sent",
+    "timestamp": "2024-01-15T10:00:00.000Z",
+    "user_id": "user_1",
+    "data": {
+      "subject": "Great meeting you at Tech Expo!",
+      "description": "Follow-up email after trade show meeting"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "ColdCaller/1.0"
+  }
+]

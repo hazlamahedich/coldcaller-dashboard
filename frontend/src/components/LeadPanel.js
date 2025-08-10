@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLead } from '../contexts/LeadContext';
 import MeetingScheduleModal from './MeetingScheduleModal';
 import EmailComposerModal from './EmailComposerModal';
+import LeadTimeline from './LeadTimeline';
 
 // LeadPanel Component - Displays information about the person you're calling
 // Shows their name, company, phone number, and notes
@@ -37,6 +38,10 @@ const LeadPanel = () => {
   
   // Email composer state
   const [showEmailModal, setShowEmailModal] = useState(false);
+  
+  // Timeline modal state
+  const [showTimelineModal, setShowTimelineModal] = useState(false);
+  const [timelineRefreshTrigger, setTimelineRefreshTrigger] = useState(0);
 
   // Get the current lead
   const currentLead = getCurrentLead();
@@ -119,15 +124,14 @@ const LeadPanel = () => {
     setShowEmailModal(true);
   };
 
-  // Function to show call log (mock functionality for now)
-  const handleShowCallLog = () => {
+  // Function to show timeline
+  const handleShowTimeline = () => {
     if (!currentLead?.id) {
       alert('No lead selected');
       return;
     }
     
-    // In a real app, this would open a call log modal or navigate to call history
-    alert(`Call log for ${currentLead.name} would be displayed here.\n\nFeatures:\n- View call history\n- See call duration\n- Review call notes\n- Schedule callbacks`);
+    setShowTimelineModal(true);
   };
 
   // Function to handle meeting scheduling completion
@@ -146,6 +150,9 @@ const LeadPanel = () => {
       
       // Refresh leads to get updated timeline
       refreshLeads();
+      
+      // Refresh timeline display
+      setTimelineRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('❌ Error after meeting scheduling:', error);
     }
@@ -197,6 +204,9 @@ const LeadPanel = () => {
       
       // Refresh leads to get updated timeline
       refreshLeads();
+      
+      // Refresh timeline display
+      setTimelineRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('❌ Error after email sending:', error);
     }
@@ -415,7 +425,7 @@ className={`flex-1 min-w-[120px] p-3 rounded-md text-sm font-medium transition-a
             {loading ? '🔄 Loading...' : '🔄 Refresh'}
           </button>
           <button 
-            onClick={handleShowCallLog}
+            onClick={handleShowTimeline}
             disabled={!apiConnected}
 className={`flex-1 min-w-[120px] p-3 rounded-md text-sm font-medium transition-all hover:shadow-sm disabled:opacity-50 ${
               isDarkMode 
@@ -423,7 +433,7 @@ className={`flex-1 min-w-[120px] p-3 rounded-md text-sm font-medium transition-a
                 : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 border'
             }`}
           >
-            📞 Call Log
+            📅 Timeline
           </button>
         </div>
         
@@ -453,6 +463,42 @@ className={`flex-1 min-w-[120px] p-3 rounded-md text-sm font-medium transition-a
         onClose={() => setShowEmailModal(false)}
         onEmailSent={handleEmailSent}
       />
+
+      {/* Timeline Modal */}
+      {showTimelineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            {/* Modal Header */}
+            <div className={`px-6 py-4 border-b flex items-center justify-between ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                📅 Timeline - {currentLead?.name}
+              </h2>
+              <button
+                onClick={() => setShowTimelineModal(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDarkMode 
+                    ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' 
+                    : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <LeadTimeline 
+                leadId={currentLead?.id} 
+                refreshTrigger={timelineRefreshTrigger}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

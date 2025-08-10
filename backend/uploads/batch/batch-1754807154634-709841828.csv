@@ -1,0 +1,6 @@
+name,company,email,phone,title,industry,companySize,website,leadSource,notes,tags,priority
+John Smith,TechCorp Solutions,john.smith@techcorp.com,+1-555-0123,CTO,Software,50-200,https://techcorp.com,Website Contact,"Interested in AI solutions for development team. Budget approved for Q1.","hot-lead,enterprise,ai-interested",high
+Sarah Johnson,FinanceFlow Inc,sarah.j@financeflow.com,+1-555-0456,CFO,Finance,200-500,https://financeflow.com,LinkedIn,"Looking to automate financial reporting processes. Has existing tech stack.","enterprise,automation",medium
+Mike Chen,StartupX,mike@startupx.io,+1-555-0789,CEO,Technology,10-50,https://startupx.io,Referral,"Early-stage startup seeking scalable solutions. Limited budget but high growth potential.","startup,growth,referral",medium
+Lisa Brown,RetailCorp,l.brown@retailcorp.com,+1-555-0321,VP Operations,Retail,500-1000,https://retailcorp.com,Trade Show,"Interested in supply chain optimization. Currently evaluating multiple vendors.","enterprise,supply-chain",high
+David Wilson,HealthTech Labs,david.wilson@healthtech.com,+1-555-0654,CTO,Healthcare,100-500,https://healthtech.com,Cold Email,"Developing patient management system. Needs compliance-focused solutions.","healthcare,compliance",medium
