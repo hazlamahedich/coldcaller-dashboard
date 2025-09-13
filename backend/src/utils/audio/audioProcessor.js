@@ -2,9 +2,17 @@ const fs = require('fs-extra');
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
 const execAsync = promisify(exec);
+
+// Try to get ffmpeg path, fallback to system ffmpeg
+let ffmpegPath;
+try {
+  ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+} catch (error) {
+  console.log('Using system ffmpeg instead of @ffmpeg-installer');
+  ffmpegPath = 'ffmpeg'; // Use system ffmpeg
+}
 
 /**
  * Audio processing utilities using FFmpeg
