@@ -7,11 +7,28 @@ const execAsync = promisify(exec);
 
 // Try to get ffmpeg path, fallback to system ffmpeg
 let ffmpegPath;
-try {
-  ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-} catch (error) {
-  console.log('Using system ffmpeg instead of @ffmpeg-installer');
-  ffmpegPath = 'ffmpeg'; // Use system ffmpeg
+
+// Function to check if module exists
+function moduleExists(moduleName) {
+  try {
+    require.resolve(moduleName);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+if (moduleExists('@ffmpeg-installer/ffmpeg')) {
+  try {
+    ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+    console.log('Using @ffmpeg-installer ffmpeg at:', ffmpegPath);
+  } catch (error) {
+    console.log('Error loading @ffmpeg-installer/ffmpeg, falling back to system ffmpeg');
+    ffmpegPath = 'ffmpeg';
+  }
+} else {
+  console.log('@ffmpeg-installer/ffmpeg not found, using system ffmpeg');
+  ffmpegPath = 'ffmpeg';
 }
 
 /**
