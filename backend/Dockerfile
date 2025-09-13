@@ -23,7 +23,7 @@ COPY --chown=nodejs:nodejs package*.json ./
 FROM base AS development
 ENV NODE_ENV=development
 USER nodejs
-RUN npm ci --include=dev
+RUN npm ci --include=dev --force
 COPY --chown=nodejs:nodejs . .
 EXPOSE 3001
 CMD ["dumb-init", "npm", "run", "dev"]
@@ -32,7 +32,7 @@ CMD ["dumb-init", "npm", "run", "dev"]
 FROM base AS build
 ENV NODE_ENV=production
 USER nodejs
-RUN npm ci --only=production --no-audit --no-fund
+RUN npm ci --only=production --no-audit --no-fund --force
 COPY --chown=nodejs:nodejs . .
 
 # Production stage

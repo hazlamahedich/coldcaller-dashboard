@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base AS development
 ENV NODE_ENV=development
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --force
 COPY . .
 EXPOSE 3000
 CMD ["npm", "start"]
@@ -22,7 +22,7 @@ CMD ["npm", "start"]
 FROM base AS build
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --only=production --no-audit --no-fund
+RUN npm ci --only=production --no-audit --no-fund --force
 COPY . .
 
 # Build the application
