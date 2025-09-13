@@ -1,0 +1,21 @@
+[phases.setup]
+nixPkgs = ['nodejs_22']
+
+[phases.install]
+cmds = [
+  'npm ci --ignore-scripts',
+  'cd frontend && npm ci --only=production',
+  'cd backend && npm ci --only=production'
+]
+
+[phases.build]
+cmds = [
+  'npm run build:frontend',
+  'npm run build:backend'
+]
+
+[start]
+cmd = 'npm run start'
+
+[variables]
+NODE_ENV = 'production'
