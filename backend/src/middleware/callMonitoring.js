@@ -1,6 +1,18 @@
 const WebSocketManager = require('../services/webSocketManager');
-const SIPManager = require('../services/sipManager');
 const { systemMetrics } = require('../data/dataStore');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('../services/sipManager');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available in monitoring middleware:', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    getRegistrationStatus: async () => ({ registered: false, status: 'unavailable' }),
+    getActiveCalls: () => []
+  };
+}
 
 /**
  * Middleware for monitoring call activities and system performance

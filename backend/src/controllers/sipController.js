@@ -1,6 +1,19 @@
 const { sipConfig, generateId } = require('../data/dataStore');
 const ResponseFormatter = require('../utils/responseFormatter');
-const SIPManager = require('../services/sipManager');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('../services/sipManager');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available in controller:', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    testConfiguration: async () => ({ success: false, error: 'SIP Manager unavailable' }),
+    getRegistrationStatus: async () => ({ registered: false, status: 'unavailable' }),
+    getActiveCalls: () => []
+  };
+}
 const SipConfiguration = require('../database/models/SipConfiguration');
 const SipCallLog = require('../database/models/SipCallLog');
 const sipAnalytics = require('../services/sipAnalytics');

@@ -1,7 +1,20 @@
 const express = require('express');
 const CallMonitoringMiddleware = require('../middleware/callMonitoring');
 const WebSocketManager = require('../services/webSocketManager');
-const SIPManager = require('../services/sipManager');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('../services/sipManager');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available in healthDetailed route:', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    getRegistrationStatus: async () => ({ registered: false, status: 'unavailable' }),
+    getCallMetrics: () => ({ totalCalls: 0, activeCalls: 0, successfulCalls: 0 }),
+    getActiveCalls: () => []
+  };
+}
 
 const router = express.Router();
 

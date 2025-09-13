@@ -48,8 +48,21 @@ const CallMonitoringMiddleware = require('./middleware/callMonitoring');
 
 // Services
 const WebSocketManager = require('./services/webSocketManager');
-const SIPManager = require('./services/sipManager');
 const { testEncryption } = require('./utils/encryption');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('./services/sipManager');
+  console.log('✅ SIP Manager loaded successfully');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available (ES module compatibility issue):', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    getRegistrationStatus: () => ({ registered: false, status: 'unavailable' }),
+    getActiveCalls: () => []
+  };
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;

@@ -1,6 +1,19 @@
 const WebSocket = require('ws');
 const EventEmitter = require('events');
-const SIPManager = require('./sipManager');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('./sipManager');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available in webSocketManager:', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    on: () => {}, // No-op event listener
+    getRegistrationStatus: async () => ({ registered: false, status: 'unavailable' }),
+    getActiveCalls: () => []
+  };
+}
 
 class WebSocketManager extends EventEmitter {
   constructor() {

@@ -1,7 +1,20 @@
 const { callLogs, leads, generateId } = require('../data/dataStore');
 const ResponseFormatter = require('../utils/responseFormatter');
-const SIPManager = require('../services/sipManager');
 const TwilioService = require('../services/twilioService');
+
+// SIPManager is optional due to ES module compatibility
+let SIPManager = null;
+try {
+  SIPManager = require('../services/sipManager');
+} catch (error) {
+  console.log('⚠️  SIP Manager not available in callsController:', error.message);
+  // Create a stub SIPManager for graceful degradation
+  SIPManager = {
+    getRegistrationStatus: async () => ({ registered: false, status: 'unavailable' }),
+    getCallMetrics: () => ({ totalCalls: 0, activeCalls: 0, successfulCalls: 0 }),
+    getActiveCalls: () => []
+  };
+}
 const CallRecordingModel = require('../models/callRecordingModel');
 const fs = require('fs');
 const path = require('path');
