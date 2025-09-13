@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false ESLINT_NO_DEV_ERRORS=true react-scripts build",
+    "build": "NODE_OPTIONS='--max_old_space_size=512' CI=false ESLINT_NO_DEV_ERRORS=true react-scripts build",
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "test:watch": "react-scripts test --watchAll",
