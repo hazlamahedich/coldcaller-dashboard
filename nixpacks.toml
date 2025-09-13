@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ['nodejs_22']
+nixPkgs = ['nodejs_22', 'git']
 
 [phases.install]
 cmds = [
-  'npm ci --ignore-scripts',
-  'cd frontend && npm ci --only=production',
-  'cd backend && npm ci --only=production'
+  'npm ci --legacy-peer-deps --omit=optional --loglevel=error --ignore-scripts',
+  'cd frontend && npm ci --legacy-peer-deps --omit=optional --loglevel=error --omit=dev',
+  'cd backend && npm ci --legacy-peer-deps --omit=optional --loglevel=error --omit=dev'
 ]
 
 [phases.build]
