@@ -3,3 +3,5 @@ export { default as MakeCalls } from './MakeCalls';
 export { default as ManageLeads } from './ManageLeads';
 export { default as Analytics } from './Analytics';
 export { default as Settings } from './Settings';
+export { default as ProfileSettings } from './ProfileSettings';
+export { default as AccountSettings } from './AccountSettings';

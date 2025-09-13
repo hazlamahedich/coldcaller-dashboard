@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Import page components
-import { MakeCalls, ManageLeads, Analytics, Settings } from './pages';
+import { MakeCalls, ManageLeads, Analytics, Settings, ProfileSettings, AccountSettings } from './pages';
 import OAuthCallback from './components/OAuthCallback';
 
 // Import Layout and ErrorBoundary
@@ -62,6 +62,20 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <Settings />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/profile" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <ProfileSettings />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/account" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <AccountSettings />
                         </Layout>
                       </ProtectedRoute>
                     } />

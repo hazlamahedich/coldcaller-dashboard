@@ -12,6 +12,11 @@
 8. [Technical Issues](#technical-issues)
 9. [Features & Functionality](#features--functionality)
 10. [Billing & Pricing](#billing--pricing)
+11. [AI-Enhanced Features](#ai-enhanced-features) ⭐ **NEW**
+12. [Batch Operations](#batch-operations) ⭐ **NEW**
+13. [Advanced Recording](#advanced-recording) ⭐ **NEW** 
+14. [Calendar & Email Integration](#calendar--email-integration) ⭐ **NEW**
+15. [Lead Scoring & Analytics](#lead-scoring--analytics) ⭐ **NEW**
 
 ---
 
@@ -522,23 +527,261 @@ Contact your administrator or sales team for specific pricing information.
 
 ## Recent Updates & What's New
 
-### Latest Features
-- Enhanced chatbot with document integration
-- Improved audio quality and call stability
-- Advanced analytics dashboard
-- Mobile interface improvements
-- Better CRM integrations
+### Latest Features (2024 Updates)
+- **AI-Enhanced Lead Scoring**: Intelligent lead qualification with scoring algorithms
+- **Batch Upload System**: Upload multiple leads via CSV with validation and deduplication
+- **Advanced Recording Settings**: Configurable audio recording with multiple formats
+- **RAG-Powered Chatbot**: AI chatbot with comprehensive document integration and search
+- **Lead Status Synchronization**: Real-time updates across all views (Kanban, List, Panel)
+- **Performance Analytics**: Advanced metrics tracking with conversion funnel analysis  
+- **Calendar Integration**: OAuth integration with Google Calendar and Microsoft Outlook
+- **Email Integration**: OAuth integration with Gmail and Outlook for automated workflows
+- **Webhook System**: Real-time integrations with external systems
+- **Enhanced VOIP**: Improved call quality and WebRTC performance optimization
+- **Security Enhancements**: Advanced authentication and data protection measures
+
+### New Sections Added to FAQ
+11. [AI-Enhanced Features](#ai-enhanced-features)
+12. [Batch Operations](#batch-operations)  
+13. [Advanced Recording](#advanced-recording)
+14. [Calendar & Email Integration](#calendar--email-integration)
+15. [Lead Scoring & Analytics](#lead-scoring--analytics)
 
 ### Coming Soon
-- Advanced AI-powered lead scoring
-- Voice analytics and sentiment detection
-- Enhanced mobile app
-- Additional integration options
-- Expanded reporting capabilities
+- Advanced sentiment analysis during calls
+- Voice transcription and call summaries
+- Mobile app with full feature parity
+- Advanced workflow automation
+- Enhanced team collaboration tools
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: January 2024  
+## AI-Enhanced Features
+
+### Q: How does the AI lead scoring work?
+**A:** The AI lead scoring system analyzes multiple factors:
+- **Contact Information**: Completeness and quality of email/phone data
+- **Company Data**: Industry, size, and growth indicators
+- **Engagement History**: Previous interactions and responses
+- **Behavioral Signals**: Website visits, email opens, and call outcomes
+- **Demographic Fit**: Alignment with ideal customer profiles
+
+Scores range from 0-100, with higher scores indicating better conversion probability.
+
+### Q: What can I ask the AI chatbot?
+**A:** The chatbot can help with:
+- **Feature Questions**: "How do I change lead status?" or "Where is the recording button?"
+- **Troubleshooting**: "Why can't I make calls?" or "Audio not working"
+- **Documentation Search**: "Show me API documentation" or "Find user manual"
+- **Analytics**: "How to track performance?" or "Understanding conversion rates"
+- **Best Practices**: "Tips for cold calling" or "Lead management strategies"
+
+### Q: How accurate is the lead quality assessment?
+**A:** The quality assessment uses machine learning models trained on successful conversions:
+- **Grade A**: 80-90% likelihood to convert (high-quality prospects)
+- **Grade B**: 60-79% likelihood to convert (good prospects)  
+- **Grade C**: 40-59% likelihood to convert (moderate prospects)
+- **Grade D**: 20-39% likelihood to convert (low prospects)
+- **Grade F**: Below 20% likelihood to convert (poor prospects)
+
+The system continuously learns from your team's actual outcomes to improve accuracy.
+
+### Q: Can I customize the AI scoring criteria?
+**A:** Yes, administrators can:
+1. Adjust scoring weight factors
+2. Add custom fields to scoring algorithms  
+3. Define industry-specific criteria
+4. Set minimum quality thresholds
+5. Configure automated actions based on scores
+
+Contact your administrator to customize scoring parameters for your organization.
+
+---
+
+## Batch Operations
+
+### Q: How do I upload multiple leads at once?
+**A:**
+1. Go to Lead Management → Batch Upload
+2. Download the CSV template
+3. Fill in your lead data following the format
+4. Upload the completed CSV file
+5. Review the validation results
+6. Choose how to handle duplicates (skip, merge, or create)
+7. Confirm the import
+
+### Q: What data validation occurs during batch upload?
+**A:** The system validates:
+- **Email Formats**: Checks for valid email structure
+- **Phone Numbers**: Validates format and country codes
+- **Required Fields**: Ensures essential data is present
+- **Duplicate Detection**: Identifies potential duplicate leads
+- **Data Types**: Verifies correct field formatting
+- **Character Limits**: Ensures data fits within field constraints
+
+### Q: How are duplicates handled during upload?
+**A:** You can choose from three options:
+- **Skip Duplicates**: Don't import leads that match existing records
+- **Update Existing**: Merge new data with existing lead records
+- **Create Anyway**: Import as new leads despite potential duplicates
+
+Matching is based on email, phone, and company name similarity.
+
+### Q: Can I export lead data in bulk?
+**A:** Yes, managers and administrators can export:
+1. Go to Lead Management → Export
+2. Select date range and filters
+3. Choose export format (CSV, Excel)
+4. Select specific fields to include
+5. Download the generated file
+
+Exports include all lead data, notes, and interaction history.
+
+---
+
+## Advanced Recording
+
+### Q: What recording formats are supported?
+**A:** ColdCaller supports multiple formats:
+- **WAV**: High-quality, uncompressed (best for analysis)
+- **MP3**: Compressed, smaller files (good for storage)
+- **OGG**: Open-source format (good compatibility)
+- **AAC**: High-quality compression (mobile-friendly)
+
+### Q: How do I configure automatic recording?
+**A:**
+1. Go to Settings → Recording Settings
+2. Enable "Auto-Record Calls"
+3. Choose recording format and quality
+4. Set storage location and retention policy
+5. Configure notification preferences
+
+All users with proper permissions will have calls automatically recorded.
+
+### Q: Can I set different recording settings per user?
+**A:** Yes, administrators can:
+- Set global default recording policies
+- Override settings for specific users or roles  
+- Configure department-specific recording rules
+- Set compliance requirements by call type
+- Define storage and retention policies per user group
+
+### Q: How long are recordings stored?
+**A:** Storage duration depends on your configuration:
+- **Standard**: 90 days (adjustable by admin)
+- **Compliance**: Up to 7 years for regulated industries
+- **Custom**: Administrator-defined retention periods
+- **Export Option**: Download recordings before automatic deletion
+
+You'll receive notifications before recordings are automatically deleted.
+
+### Q: Are recordings transcribed automatically?
+**A:** Transcription features include:
+- **Speech-to-Text**: Automatic conversation transcription
+- **Speaker Identification**: Distinguish between caller and prospect
+- **Keyword Detection**: Flag important terms and phrases
+- **Summary Generation**: AI-generated call summaries
+- **Sentiment Analysis**: Emotional tone assessment throughout calls
+
+Contact your administrator to enable transcription services.
+
+---
+
+## Calendar & Email Integration
+
+### Q: How do I connect my Google Calendar?
+**A:**
+1. Go to Settings → Integrations → Calendar
+2. Click "Connect Google Calendar"
+3. Sign in with your Google account
+4. Grant necessary permissions
+5. Select calendars to sync
+6. Configure sync preferences
+
+Your calendar events will now appear in the ColdCaller dashboard.
+
+### Q: What calendar features are integrated?
+**A:** Calendar integration includes:
+- **Meeting Scheduling**: Create calendar events directly from leads
+- **Availability Checking**: See free/busy status when scheduling calls
+- **Automatic Reminders**: Get notifications for upcoming appointments
+- **Two-Way Sync**: Updates sync between ColdCaller and your calendar
+- **Meeting Links**: Automatically include video conference links
+
+### Q: Can I sync multiple email accounts?
+**A:** Yes, you can connect:
+- **Gmail**: Personal and G Suite accounts
+- **Outlook**: Personal and Office 365 accounts  
+- **Exchange**: On-premise Exchange servers
+- **IMAP**: Any standard IMAP email service
+
+Each account can have different sync settings and permissions.
+
+### Q: How does email integration help with leads?
+**A:** Email integration provides:
+- **Automatic Logging**: Emails with leads are automatically recorded
+- **Template System**: Pre-built email templates for common responses
+- **Mail Merge**: Send personalized emails to multiple leads
+- **Open Tracking**: See when prospects open your emails
+- **Response Monitoring**: Track replies and engagement
+- **Follow-up Automation**: Automatic email sequences based on lead behavior
+
+### Q: Is email content secure and private?
+**A:** Yes, we maintain strict security:
+- **OAuth Authentication**: Secure, token-based access (no passwords stored)
+- **Encrypted Storage**: All email data encrypted at rest and in transit
+- **Limited Access**: Only necessary email metadata is stored
+- **User Control**: You can disconnect integrations at any time
+- **Compliance**: GDPR, CCPA, and SOC 2 compliant
+
+---
+
+## Lead Scoring & Analytics
+
+### Q: How is conversion probability calculated?
+**A:** Conversion probability uses a machine learning model considering:
+- **Historical Data**: Past conversion patterns from your team
+- **Lead Characteristics**: Industry, company size, contact quality
+- **Behavioral Signals**: Website visits, email engagement, call outcomes
+- **Timing Factors**: Best days/times for contact based on success rates
+- **Sales Cycle Stage**: Where the lead is in your typical sales process
+
+### Q: What analytics are available for lead scoring?
+**A:** Analytics dashboards show:
+- **Score Distribution**: How your leads are distributed across score ranges
+- **Conversion Rates by Score**: Actual conversion rates for each score band
+- **Score Trends**: How lead quality changes over time
+- **ROI by Score Range**: Revenue generated by different quality leads
+- **Team Performance**: How different agents perform with various lead scores
+
+### Q: Can I track lead progression through the pipeline?
+**A:** Yes, the conversion funnel analysis shows:
+- **Stage Progression**: How leads move through your sales stages
+- **Drop-off Points**: Where prospects typically exit your pipeline
+- **Time in Stage**: Average duration at each pipeline stage
+- **Conversion Rates**: Success rates from each stage to the next
+- **Bottleneck Identification**: Stages that need improvement
+
+### Q: How do I improve my lead scores?
+**A:** To improve lead quality:
+1. **Data Enrichment**: Add missing information to increase completeness scores
+2. **Engagement Activities**: Regular touchpoints improve engagement scores  
+3. **Better Targeting**: Focus on prospects that match your ideal customer profile
+4. **Source Quality**: Identify and focus on highest-quality lead sources
+5. **Feedback Loop**: Update outcomes to help the AI learn what works
+
+### Q: What reports can I generate from lead analytics?
+**A:** Available reports include:
+- **Lead Quality Report**: Score distribution and trends
+- **Conversion Funnel Report**: Pipeline progression analysis
+- **Source Performance Report**: ROI by lead source
+- **Agent Performance Report**: Individual and team conversion rates
+- **Predictive Analysis Report**: Forecasting based on current pipeline
+- **Custom Reports**: Build reports with specific metrics and date ranges
+
+---
+
+**Document Version**: 2.0  
+**Last Updated**: August 2024  
 **For Technical Support**: support@coldcaller.com  
 **For Training**: training@coldcaller.com

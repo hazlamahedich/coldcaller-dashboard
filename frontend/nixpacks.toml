@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['nodejs_18']
+
+[phases.install]
+cmds = ['npm ci --only=production']
+
+[phases.build]
+cmds = ['npm run build']
+
+[start]
+cmd = 'npx serve -s build -l $PORT'
+
+[variables]
+NODE_ENV = 'production'

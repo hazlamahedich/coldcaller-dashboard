@@ -4,10 +4,12 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 const UserMenu = () => {
+  const navigate = useNavigate();
   const { user, logout, getFullName, isAdmin } = useAuth();
   const { themeClasses } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
@@ -93,8 +95,7 @@ const UserMenu = () => {
             <button
               onClick={() => {
                 setIsOpen(false);
-                // TODO: Navigate to profile page
-                console.log('Profile clicked');
+                navigate('/profile');
               }}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
             >
@@ -108,8 +109,7 @@ const UserMenu = () => {
             <button
               onClick={() => {
                 setIsOpen(false);
-                // TODO: Navigate to account page
-                console.log('Account clicked');
+                navigate('/account');
               }}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
             >

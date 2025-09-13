@@ -324,6 +324,103 @@ export const authService = {
   },
 
   /**
+   * Get security information
+   * @returns {Promise<Object>} Security info result
+   */
+  getSecurityInfo: async () => {
+    try {
+      const response = await api.get('/auth/security');
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: response.data,
+          message: 'Security information retrieved successfully'
+        };
+      }
+
+      return {
+        success: false,
+        error: response.message || 'Failed to retrieve security information'
+      };
+    } catch (error) {
+      console.error('❌ [authService] Get security info failed:', error);
+      
+      return {
+        success: false,
+        error: error.response?.data?.error?.message || error.message || 'Failed to retrieve security information'
+      };
+    }
+  },
+
+  /**
+   * Update security preferences
+   * @param {Object} preferences - Security preferences
+   * @returns {Promise<Object>} Update result
+   */
+  updateSecurityPreferences: async (preferences) => {
+    try {
+      const response = await api.put('/auth/security', preferences);
+
+      if (response.success) {
+        return {
+          success: true,
+          message: 'Security preferences updated successfully'
+        };
+      }
+
+      return {
+        success: false,
+        error: response.message || 'Security preferences update failed'
+      };
+    } catch (error) {
+      console.error('❌ [authService] Update security preferences failed:', error);
+      
+      return {
+        success: false,
+        error: error.response?.data?.error?.message || error.message || 'Security preferences update failed'
+      };
+    }
+  },
+
+  /**
+   * Deactivate account
+   * @param {string} reason - Reason for deactivation
+   * @param {string} feedback - Additional feedback
+   * @returns {Promise<Object>} Deactivation result
+   */
+  deactivateAccount: async (reason, feedback) => {
+    try {
+      const response = await api.post('/auth/deactivate', {
+        reason,
+        feedback
+      });
+
+      if (response.success) {
+        // Clear tokens after successful deactivation
+        tokenManager.clearTokens();
+        
+        return {
+          success: true,
+          message: 'Account deactivated successfully'
+        };
+      }
+
+      return {
+        success: false,
+        error: response.message || 'Account deactivation failed'
+      };
+    } catch (error) {
+      console.error('❌ [authService] Deactivate account failed:', error);
+      
+      return {
+        success: false,
+        error: error.response?.data?.error?.message || error.message || 'Account deactivation failed'
+      };
+    }
+  },
+
+  /**
    * Check if user is authenticated
    * @returns {boolean} Authentication status
    */

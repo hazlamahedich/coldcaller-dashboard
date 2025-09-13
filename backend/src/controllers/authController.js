@@ -29,10 +29,23 @@ const createDefaultAdmin = async () => {
       password: hashedPassword,
       firstName: 'System',
       lastName: 'Administrator',
+      phone: '',
+      company: 'ColdCaller Inc.',
+      bio: 'System administrator account',
+      timezone: 'America/New_York',
+      avatarUrl: '',
       role: ROLES.SUPER_ADMIN,
       isActive: true,
       tokenVersion: 1,
+      twoFactorEnabled: false,
+      notificationSettings: {
+        emailAlerts: true,
+        smsAlerts: false,
+        loginNotifications: true
+      },
+      lastPasswordChange: new Date().toISOString(),
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       lastLogin: null,
       loginAttempts: 0,
       lockedUntil: null
@@ -450,7 +463,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, phone, company, bio, timezone, avatarUrl } = req.body;
     
     const user = Array.from(users.values()).find(u => u.id === userId);
     if (!user) {
@@ -465,8 +478,14 @@ const updateProfile = async (req, res) => {
     }
 
     // Update profile fields
-    if (firstName) user.firstName = firstName.trim();
-    if (lastName) user.lastName = lastName.trim();
+    if (firstName !== undefined) user.firstName = firstName ? firstName.trim() : '';
+    if (lastName !== undefined) user.lastName = lastName ? lastName.trim() : '';
+    if (phone !== undefined) user.phone = phone ? phone.trim() : '';
+    if (company !== undefined) user.company = company ? company.trim() : '';
+    if (bio !== undefined) user.bio = bio ? bio.trim() : '';
+    if (timezone !== undefined) user.timezone = timezone;
+    if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
+    
     user.updatedAt = new Date().toISOString();
 
     users.set(user.email, user);
@@ -474,6 +493,7 @@ const updateProfile = async (req, res) => {
     securityLogger('PROFILE_UPDATED', {
       userId: user.id,
       email: user.email,
+      updatedFields: Object.keys(req.body),
       ip: req.ip,
       userAgent: req.get('User-Agent')
     });
@@ -568,6 +588,201 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * Get security information (login history, active sessions)
+ */
+const getSecurityInfo = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = Array.from(users.values()).find(u => u.id === userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: 'User not found',
+          status: 404,
+          code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+
+    // Mock login history - in production, this would come from audit logs
+    const loginHistory = [
+      {
+        id: 1,
+        timestamp: user.lastLogin || new Date().toISOString(),
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        location: 'Unknown Location',
+        status: 'success'
+      }
+    ];
+
+    // Mock active sessions - in production, this would come from session store
+    const activeSessions = [
+      {
+        id: user.tokenVersion,
+        createdAt: user.lastLogin || new Date().toISOString(),
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        location: 'Unknown Location',
+        isCurrent: true
+      }
+    ];
+
+    const securityInfo = {
+      twoFactorEnabled: user.twoFactorEnabled || false,
+      lastPasswordChange: user.lastPasswordChange || user.createdAt,
+      loginHistory: loginHistory.slice(0, 10), // Last 10 logins
+      activeSessions,
+      securityScore: calculateSecurityScore(user)
+    };
+
+    return ResponseFormatter.success(res, securityInfo, 'Security information retrieved successfully');
+
+  } catch (error) {
+    console.error('Get security info error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to retrieve security information',
+        status: 500,
+        code: 'SECURITY_INFO_ERROR'
+      }
+    });
+  }
+};
+
+/**
+ * Update security preferences
+ */
+const updateSecurityPreferences = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { twoFactorEnabled, notificationSettings } = req.body;
+    
+    const user = Array.from(users.values()).find(u => u.id === userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: 'User not found',
+          status: 404,
+          code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+
+    // Update security preferences
+    if (twoFactorEnabled !== undefined) {
+      user.twoFactorEnabled = twoFactorEnabled;
+    }
+    if (notificationSettings !== undefined) {
+      user.notificationSettings = { ...user.notificationSettings, ...notificationSettings };
+    }
+    
+    user.updatedAt = new Date().toISOString();
+    users.set(user.email, user);
+
+    securityLogger('SECURITY_PREFERENCES_UPDATED', {
+      userId: user.id,
+      email: user.email,
+      changes: req.body,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    return ResponseFormatter.success(res, null, 'Security preferences updated successfully');
+
+  } catch (error) {
+    console.error('Update security preferences error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to update security preferences',
+        status: 500,
+        code: 'SECURITY_UPDATE_ERROR'
+      }
+    });
+  }
+};
+
+/**
+ * Deactivate user account
+ */
+const deactivateAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { reason, feedback } = req.body;
+    
+    const user = Array.from(users.values()).find(u => u.id === userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: 'User not found',
+          status: 404,
+          code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+
+    // Deactivate account
+    user.isActive = false;
+    user.deactivatedAt = new Date().toISOString();
+    user.deactivationReason = reason || 'User requested';
+    user.deactivationFeedback = feedback || '';
+    
+    // Invalidate all tokens
+    user.tokenVersion += 1;
+    
+    users.set(user.email, user);
+
+    securityLogger('ACCOUNT_DEACTIVATED', {
+      userId: user.id,
+      email: user.email,
+      reason,
+      feedback,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    return ResponseFormatter.success(res, null, 'Account deactivated successfully');
+
+  } catch (error) {
+    console.error('Deactivate account error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to deactivate account',
+        status: 500,
+        code: 'ACCOUNT_DEACTIVATION_ERROR'
+      }
+    });
+  }
+};
+
+/**
+ * Calculate security score based on user security settings
+ */
+const calculateSecurityScore = (user) => {
+  let score = 50; // Base score
+  
+  // Strong password (assume if it exists)
+  if (user.password) score += 20;
+  
+  // Two-factor authentication
+  if (user.twoFactorEnabled) score += 25;
+  
+  // Recent password change (within 90 days)
+  const lastChange = new Date(user.lastPasswordChange || user.createdAt);
+  const daysSinceChange = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
+  if (daysSinceChange <= 90) score += 5;
+  
+  return Math.min(100, score);
+};
+
 module.exports = {
   register,
   login,
@@ -575,5 +790,8 @@ module.exports = {
   logout,
   getProfile,
   updateProfile,
-  changePassword
+  changePassword,
+  getSecurityInfo,
+  updateSecurityPreferences,
+  deactivateAccount
 };

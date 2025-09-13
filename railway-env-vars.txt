@@ -1,0 +1,31 @@
+# Essential Environment Variables for Railway
+# Copy these to your Railway service settings
+
+## Backend Service Variables:
+NODE_ENV=production
+PORT=3001
+
+# Your Supabase credentials (get from your Supabase dashboard)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_KEY=your-supabase-service-role-key
+
+# JWT & Security (generate secure values)
+JWT_SECRET=your-super-secure-jwt-secret-32-chars-min
+ENCRYPTION_KEY=your-32-character-encryption-key-here
+
+# AI Configuration
+GOOGLE_AI_API_KEY=your-google-ai-api-key
+GOOGLE_AI_MODEL=gemini-1.5-pro-latest
+
+# Twilio Configuration (optional, for calling features)
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_PHONE_NUMBER=your-twilio-phone-number
+
+## Frontend Service Variables:
+NODE_ENV=production
+REACT_APP_API_URL=https://your-backend-service.up.railway.app
+REACT_APP_ENVIRONMENT=production
+
+# After backend deploys, update this URL ^^^ with actual backend URL
